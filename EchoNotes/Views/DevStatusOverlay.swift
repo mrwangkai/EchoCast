@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreData
 
 // MARK: - Dev Status Manager
 
@@ -68,6 +69,8 @@ class DevStatusManager: ObservableObject {
 struct DevStatusOverlay: View {
     @ObservedObject var statusManager = DevStatusManager.shared
     @State private var isExpanded = false
+    @State private var showClearConfirmation = false
+    @Environment(\.managedObjectContext) private var viewContext
 
     var body: some View {
         if statusManager.isEnabled {
@@ -96,13 +99,35 @@ struct DevStatusOverlay: View {
 
                         // Expanded details
                         if isExpanded {
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 8) {
                                 ForEach(statusManager.statusMessages.prefix(10), id: \.self) { message in
                                     Text(message)
                                         .font(.system(size: 10, design: .monospaced))
                                         .foregroundColor(.white)
                                         .lineLimit(2)
                                 }
+
+                                Divider()
+                                    .background(Color.white.opacity(0.3))
+
+                                // Clear Cache Button
+                                Button(action: {
+                                    showClearConfirmation = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "trash.fill")
+                                            .font(.caption)
+                                        Text("Clear All Cache")
+                                            .font(.caption)
+                                            .fontWeight(.semibold)
+                                    }
+                                    .foregroundColor(.red)
+                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 12)
+                                    .background(Color.red.opacity(0.2))
+                                    .cornerRadius(8)
+                                }
+                                .frame(maxWidth: .infinity)
                             }
                             .padding(8)
                             .frame(maxWidth: 300)
@@ -116,7 +141,61 @@ struct DevStatusOverlay: View {
 
                 Spacer()
             }
+            .alert("Clear All Cache?", isPresented: $showClearConfirmation) {
+                Button("Cancel", role: .cancel) {}
+                Button("Clear All", role: .destructive) {
+                    clearAllCache()
+                }
+            } message: {
+                Text("This will delete all podcasts, notes, playback history, and downloaded files. This action cannot be undone.")
+            }
         }
+    }
+
+    private func clearAllCache() {
+        // Stop player and clear state
+        GlobalPlayerManager.shared.stop()
+
+        // Delete all Core Data entities
+        let fetchRequest1: NSFetchRequest<NSFetchRequestResult> = PodcastEntity.fetchRequest()
+        let deleteRequest1 = NSBatchDeleteRequest(fetchRequest: fetchRequest1)
+
+        let fetchRequest2: NSFetchRequest<NSFetchRequestResult> = NoteEntity.fetchRequest()
+        let deleteRequest2 = NSBatchDeleteRequest(fetchRequest: fetchRequest2)
+
+        do {
+            try viewContext.execute(deleteRequest1)
+            try viewContext.execute(deleteRequest2)
+            try viewContext.save()
+            statusManager.addMessage("✅ Core Data cleared")
+        } catch {
+            statusManager.addMessage("❌ Core Data error: \(error.localizedDescription)")
+        }
+
+        // Clear UserDefaults
+        UserDefaults.standard.removeObject(forKey: "playbackHistory")
+        UserDefaults.standard.removeObject(forKey: "downloadedEpisodes")
+        statusManager.addMessage("✅ UserDefaults cleared")
+
+        // Clear downloaded files
+        if let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let downloadsPath = documentsPath.appendingPathComponent("Downloads", isDirectory: true)
+            do {
+                if FileManager.default.fileExists(atPath: downloadsPath.path) {
+                    try FileManager.default.removeItem(at: downloadsPath)
+                    statusManager.addMessage("✅ Downloaded files cleared")
+                }
+            } catch {
+                statusManager.addMessage("❌ File deletion error: \(error.localizedDescription)")
+            }
+        }
+
+        // Reset managers
+        PlaybackHistoryManager.shared.recentlyPlayed.removeAll()
+        EpisodeDownloadManager.shared.downloadedEpisodes.removeAll()
+        EpisodeDownloadManager.shared.downloadProgress.removeAll()
+
+        statusManager.addMessage("🎉 Cache cleared! App reset to zero state")
     }
 }
 

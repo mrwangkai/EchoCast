@@ -10,21 +10,17 @@ import SwiftUI
 struct MiniPlayerView: View {
     @ObservedObject var player = GlobalPlayerManager.shared
     @State private var showFullPlayer = false
+    @State private var showNoteCaptureSheet = false
+    @State private var currentTimestamp = ""
+    @State private var dragOffset: CGFloat = 0
 
     var body: some View {
         if player.showMiniPlayer, let episode = player.currentEpisode {
             VStack(spacing: 0) {
-                // Drag indicator
-                RoundedRectangle(cornerRadius: 2.5)
-                    .fill(Color.gray.opacity(0.4))
-                    .frame(width: 36, height: 5)
-                    .padding(.top, 8)
-                    .padding(.bottom, 4)
-
                 // Mini player controls
                 HStack(spacing: 12) {
                     // Artwork
-                    RoundedRectangle(cornerRadius: 6)
+                    Circle()
                         .fill(Color.blue.opacity(0.2))
                         .frame(width: 48, height: 48)
                         .overlay(
@@ -60,7 +56,17 @@ struct MiniPlayerView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                     // Controls
-                    HStack(spacing: 16) {
+                    HStack(spacing: 12) {
+                        Button(action: {
+                            currentTimestamp = formatTime(player.currentTime)
+                            player.pause()
+                            showNoteCaptureSheet = true
+                        }) {
+                            Image(systemName: "note.text.badge.plus")
+                                .font(.system(size: 20))
+                                .foregroundColor(.blue)
+                        }
+
                         Button(action: {
                             player.togglePlayPause()
                         }) {
@@ -79,9 +85,10 @@ struct MiniPlayerView: View {
                     }
                 }
                 .padding(.horizontal)
-                .padding(.top, 8)
+                .padding(.top, 12)
                 .padding(.bottom, 12)
                 .background(Color(.systemBackground))
+                .contentShape(Rectangle())
                 .onTapGesture {
                     showFullPlayer = true
                 }
@@ -98,12 +105,21 @@ struct MiniPlayerView: View {
                 Color(.systemBackground)
                     .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
             )
-            .fullScreenCover(isPresented: $showFullPlayer) {
+            .sheet(isPresented: $showFullPlayer) {
                 if let episode = player.currentEpisode, let podcast = player.currentPodcast {
                     PlayerSheetWrapper(
                         episode: episode,
                         podcast: podcast,
                         dismiss: { showFullPlayer = false }
+                    )
+                }
+            }
+            .sheet(isPresented: $showNoteCaptureSheet) {
+                if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                    QuickNoteCaptureView(
+                        podcast: podcast,
+                        episode: episode,
+                        timestamp: currentTimestamp
                     )
                 }
             }
@@ -146,7 +162,7 @@ struct FullPlayerView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     // Episode Artwork
-                    RoundedRectangle(cornerRadius: 20)
+                    Circle()
                         .fill(Color.blue.opacity(0.2))
                         .frame(width: 280, height: 280)
                         .overlay(
@@ -160,8 +176,7 @@ struct FullPlayerView: View {
                     // Episode Info
                     VStack(spacing: 8) {
                         Text(episode.title)
-                            .font(.title3)
-                            .fontWeight(.bold)
+                            .font(.headline)
                             .multilineTextAlignment(.center)
                             .lineLimit(3)
 
@@ -170,6 +185,65 @@ struct FullPlayerView: View {
                             .foregroundColor(.gray)
                     }
                     .padding(.horizontal, 32)
+
+                    // Playback Controls Row (Play/Pause and Close)
+                    HStack(spacing: 20) {
+                        Button(action: { player.togglePlayPause() }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                                    .font(.system(size: 24))
+                                Text(player.isPlaying ? "Pause" : "Play")
+                                    .font(.headline)
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(Color.blue)
+                            .cornerRadius(10)
+                        }
+
+                        Button(action: {
+                            dismiss()
+                            player.showMiniPlayer = true
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 20))
+                                .foregroundColor(.gray)
+                                .padding(12)
+                                .background(Color(.systemGray5))
+                                .clipShape(Circle())
+                        }
+                    }
+                    .padding(.horizontal, 32)
+                    .padding(.top, 8)
+
+                    // Add Note Button
+                    Button(action: {
+                        currentTimestamp = formatTime(player.currentTime)
+                        player.pause()
+                        showNoteCaptureSheet = true
+                    }) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "note.text.badge.plus")
+                                .font(.title3)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Add Note")
+                                    .font(.headline)
+                                Text("at \(formatTime(player.currentTime))")
+                                    .font(.caption)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.orange)
+                        .cornerRadius(12)
+                    }
+                    .padding(.horizontal, 32)
+                    .padding(.top, 12)
 
                     // Progress Slider with Timeline Markers
                     VStack(spacing: 8) {
@@ -223,28 +297,33 @@ struct FullPlayerView: View {
                         }
                     }
                     .padding(.horizontal, 32)
+                    .padding(.top, 12)
 
-                    // Playback Controls
+                    // Skip Controls
                     HStack(spacing: 40) {
                         Button(action: { player.skipBackward(30) }) {
-                            Image(systemName: "gobackward.30")
-                                .font(.system(size: 32))
-                                .foregroundColor(.primary)
+                            HStack(spacing: 4) {
+                                Image(systemName: "gobackward.30")
+                                    .font(.system(size: 24))
+                                Text("30s")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(.primary)
                         }
 
-                        Button(action: { player.togglePlayPause() }) {
-                            Image(systemName: player.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                                .font(.system(size: 64))
-                                .foregroundColor(.blue)
-                        }
+                        Spacer()
 
                         Button(action: { player.skipForward(30) }) {
-                            Image(systemName: "goforward.30")
-                                .font(.system(size: 32))
-                                .foregroundColor(.primary)
+                            HStack(spacing: 4) {
+                                Text("30s")
+                                    .font(.caption)
+                                Image(systemName: "goforward.30")
+                                    .font(.system(size: 24))
+                            }
+                            .foregroundColor(.primary)
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 60)
 
                     // Notes Section
                     if !allNotes.isEmpty {
@@ -311,35 +390,6 @@ struct FullPlayerView: View {
                 if let note = selectedNote {
                     NoteDetailView(note: note, player: player)
                 }
-            }
-            .safeAreaInset(edge: .bottom) {
-                // Add Note Button
-                Button(action: {
-                    currentTimestamp = formatTime(player.currentTime)
-                    showNoteCaptureSheet = true
-                }) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "note.text.badge.plus")
-                            .font(.title3)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Add Note")
-                                .font(.headline)
-                            Text("at \(formatTime(player.currentTime))")
-                                .font(.caption)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.7))
-                    }
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(12)
-                    .shadow(radius: 4)
-                }
-                .padding()
-                .background(Color(.systemBackground))
             }
         }
     }

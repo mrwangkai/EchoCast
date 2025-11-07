@@ -44,11 +44,11 @@ struct AudioPlayerView: View {
 
     var body: some View {
         ZStack {
-            // Main content
+            // Main content (inner ZStack for existing structure)
             ScrollView {
                 VStack(spacing: 20) {
                     // Episode Artwork
-                    RoundedRectangle(cornerRadius: 20)
+                    Circle()
                         .fill(Color.blue.opacity(0.2))
                         .frame(width: 280, height: 280)
                         .overlay(
@@ -85,8 +85,7 @@ struct AudioPlayerView: View {
                 // Episode Info
                 VStack(spacing: 8) {
                     Text(episode.title)
-                        .font(.title3)
-                        .fontWeight(.bold)
+                        .font(.headline)
                         .multilineTextAlignment(.center)
                         .lineLimit(3)
 
@@ -210,39 +209,6 @@ struct AudioPlayerView: View {
                 Spacer(minLength: 20)
             }
             }
-
-            // Full-screen loading overlay
-            if isLoading || player.isBuffering {
-                Color.black.opacity(0.3)
-                    .ignoresSafeArea()
-
-                VStack(spacing: 16) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                        .tint(.white)
-
-                    VStack(spacing: 8) {
-                        Text(player.isBuffering ? "Buffering..." : "Loading Episode...")
-                            .font(.headline)
-                            .foregroundColor(.white)
-
-                        if let error = player.playerError {
-                            Text(error)
-                                .font(.caption)
-                                .foregroundColor(.red)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 32)
-                        } else {
-                            Text("Please wait")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.8))
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black.opacity(0.5))
-            }
-        }
         .navigationTitle(episode.title)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -297,6 +263,7 @@ struct AudioPlayerView: View {
             // Add Note Button - Always visible at bottom
             Button(action: {
                 currentTimestamp = formatTime(player.currentTime)
+                player.pause()
                 showNoteCaptureSheet = true
             }) {
                 HStack(spacing: 12) {
@@ -325,6 +292,38 @@ struct AudioPlayerView: View {
         .sheet(isPresented: $showNoteDetail) {
             if let note = selectedNote {
                 NoteDetailView(note: note, player: player)
+            }
+        }
+
+            // Full-screen loading overlay - at outer ZStack level to cover everything
+            if isLoading || player.isBuffering {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .overlay(
+                        VStack(spacing: 16) {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                                .tint(.white)
+
+                            VStack(spacing: 8) {
+                                Text(player.isBuffering ? "Buffering..." : "Loading Episode...")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+
+                                if let error = player.playerError {
+                                    Text(error)
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.horizontal, 32)
+                                } else {
+                                    Text("Please wait")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                            }
+                        }
+                    )
             }
         }
     }

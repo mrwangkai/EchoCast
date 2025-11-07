@@ -12,11 +12,14 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @StateObject private var player = GlobalPlayerManager.shared
     @StateObject private var devStatus = DevStatusManager.shared
+    @State private var showSiriNoteCaptureSheet = false
+    @State private var siriNoteTimestamp = ""
+    @Environment(\.managedObjectContext) private var viewContext
 
     var body: some View {
         ZStack {
         TabView(selection: $selectedTab) {
-            HomeView()
+            HomeView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Home", systemImage: "house.fill")
                 }
@@ -40,9 +43,35 @@ struct ContentView: View {
                 MiniPlayerView()
             }
         }
+        .onAppear {
+            checkForSiriIntent()
+        }
+        .onChange(of: showSiriNoteCaptureSheet) { _, newValue in
+            if !newValue {
+                // Clear flags when sheet is dismissed
+                UserDefaults.standard.removeObject(forKey: "shouldShowNoteCaptureFromSiri")
+                UserDefaults.standard.removeObject(forKey: "siriNoteTimestamp")
+            }
+        }
+        .sheet(isPresented: $showSiriNoteCaptureSheet) {
+            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                QuickNoteCaptureView(
+                    podcast: podcast,
+                    episode: episode,
+                    timestamp: siriNoteTimestamp
+                )
+            }
+        }
 
         // Dev status overlay
         DevStatusOverlay()
+        }
+    }
+
+    private func checkForSiriIntent() {
+        if UserDefaults.standard.bool(forKey: "shouldShowNoteCaptureFromSiri") {
+            siriNoteTimestamp = UserDefaults.standard.string(forKey: "siriNoteTimestamp") ?? ""
+            showSiriNoteCaptureSheet = true
         }
     }
 }
@@ -50,6 +79,7 @@ struct ContentView: View {
 // MARK: - Home View
 
 struct HomeView: View {
+    @Binding var selectedTab: Int
     @Environment(\.managedObjectContext) private var viewContext
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \PodcastEntity.title, ascending: true)],
@@ -73,16 +103,14 @@ struct HomeView: View {
             GeometryReader { geometry in
                 ScrollView {
                     VStack(spacing: 24) {
-                        podcastsSection
                         recentlyPlayedSection
 
                         Divider()
                             .padding(.horizontal)
 
                         recentNotesSection
-
-                        Spacer(minLength: 80)
                     }
+                    .padding(.bottom, 100)
                     .frame(minHeight: geometry.size.height)
                 }
             }
@@ -181,11 +209,18 @@ struct HomeView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                     Spacer()
+                    Button(action: {
+                        selectedTab = 1
+                    }) {
+                        Text("view all")
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
+                    }
                 }
                 .padding(.horizontal)
 
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 16) {
+                    HStack(alignment: .top, spacing: 16) {
                         ForEach(historyManager.getRecentlyPlayed(limit: 3)) { item in
                             RecentlyPlayedCardView(historyItem: item) {
                                 handleRecentEpisodeTap(item)
@@ -206,9 +241,11 @@ struct HomeView: View {
                     .fontWeight(.bold)
                 Spacer()
                 if !recentNotes.isEmpty {
-                    Text("\(recentNotes.count)")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
+                    NavigationLink(destination: NotesListView()) {
+                        Text("view all")
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
+                    }
                 }
             }
             .padding(.horizontal)
@@ -217,11 +254,25 @@ struct HomeView: View {
                 EmptyNotesHomeView()
             } else {
                 VStack(spacing: 12) {
-                    ForEach(recentNotes.prefix(10)) { note in
+                    ForEach(recentNotes.prefix(5)) { note in
                         NavigationLink(destination: NoteDetailSheetView(note: note)) {
                             NoteCardView(note: note)
                         }
                         .buttonStyle(PlainButtonStyle())
+                    }
+
+                    // View all link at bottom
+                    if recentNotes.count > 5 {
+                        NavigationLink(destination: NotesListView()) {
+                            HStack {
+                                Spacer()
+                                Text("view all (\(recentNotes.count) notes)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.blue)
+                                Spacer()
+                            }
+                            .padding(.vertical, 8)
+                        }
                     }
                 }
                 .padding(.horizontal)
@@ -280,14 +331,22 @@ struct PodcastCardView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.blue.opacity(0.2))
-                .frame(width: 140, height: 140)
-                .overlay(
-                    Image(systemName: "music.note")
-                        .font(.system(size: 40))
-                        .foregroundColor(.blue)
-                )
+            CachedAsyncImage(url: podcast.artworkURL) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 140, height: 140)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            } placeholder: {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.blue.opacity(0.2))
+                    .frame(width: 140, height: 140)
+                    .overlay(
+                        Image(systemName: "music.note")
+                            .font(.system(size: 40))
+                            .foregroundColor(.blue)
+                    )
+            }
 
             VStack(spacing: 4) {
                 Text(podcast.title ?? "Unknown")
@@ -315,6 +374,7 @@ struct RecentlyPlayedCardView: View {
     let onTap: () -> Void
 
     @FetchRequest private var episodeNotes: FetchedResults<NoteEntity>
+    @FetchRequest private var podcast: FetchedResults<PodcastEntity>
 
     init(historyItem: PlaybackHistoryItem, onTap: @escaping () -> Void) {
         self.historyItem = historyItem
@@ -324,20 +384,42 @@ struct RecentlyPlayedCardView: View {
             sortDescriptors: [],
             predicate: NSPredicate(format: "episodeTitle == %@", historyItem.episodeTitle)
         )
+
+        _podcast = FetchRequest(
+            sortDescriptors: [],
+            predicate: NSPredicate(format: "title == %@", historyItem.podcastTitle)
+        )
     }
 
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 12) {
-                // Thumbnail placeholder
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.blue.opacity(0.2))
-                    .frame(width: 140, height: 140)
-                    .overlay(
-                        Image(systemName: "music.note")
-                            .font(.system(size: 40))
-                            .foregroundColor(.blue)
-                    )
+                // Thumbnail with progress indicator
+                ZStack {
+                    CachedAsyncImage(url: podcast.first?.artworkURL) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 140, height: 140)
+                            .clipShape(Circle())
+                    } placeholder: {
+                        Circle()
+                            .fill(Color.blue.opacity(0.2))
+                            .frame(width: 140, height: 140)
+                            .overlay(
+                                Image(systemName: "music.note")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.blue)
+                            )
+                    }
+
+                    // Circular progress indicator
+                    Circle()
+                        .trim(from: 0, to: historyItem.progress)
+                        .stroke(Color.orange, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .frame(width: 140, height: 140)
+                        .rotationEffect(.degrees(-90))
+                }
 
                 // Episode info
                 VStack(alignment: .leading, spacing: 4) {
@@ -365,11 +447,11 @@ struct RecentlyPlayedCardView: View {
                         .foregroundColor(.orange)
                     }
 
-                    // Progress indicator
+                    // Time remaining indicator
                     HStack(spacing: 4) {
-                        Image(systemName: "waveform")
+                        Image(systemName: "clock")
                             .font(.caption2)
-                        Text("\(Int(historyItem.progress * 100))%")
+                        Text("\(formatTimeRemaining(current: historyItem.currentTime, duration: historyItem.duration)) left")
                             .font(.caption2)
                     }
                     .foregroundColor(.blue)
@@ -378,6 +460,19 @@ struct RecentlyPlayedCardView: View {
             .frame(width: 140)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+
+    private func formatTimeRemaining(current: TimeInterval, duration: TimeInterval) -> String {
+        let remaining = max(0, duration - current)
+        let hours = Int(remaining) / 3600
+        let minutes = Int(remaining) / 60 % 60
+        let seconds = Int(remaining) % 60
+
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            return String(format: "%d:%02d", minutes, seconds)
+        }
     }
 }
 
@@ -495,7 +590,19 @@ struct PodcastsListView: View {
         animation: .default)
     private var podcasts: FetchedResults<PodcastEntity>
 
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \NoteEntity.createdAt, ascending: false)],
+        animation: .default)
+    private var allNotes: FetchedResults<NoteEntity>
+
+    @ObservedObject private var downloadManager = EpisodeDownloadManager.shared
     @State private var showAddPodcastSheet = false
+    @State private var showSearchSheet = false
+    @State private var showEpisodePlayer = false
+    @State private var showAllEpisodesSheet = false
+    @State private var selectedEpisode: RSSEpisode?
+    @State private var selectedPodcast: PodcastEntity?
+    @State private var isLoadingEpisode = false
 
     // Recommended podcasts for zero state
     private let recommendedPodcasts = [
@@ -529,91 +636,140 @@ struct PodcastsListView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 0) {
-                    // My Podcasts Section
+                VStack(spacing: 20) {
+                    // Search Bar
+                    Button(action: {
+                        showSearchSheet = true
+                    }) {
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(.gray)
+                            Text("Search for podcasts...")
+                                .foregroundColor(.gray)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+
+                    // Episodes Section (Carousel)
+                    if !getIndividualEpisodes().isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("Episodes")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                Spacer()
+                                Button(action: {
+                                    showAllEpisodesSheet = true
+                                }) {
+                                    Text("view all")
+                                        .font(.subheadline)
+                                        .foregroundColor(.blue)
+                                }
+                            }
+                            .padding(.horizontal)
+
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(alignment: .top, spacing: 16) {
+                                    ForEach(getIndividualEpisodes().prefix(5)) { item in
+                                        EpisodeCardView(item: item, onTap: {
+                                            playIndividualEpisode(item)
+                                        })
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
+                    }
+
+                    // My Podcasts Section (Carousel)
                     if !podcasts.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("My Podcasts")
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .padding(.horizontal)
-                                .padding(.top, 8)
 
-                            ForEach(podcasts) { podcast in
-                                NavigationLink(destination: PodcastDetailView(podcast: podcast)) {
-                                    HStack(spacing: 12) {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.blue.opacity(0.2))
-                                            .frame(width: 60, height: 60)
-                                            .overlay(
-                                                Image(systemName: "music.note")
-                                                    .foregroundColor(.blue)
-                                            )
-
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(podcast.title ?? "Unknown Podcast")
-                                                .font(.headline)
-                                                .lineLimit(2)
-                                            if let author = podcast.author {
-                                                Text(author)
-                                                    .font(.subheadline)
-                                                    .foregroundColor(.gray)
-                                                    .lineLimit(1)
-                                            }
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 16) {
+                                    ForEach(Array(podcasts.prefix(5))) { podcast in
+                                        NavigationLink(destination: PodcastDetailView(podcast: podcast)) {
+                                            PodcastCardView(podcast: podcast)
                                         }
-
-                                        Spacer()
-
-                                        Image(systemName: "chevron.right")
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
+                                        .buttonStyle(PlainButtonStyle())
                                     }
-                                    .padding()
-                                    .background(Color(.systemGray6))
-                                    .cornerRadius(12)
                                 }
-                                .buttonStyle(PlainButtonStyle())
+                                .padding(.horizontal)
                             }
-                            .padding(.horizontal)
                         }
-                        .padding(.bottom, 20)
                     }
 
-                    // Recommended Podcasts Section
-                    VStack(alignment: .leading, spacing: 16) {
-                        VStack(spacing: 8) {
-                            Image(systemName: "sparkles")
-                                .font(.system(size: 40))
-                                .foregroundColor(.blue)
-                            Text("Recommended Podcasts")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                            Text(podcasts.isEmpty ? "Get started with these popular podcasts" : "Discover more podcasts")
+                    // Empty state
+                    if podcasts.isEmpty && getIndividualEpisodes().isEmpty {
+                        VStack(spacing: 20) {
+                            Image(systemName: "mic.slash")
+                                .font(.system(size: 60))
+                                .foregroundColor(.gray)
+                            Text("No podcasts yet")
+                                .font(.title3)
+                                .foregroundColor(.gray)
+                            Text("Tap the search bar above to discover podcasts")
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 20)
-
-                        ForEach(recommendedPodcasts) { podcast in
-                            NavigationLink(destination: PodcastPreviewView(recommendedPodcast: podcast)) {
-                                RecommendedPodcastRow(
-                                    podcast: podcast,
-                                    onAdd: {
-                                        addRecommendedPodcast(podcast)
-                                    }
-                                )
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
+                        .padding(.vertical, 60)
                     }
-                    .padding()
                 }
+                .padding(.bottom, 100)
             }
             .navigationTitle("Podcasts")
             .navigationBarTitleDisplayMode(.large)
-            .sheet(isPresented: $showAddPodcastSheet) {
-                PodcastDiscoveryView()
+            .sheet(isPresented: $showSearchSheet) {
+                PodcastSearchView(recommendedPodcasts: recommendedPodcasts)
+            }
+            .sheet(isPresented: $showEpisodePlayer) {
+                if let episode = selectedEpisode, let podcast = selectedPodcast {
+                    PlayerSheetWrapper(
+                        episode: episode,
+                        podcast: podcast,
+                        dismiss: {
+                            showEpisodePlayer = false
+                            selectedEpisode = nil
+                            selectedPodcast = nil
+                        },
+                        autoPlay: true
+                    )
+                }
+            }
+            .sheet(isPresented: $showAllEpisodesSheet) {
+                AllEpisodesSheet(
+                    episodes: getIndividualEpisodes(),
+                    onTap: { item in
+                        showAllEpisodesSheet = false
+                        playIndividualEpisode(item)
+                    }
+                )
+            }
+            .overlay {
+                if isLoadingEpisode {
+                    Color.black.opacity(0.5)
+                        .ignoresSafeArea()
+                        .overlay {
+                            VStack(spacing: 16) {
+                                ProgressView()
+                                    .scaleEffect(1.5)
+                                    .tint(.white)
+                                Text("Loading episode...")
+                                    .foregroundColor(.white)
+                            }
+                        }
+                }
             }
         }
     }
@@ -652,6 +808,277 @@ struct PodcastsListView: View {
                 }
             } catch {
                 print("Error loading recommended podcast: \(error)")
+            }
+        }
+    }
+
+    private func getIndividualEpisodes() -> [IndividualEpisodeItem] {
+        var episodes: [IndividualEpisodeItem] = []
+        var seenEpisodes = Set<String>()
+
+        // Get episodes with notes
+        for note in allNotes {
+            if let episodeTitle = note.episodeTitle,
+               let podcastTitle = note.showTitle,
+               !seenEpisodes.contains(episodeTitle) {
+                seenEpisodes.insert(episodeTitle)
+
+                // Get podcast artwork
+                let podcast = podcasts.first { $0.title == podcastTitle }
+                let noteCount = allNotes.filter { $0.episodeTitle == episodeTitle }.count
+
+                // Check if also downloaded
+                let playbackItem = PlaybackHistoryManager.shared.recentlyPlayed.first { $0.episodeTitle == episodeTitle }
+                let isDownloaded = playbackItem.map { downloadManager.isDownloaded($0.id) } ?? false
+
+                episodes.append(IndividualEpisodeItem(
+                    episodeTitle: episodeTitle,
+                    podcastTitle: podcastTitle,
+                    episodeImageURL: nil, // Will be loaded from RSS when needed
+                    podcastImageURL: podcast?.artworkURL,
+                    noteCount: noteCount,
+                    isDownloaded: isDownloaded
+                ))
+            }
+        }
+
+        // Get downloaded episodes from playback history
+        for item in PlaybackHistoryManager.shared.recentlyPlayed {
+            let isDownloaded = downloadManager.isDownloaded(item.id)
+            if isDownloaded && !seenEpisodes.contains(item.episodeTitle) {
+                seenEpisodes.insert(item.episodeTitle)
+
+                // Get podcast artwork
+                let podcast = podcasts.first { $0.title == item.podcastTitle }
+                let noteCount = allNotes.filter { $0.episodeTitle == item.episodeTitle }.count
+
+                episodes.append(IndividualEpisodeItem(
+                    episodeTitle: item.episodeTitle,
+                    podcastTitle: item.podcastTitle,
+                    episodeImageURL: nil, // Will be loaded from RSS when needed
+                    podcastImageURL: podcast?.artworkURL,
+                    noteCount: noteCount,
+                    isDownloaded: true
+                ))
+            }
+        }
+
+        return episodes
+    }
+
+    private func playIndividualEpisode(_ item: IndividualEpisodeItem) {
+        // Find the podcast
+        guard let podcast = podcasts.first(where: { $0.title == item.podcastTitle }),
+              let feedURL = podcast.feedURL else {
+            return
+        }
+
+        isLoadingEpisode = true
+
+        Task {
+            do {
+                let rssPodcast = try await PodcastRSSService.shared.fetchPodcast(from: feedURL)
+                guard let episode = rssPodcast.episodes.first(where: { $0.title == item.episodeTitle }) else {
+                    await MainActor.run {
+                        isLoadingEpisode = false
+                    }
+                    return
+                }
+
+                await MainActor.run {
+                    selectedEpisode = episode
+                    selectedPodcast = podcast
+                    isLoadingEpisode = false
+                    showEpisodePlayer = true
+                }
+            } catch {
+                await MainActor.run {
+                    isLoadingEpisode = false
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Individual Episode Item
+
+struct IndividualEpisodeItem: Identifiable {
+    let id = UUID()
+    let episodeTitle: String
+    let podcastTitle: String
+    let episodeImageURL: String?
+    let podcastImageURL: String?
+    let noteCount: Int
+    let isDownloaded: Bool
+
+    var imageURL: String? {
+        episodeImageURL ?? podcastImageURL
+    }
+}
+
+// MARK: - Episode Card (Vertical for Carousel)
+
+struct EpisodeCardView: View {
+    let item: IndividualEpisodeItem
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 12) {
+                // Thumbnail
+                CachedAsyncImage(url: item.imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 140, height: 140)
+                        .clipShape(Circle())
+                } placeholder: {
+                    Circle()
+                        .fill(Color.orange.opacity(0.2))
+                        .frame(width: 140, height: 140)
+                        .overlay(
+                            Image(systemName: "music.note")
+                                .font(.system(size: 40))
+                                .foregroundColor(.orange)
+                        )
+                }
+
+                // Episode info
+                VStack(alignment: .leading, spacing: 4) {
+                    // Episode name
+                    Text(item.episodeTitle)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+
+                    // Series name
+                    Text(item.podcastTitle)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .lineLimit(1)
+
+                    // Note count
+                    if item.noteCount > 0 {
+                        HStack(spacing: 4) {
+                            Image(systemName: "note.text")
+                                .font(.caption2)
+                            Text("\(item.noteCount) note\(item.noteCount == 1 ? "" : "s")")
+                                .font(.caption2)
+                        }
+                        .foregroundColor(.orange)
+                    }
+
+                    // Downloaded indicator
+                    if item.isDownloaded {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.caption2)
+                            Text("Downloaded")
+                                .font(.caption2)
+                        }
+                        .foregroundColor(.green)
+                    }
+                }
+            }
+            .frame(width: 140)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Individual Episode Row (Horizontal for List)
+
+struct IndividualEpisodeRow: View {
+    let item: IndividualEpisodeItem
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+        HStack(spacing: 12) {
+            CachedAsyncImage(url: item.imageURL) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 60, height: 60)
+                    .clipShape(Circle())
+            } placeholder: {
+                Circle()
+                    .fill(Color.orange.opacity(0.2))
+                    .frame(width: 60, height: 60)
+                    .overlay(
+                        Image(systemName: "music.note")
+                            .foregroundColor(.orange)
+                    )
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.episodeTitle)
+                    .font(.headline)
+                    .lineLimit(2)
+                Text(item.podcastTitle)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .lineLimit(1)
+
+                HStack(spacing: 8) {
+                    if item.noteCount > 0 {
+                        Label("\(item.noteCount) \(item.noteCount == 1 ? "note" : "notes")", systemImage: "note.text")
+                            .font(.caption2)
+                            .foregroundColor(.blue)
+                    }
+                    if item.isDownloaded {
+                        Label("Downloaded", systemImage: "arrow.down.circle.fill")
+                            .font(.caption2)
+                            .foregroundColor(.green)
+                    }
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.gray)
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - All Episodes Sheet
+
+struct AllEpisodesSheet: View {
+    let episodes: [IndividualEpisodeItem]
+    let onTap: (IndividualEpisodeItem) -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 12) {
+                    ForEach(episodes) { item in
+                        IndividualEpisodeRow(item: item, onTap: {
+                            onTap(item)
+                        })
+                        .padding(.horizontal)
+                    }
+                }
+                .padding(.top, 8)
+            }
+            .navigationTitle("All Episodes")
+            .navigationBarTitleDisplayMode(.large)
+            .safeAreaInset(edge: .bottom) {
+                VStack {
+                    Divider()
+                    Text("\(episodes.count) episode\(episodes.count == 1 ? "" : "s") downloaded")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .padding(.vertical, 12)
+                }
+                .background(Color(.systemBackground))
             }
         }
     }
@@ -781,6 +1208,7 @@ struct NotesListView: View {
                     .listStyle(.plain)
                 }
             }
+            .padding(.bottom, 100)
             .navigationTitle("Notes")
             .navigationBarTitleDisplayMode(.large)
         }
@@ -1054,6 +1482,324 @@ struct PodcastPreviewView: View {
     }
 }
 
+// MARK: - iTunes Search Service
+
+class iTunesSearchService {
+    static let shared = iTunesSearchService()
+
+    private var searchCache: [String: [iTunesPodcast]] = [:]
+
+    struct iTunesPodcast: Identifiable, Codable {
+        let trackId: Int
+        let trackName: String
+        let artistName: String
+        let artworkUrl600: String?
+        let feedUrl: String?
+
+        var id: Int { trackId }
+    }
+
+    struct SearchResponse: Codable {
+        let resultCount: Int
+        let results: [iTunesPodcast]
+    }
+
+    func search(query: String) async throws -> [iTunesPodcast] {
+        // Check cache first
+        if let cached = searchCache[query.lowercased()] {
+            return cached
+        }
+
+        guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "https://itunes.apple.com/search?term=\(encodedQuery)&media=podcast&limit=20") else {
+            throw URLError(.badURL)
+        }
+
+        let (data, _) = try await URLSession.shared.data(from: url)
+        let response = try JSONDecoder().decode(SearchResponse.self, from: data)
+
+        // Cache results
+        searchCache[query.lowercased()] = response.results
+
+        return response.results
+    }
+}
+
+// MARK: - Podcast Search View
+
+struct PodcastSearchView: View {
+    let recommendedPodcasts: [RecommendedPodcast]
+
+    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
+    @State private var searchResults: [iTunesSearchService.iTunesPodcast] = []
+    @State private var isSearching = false
+    @State private var showError = false
+    @State private var errorMessage = ""
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Search Bar
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+
+                    TextField("Search podcasts...", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .autocorrectionDisabled()
+                        .onSubmit {
+                            performSearch()
+                        }
+
+                    if !searchText.isEmpty {
+                        Button(action: {
+                            searchText = ""
+                            searchResults = []
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
+                .padding()
+
+                Divider()
+
+                // Content
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Search Results
+                        if isSearching {
+                            ProgressView("Searching...")
+                                .padding()
+                        } else if !searchResults.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Search Results")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .padding(.horizontal)
+
+                                ForEach(searchResults) { podcast in
+                                    iTunesPodcastRow(podcast: podcast) {
+                                        addPodcast(podcast)
+                                    }
+                                    .padding(.horizontal)
+                                }
+                            }
+                            .padding(.top)
+                        } else if !searchText.isEmpty && !isSearching {
+                            VStack(spacing: 12) {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.gray)
+                                Text("No podcasts found")
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.vertical, 40)
+                        }
+
+                        // Recommended Podcasts
+                        if searchText.isEmpty {
+                            VStack(alignment: .leading, spacing: 16) {
+                                VStack(spacing: 8) {
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 40))
+                                        .foregroundColor(.blue)
+                                    Text("Recommended Podcasts")
+                                        .font(.title2)
+                                        .fontWeight(.bold)
+                                    Text("Get started with these popular podcasts")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 20)
+
+                                ForEach(recommendedPodcasts) { podcast in
+                                    NavigationLink(destination: PodcastPreviewView(recommendedPodcast: podcast)) {
+                                        RecommendedPodcastRow(
+                                            podcast: podcast,
+                                            onAdd: {
+                                                addRecommendedPodcast(podcast)
+                                            }
+                                        )
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
+                            }
+                            .padding()
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Search Podcasts")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            .alert("Error", isPresented: $showError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage)
+            }
+        }
+    }
+
+    private func performSearch() {
+        guard !searchText.isEmpty else { return }
+
+        isSearching = true
+        Task {
+            do {
+                let results = try await iTunesSearchService.shared.search(query: searchText)
+                await MainActor.run {
+                    searchResults = results
+                    isSearching = false
+                }
+            } catch {
+                await MainActor.run {
+                    isSearching = false
+                    errorMessage = "Failed to search: \(error.localizedDescription)"
+                    showError = true
+                }
+            }
+        }
+    }
+
+    private func addPodcast(_ iTunesPodcast: iTunesSearchService.iTunesPodcast) {
+        guard let feedURL = iTunesPodcast.feedUrl else {
+            errorMessage = "No RSS feed available for this podcast"
+            showError = true
+            return
+        }
+
+        Task {
+            do {
+                let rssPodcast = try await PodcastRSSService.shared.fetchPodcast(from: feedURL)
+                await MainActor.run {
+                    let newPodcast = PodcastEntity(context: viewContext)
+                    newPodcast.id = rssPodcast.id.uuidString
+                    newPodcast.title = rssPodcast.title
+                    newPodcast.author = rssPodcast.author
+                    newPodcast.podcastDescription = rssPodcast.description
+                    newPodcast.artworkURL = rssPodcast.imageURL
+                    newPodcast.feedURL = rssPodcast.feedURL
+
+                    do {
+                        try viewContext.save()
+                        dismiss()
+                    } catch {
+                        errorMessage = "Error saving podcast: \(error.localizedDescription)"
+                        showError = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Error loading podcast: \(error.localizedDescription)"
+                    showError = true
+                }
+            }
+        }
+    }
+
+    private func addRecommendedPodcast(_ recommended: RecommendedPodcast) {
+        Task {
+            do {
+                let rssPodcast = try await PodcastRSSService.shared.fetchPodcast(from: recommended.rssURL)
+                await MainActor.run {
+                    let newPodcast = PodcastEntity(context: viewContext)
+                    newPodcast.id = rssPodcast.id.uuidString
+                    newPodcast.title = rssPodcast.title
+                    newPodcast.author = rssPodcast.author
+                    newPodcast.podcastDescription = rssPodcast.description
+                    newPodcast.artworkURL = rssPodcast.imageURL
+                    newPodcast.feedURL = rssPodcast.feedURL
+
+                    do {
+                        try viewContext.save()
+                        dismiss()
+                    } catch {
+                        errorMessage = "Error saving podcast: \(error.localizedDescription)"
+                        showError = true
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Error loading podcast: \(error.localizedDescription)"
+                    showError = true
+                }
+            }
+        }
+    }
+}
+
+// MARK: - iTunes Podcast Row
+
+struct iTunesPodcastRow: View {
+    let podcast: iTunesSearchService.iTunesPodcast
+    let onAdd: () -> Void
+    @State private var isAdding = false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.blue.opacity(0.2))
+                .frame(width: 60, height: 60)
+                .overlay(
+                    Image(systemName: "mic.fill")
+                        .foregroundColor(.blue)
+                )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(podcast.trackName)
+                    .font(.headline)
+                    .lineLimit(2)
+                Text(podcast.artistName)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            if podcast.feedUrl != nil {
+                Button(action: {
+                    isAdding = true
+                    onAdd()
+                }) {
+                    if isAdding {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    } else {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.blue)
+                    }
+                }
+                .disabled(isAdding)
+                .frame(width: 32, height: 32)
+            } else {
+                Text("No feed")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+    }
+}
+
 // MARK: - Player Sheet Wrapper
 
 struct PlayerSheetWrapper: View {
@@ -1062,34 +1808,42 @@ struct PlayerSheetWrapper: View {
     let dismiss: () -> Void
     var autoPlay: Bool = true
     var seekToTime: TimeInterval? = nil
+    @ObservedObject private var player = GlobalPlayerManager.shared
 
     var body: some View {
-        NavigationStack {
-            AudioPlayerView(
-                episode: episode,
-                podcast: podcast,
-                autoPlay: autoPlay,
-                seekToTime: seekToTime
-            )
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: dismiss) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title3)
-                            .foregroundColor(.gray)
-                    }
-                }
-            }
-            .safeAreaInset(edge: .top, spacing: 0) {
-                // Drag indicator
+        ZStack {
+            VStack(spacing: 0) {
+                // Drag indicator at the very top
                 RoundedRectangle(cornerRadius: 2.5)
                     .fill(Color.gray.opacity(0.4))
                     .frame(width: 36, height: 5)
-                    .frame(maxWidth: .infinity)
                     .padding(.top, 8)
                     .padding(.bottom, 8)
-                    .background(Color(.systemBackground))
+
+                NavigationStack {
+                    AudioPlayerView(
+                        episode: episode,
+                        podcast: podcast,
+                        autoPlay: autoPlay,
+                        seekToTime: seekToTime
+                    )
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button(action: dismiss) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.title3)
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Buffering overlay to cover drag bar
+            if player.isBuffering {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
             }
         }
     }
@@ -1109,6 +1863,10 @@ struct NoteDetailSheetView: View {
     @State private var editedNoteText: String = ""
     @State private var editedIsPriority: Bool = false
     @State private var isEditing: Bool = false
+    @State private var loadedEpisode: RSSEpisode?
+    @State private var loadedPodcast: PodcastEntity?
+    @State private var isLoadingEpisode = false
+    @State private var loadError: String?
     @Environment(\.managedObjectContext) private var viewContext
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \PodcastEntity.title, ascending: true)]
@@ -1226,21 +1984,38 @@ struct NoteDetailSheetView: View {
                 // Play at Timestamp Button
                 if let timestamp = note.timestamp, let _ = note.episodeTitle {
                     Button(action: {
-                        showPlayer = true
+                        loadEpisodeAndPlay()
                     }) {
                         HStack {
-                            Image(systemName: "play.circle.fill")
-                                .font(.title3)
-                            Text("Play at \(timestamp)")
+                            if isLoadingEpisode {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.8)
+                            } else {
+                                Image(systemName: "play.circle.fill")
+                                    .font(.title3)
+                            }
+                            Text(isLoadingEpisode ? "Loading..." : "Play at \(timestamp)")
                                 .fontWeight(.semibold)
                             Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
+                            if !isLoadingEpisode {
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                            }
                         }
                         .foregroundColor(.white)
                         .padding()
                         .background(Color.blue)
                         .cornerRadius(12)
+                    }
+                    .disabled(isLoadingEpisode)
+
+                    // Show error if loading failed
+                    if let error = loadError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                            .padding(.top, 4)
                     }
                 }
             }
@@ -1253,14 +2028,16 @@ struct NoteDetailSheetView: View {
             editedIsPriority = note.isPriority
         }
         .sheet(isPresented: $showPlayer) {
-            if let episodeTitle = note.episodeTitle,
-               let podcast = findPodcast(for: note.showTitle),
-               let episode = findEpisode(title: episodeTitle, in: podcast) {
+            if let episode = loadedEpisode, let podcast = loadedPodcast {
                 PlayerSheetWrapper(
                     episode: episode,
                     podcast: podcast,
-                    dismiss: { showPlayer = false },
-                    autoPlay: false,
+                    dismiss: {
+                        showPlayer = false
+                        loadedEpisode = nil
+                        loadedPodcast = nil
+                    },
+                    autoPlay: true,
                     seekToTime: parseTimestamp(note.timestamp ?? "")
                 )
             }
@@ -1278,15 +2055,43 @@ struct NoteDetailSheetView: View {
         }
     }
 
-    private func findPodcast(for title: String?) -> PodcastEntity? {
-        guard let title = title else { return nil }
-        return podcasts.first { $0.title == title }
-    }
+    private func loadEpisodeAndPlay() {
+        guard let episodeTitle = note.episodeTitle,
+              let showTitle = note.showTitle,
+              let podcast = podcasts.first(where: { $0.title == showTitle }),
+              let feedURL = podcast.feedURL else {
+            loadError = "Could not find podcast information"
+            return
+        }
 
-    private func findEpisode(title: String, in podcast: PodcastEntity) -> RSSEpisode? {
-        // This is a placeholder - in a real app, you'd fetch episodes from the podcast
-        // For now, return nil and we'll handle this gracefully
-        return nil
+        isLoadingEpisode = true
+        loadError = nil
+
+        Task {
+            do {
+                let rssPodcast = try await PodcastRSSService.shared.fetchPodcast(from: feedURL)
+
+                guard let episode = rssPodcast.episodes.first(where: { $0.title == episodeTitle }) else {
+                    await MainActor.run {
+                        isLoadingEpisode = false
+                        loadError = "Could not find episode in podcast feed"
+                    }
+                    return
+                }
+
+                await MainActor.run {
+                    loadedEpisode = episode
+                    loadedPodcast = podcast
+                    isLoadingEpisode = false
+                    showPlayer = true
+                }
+            } catch {
+                await MainActor.run {
+                    isLoadingEpisode = false
+                    loadError = "Failed to load episode: \(error.localizedDescription)"
+                }
+            }
+        }
     }
 
     private func parseTimestamp(_ timestamp: String) -> TimeInterval? {

@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		002F485A26DC52F5F6289CA8 /* DevStatusOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47EF9A3F2D199A93B819E676 /* DevStatusOverlay.swift */; };
+		9BB4859B92DDF503220B8965 /* CachedAsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB22B81879EF1F1F4E09FFDE /* CachedAsyncImage.swift */; };
+		9FAB9D200AEB78399A453E70 /* AddNoteIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DD93D0AD7DDFDF76E41F9DF /* AddNoteIntent.swift */; };
 		A10000000000000000000001 /* EchoNotesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000001 /* EchoNotesApp.swift */; };
 		A10000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000002 /* ContentView.swift */; };
 		A10000000000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000003 /* Assets.xcassets */; };
@@ -30,6 +32,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0DD93D0AD7DDFDF76E41F9DF /* AddNoteIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AddNoteIntent.swift; path = EchoNotes/AppIntents/AddNoteIntent.swift; sourceTree = "<group>"; };
 		47EF9A3F2D199A93B819E676 /* DevStatusOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DevStatusOverlay.swift; sourceTree = "<group>"; };
 		A00000000000000000000000 /* EchoNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EchoNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000001 /* EchoNotesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoNotesApp.swift; sourceTree = "<group>"; };
@@ -52,6 +55,7 @@
 		A00000000000000000000015 /* GlobalPlayerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalPlayerManager.swift; sourceTree = "<group>"; };
 		A00000000000000000000017 /* MiniPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerView.swift; sourceTree = "<group>"; };
 		B30833EA66B8D3ED18502B61 /* PlaybackHistoryManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PlaybackHistoryManager.swift; sourceTree = "<group>"; };
+		DB22B81879EF1F1F4E09FFDE /* CachedAsyncImage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CachedAsyncImage.swift; path = EchoNotes/Views/CachedAsyncImage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,11 +69,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		161A209E01ED1DF8D14AF816 /* AppIntents */ = {
+			isa = PBXGroup;
+			children = (
+				0DD93D0AD7DDFDF76E41F9DF /* AddNoteIntent.swift */,
+			);
+			name = AppIntents;
+			sourceTree = "<group>";
+		};
 		A30000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
 				A30000000000000000000002 /* EchoNotes */,
 				A30000000000000000000003 /* Products */,
+				161A209E01ED1DF8D14AF816 /* AppIntents */,
+				FCED78B1D7AA1BCCF4632C60 /* Views */,
 			);
 			sourceTree = "<group>";
 		};
@@ -147,6 +161,14 @@
 				A00000000000000000000003 /* Assets.xcassets */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		FCED78B1D7AA1BCCF4632C60 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				DB22B81879EF1F1F4E09FFDE /* CachedAsyncImage.swift */,
+			);
+			name = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -237,6 +259,8 @@
 				A10000000000000000000016 /* MiniPlayerView.swift in Sources */,
 				002F485A26DC52F5F6289CA8 /* DevStatusOverlay.swift in Sources */,
 				A6EBAAFE65FA82B433B8E03E /* PlaybackHistoryManager.swift in Sources */,
+				9FAB9D200AEB78399A453E70 /* AddNoteIntent.swift in Sources */,
+				9BB4859B92DDF503220B8965 /* CachedAsyncImage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

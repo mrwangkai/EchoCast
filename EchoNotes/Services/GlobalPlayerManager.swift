@@ -9,6 +9,7 @@ import Foundation
 import AVFoundation
 import SwiftUI
 import Combine
+import MediaPlayer
 
 class GlobalPlayerManager: ObservableObject {
     static let shared = GlobalPlayerManager()
@@ -28,7 +29,75 @@ class GlobalPlayerManager: ObservableObject {
     private var statusObserver: NSKeyValueObservation?
     private var lastHistoryUpdate: TimeInterval = 0
 
-    private init() {}
+    private init() {
+        setupAudioSession()
+        setupRemoteCommandCenter()
+    }
+
+    private func setupAudioSession() {
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .spokenAudio, options: [])
+            try audioSession.setActive(true)
+            print("✅ Audio session configured successfully")
+        } catch {
+            print("❌ Failed to set up audio session: \(error)")
+        }
+    }
+
+    private func setupRemoteCommandCenter() {
+        let commandCenter = MPRemoteCommandCenter.shared()
+
+        // Play command
+        commandCenter.playCommand.isEnabled = true
+        commandCenter.playCommand.addTarget { [weak self] _ in
+            self?.play()
+            return .success
+        }
+
+        // Pause command
+        commandCenter.pauseCommand.isEnabled = true
+        commandCenter.pauseCommand.addTarget { [weak self] _ in
+            self?.pause()
+            return .success
+        }
+
+        // Skip forward command
+        commandCenter.skipForwardCommand.isEnabled = true
+        commandCenter.skipForwardCommand.preferredIntervals = [30]
+        commandCenter.skipForwardCommand.addTarget { [weak self] _ in
+            self?.skipForward(30)
+            return .success
+        }
+
+        // Skip backward command
+        commandCenter.skipBackwardCommand.isEnabled = true
+        commandCenter.skipBackwardCommand.preferredIntervals = [30]
+        commandCenter.skipBackwardCommand.addTarget { [weak self] _ in
+            self?.skipBackward(30)
+            return .success
+        }
+
+        print("✅ Remote command center configured")
+    }
+
+    private func updateNowPlayingInfo() {
+        var nowPlayingInfo = [String: Any]()
+
+        if let episode = currentEpisode {
+            nowPlayingInfo[MPMediaItemPropertyTitle] = episode.title
+        }
+
+        if let podcast = currentPodcast {
+            nowPlayingInfo[MPMediaItemPropertyArtist] = podcast.title ?? "Unknown Podcast"
+        }
+
+        nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = duration
+        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentTime
+        nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
+
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+    }
 
     func loadEpisode(_ episode: RSSEpisode, podcast: PodcastEntity) {
         currentEpisode = episode
@@ -154,6 +223,9 @@ class GlobalPlayerManager: ObservableObject {
             guard let self = self else { return }
             self.currentTime = time.seconds
 
+            // Update Now Playing info
+            self.updateNowPlayingInfo()
+
             // Update playback history every 10 seconds
             if self.currentTime - self.lastHistoryUpdate >= 10.0 {
                 self.savePlaybackHistory()
@@ -168,6 +240,7 @@ class GlobalPlayerManager: ObservableObject {
                     let duration = try await asset.load(.duration)
                     await MainActor.run {
                         self.duration = duration.seconds
+                        self.updateNowPlayingInfo()
                     }
                 } catch {
                     print("⚠️ Error loading duration: \(error)")
@@ -189,11 +262,13 @@ class GlobalPlayerManager: ObservableObject {
     func play() {
         player?.play()
         isPlaying = true
+        updateNowPlayingInfo()
     }
 
     func pause() {
         player?.pause()
         isPlaying = false
+        updateNowPlayingInfo()
     }
 
     func stop() {
