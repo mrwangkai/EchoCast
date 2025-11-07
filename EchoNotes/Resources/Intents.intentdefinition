@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>INIntents</key>
+	<array>
+		<dict>
+			<key>INIntentCategory</key>
+			<string>create</string>
+			<key>INIntentDescription</key>
+			<string>Capture a podcast note with EchoNotes</string>
+			<key>INIntentDescriptionID</key>
+			<string>gR3yXz</string>
+			<key>INIntentName</key>
+			<string>CaptureNote</string>
+			<key>INIntentResponse</key>
+			<dict>
+				<key>INIntentResponseCodes</key>
+				<array>
+					<dict>
+						<key>INIntentResponseCodeName</key>
+						<string>success</string>
+						<key>INIntentResponseCodeSuccess</key>
+						<true/>
+					</dict>
+					<dict>
+						<key>INIntentResponseCodeName</key>
+						<string>failure</string>
+					</dict>
+				</array>
+			</dict>
+			<key>INIntentTitle</key>
+			<string>Capture Note</string>
+			<key>INIntentTitleID</key>
+			<string>dH8kLm</string>
+			<key>INIntentType</key>
+			<string>Custom</string>
+			<key>INIntentVerb</key>
+			<string>Create</string>
+			<key>INIntentParameters</key>
+			<array>
+				<dict>
+					<key>INIntentParameterName</key>
+					<string>noteText</string>
+					<key>INIntentParameterDisplayName</key>
+					<string>Note</string>
+					<key>INIntentParameterType</key>
+					<string>String</string>
+					<key>INIntentParameterConfigurable</key>
+					<true/>
+					<key>INIntentParameterPromptDialogs</key>
+					<array>
+						<dict>
+							<key>INIntentParameterPromptDialogType</key>
+							<string>Primary</string>
+							<key>INIntentParameterPromptDialogFormatString</key>
+							<string>What would you like to note?</string>
+						</dict>
+					</array>
+				</dict>
+			</array>
+		</dict>
+	</array>
+	<key>INTypes</key>
+	<array/>
+</dict>
+</plist>
