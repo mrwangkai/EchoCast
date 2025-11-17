@@ -15,113 +15,119 @@ struct MiniPlayerView: View {
     @State private var dragOffset: CGFloat = 0
 
     var body: some View {
-        if player.showMiniPlayer, let episode = player.currentEpisode {
-            VStack(spacing: 0) {
-                // Mini player controls
-                HStack(spacing: 12) {
-                    // Artwork
-                    Circle()
-                        .fill(Color.blue.opacity(0.2))
-                        .frame(width: 48, height: 48)
-                        .overlay(
-                            Image(systemName: "music.note")
-                                .font(.system(size: 20))
-                                .foregroundColor(.blue)
-                        )
+        ZStack {
+            // Always present container to ensure sheets persist
+            Color.clear
 
-                    // Episode info
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(episode.title)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .lineLimit(1)
+            // Mini player bar (only shown when needed)
+            if player.showMiniPlayer, let episode = player.currentEpisode {
+                VStack(spacing: 0) {
+                    // Mini player controls
+                    HStack(spacing: 12) {
+                        // Artwork
+                        Circle()
+                            .fill(Color.blue.opacity(0.2))
+                            .frame(width: 48, height: 48)
+                            .overlay(
+                                Image(systemName: "music.note")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.blue)
+                            )
 
-                        HStack(spacing: 4) {
-                            if let podcastTitle = player.currentPodcast?.title {
-                                Text(podcastTitle)
+                        // Episode info
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(episode.title)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .lineLimit(1)
+
+                            HStack(spacing: 4) {
+                                if let podcastTitle = player.currentPodcast?.title {
+                                    Text(podcastTitle)
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                        .lineLimit(1)
+                                }
+
+                                Text("•")
                                     .font(.caption)
                                     .foregroundColor(.gray)
-                                    .lineLimit(1)
+
+                                Text(formatTime(player.currentTime))
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        // Controls
+                        HStack(spacing: 12) {
+                            Button(action: {
+                                currentTimestamp = formatTime(player.currentTime)
+                                player.pause()
+                                showNoteCaptureSheet = true
+                            }) {
+                                Image(systemName: "note.text.badge.plus")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.blue)
                             }
 
-                            Text("•")
-                                .font(.caption)
-                                .foregroundColor(.gray)
+                            Button(action: {
+                                player.togglePlayPause()
+                            }) {
+                                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                                    .font(.system(size: 28))
+                                    .foregroundColor(.primary)
+                            }
 
-                            Text(formatTime(player.currentTime))
-                                .font(.caption)
-                                .foregroundColor(.gray)
+                            Button(action: {
+                                player.stop()
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.gray)
+                            }
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                    // Controls
-                    HStack(spacing: 12) {
-                        Button(action: {
-                            currentTimestamp = formatTime(player.currentTime)
-                            player.pause()
-                            showNoteCaptureSheet = true
-                        }) {
-                            Image(systemName: "note.text.badge.plus")
-                                .font(.system(size: 20))
-                                .foregroundColor(.blue)
-                        }
-
-                        Button(action: {
-                            player.togglePlayPause()
-                        }) {
-                            Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                                .font(.system(size: 28))
-                                .foregroundColor(.primary)
-                        }
-
-                        Button(action: {
-                            player.stop()
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(.gray)
-                        }
+                    .padding(.horizontal)
+                    .padding(.top, 12)
+                    .padding(.bottom, 12)
+                    .background(Color(.systemBackground))
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        showFullPlayer = true
                     }
-                }
-                .padding(.horizontal)
-                .padding(.top, 12)
-                .padding(.bottom, 12)
-                .background(Color(.systemBackground))
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    showFullPlayer = true
-                }
 
-                // Progress bar at bottom
-                GeometryReader { geometry in
-                    Rectangle()
-                        .fill(Color.blue)
-                        .frame(width: geometry.size.width * CGFloat(player.currentTime / max(player.duration, 1)), height: 3)
+                    // Progress bar at bottom
+                    GeometryReader { geometry in
+                        Rectangle()
+                            .fill(Color.blue)
+                            .frame(width: geometry.size.width * CGFloat(player.currentTime / max(player.duration, 1)), height: 3)
+                    }
+                    .frame(height: 3)
                 }
-                .frame(height: 3)
+                .background(
+                    Color(.systemBackground)
+                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
+                )
             }
-            .background(
-                Color(.systemBackground)
-                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
-            )
-            .sheet(isPresented: $showFullPlayer) {
-                if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                    PlayerSheetWrapper(
-                        episode: episode,
-                        podcast: podcast,
-                        dismiss: { showFullPlayer = false }
-                    )
-                }
+        }
+        .sheet(isPresented: $showFullPlayer) {
+            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                PlayerSheetWrapper(
+                    episode: episode,
+                    podcast: podcast,
+                    dismiss: { showFullPlayer = false }
+                )
             }
-            .sheet(isPresented: $showNoteCaptureSheet) {
-                if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                    QuickNoteCaptureView(
-                        podcast: podcast,
-                        episode: episode,
-                        timestamp: currentTimestamp
-                    )
-                }
+        }
+        .sheet(isPresented: $showNoteCaptureSheet) {
+            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                QuickNoteCaptureView(
+                    podcast: podcast,
+                    episode: episode,
+                    timestamp: currentTimestamp
+                )
             }
         }
     }

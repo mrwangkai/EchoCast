@@ -241,8 +241,8 @@ struct AudioPlayerView: View {
 
             player.showMiniPlayer = false
 
-            // Wait a moment for player to load, then hide loading indicator
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            // Wait a brief moment for player to load, then hide loading indicator
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 isLoading = false
             }
         }

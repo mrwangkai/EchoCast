@@ -78,6 +78,10 @@ class GlobalPlayerManager: ObservableObject {
             return .success
         }
 
+        // Disable continuous seek commands (we want discrete 30s skips instead)
+        commandCenter.seekForwardCommand.isEnabled = false
+        commandCenter.seekBackwardCommand.isEnabled = false
+
         print("✅ Remote command center configured")
     }
 
