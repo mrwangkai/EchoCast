@@ -20,7 +20,8 @@ struct AudioPlayerView: View {
     @State private var episodeNotes: [NoteEntity] = []
     @State private var selectedNote: NoteEntity?
     @State private var showNoteDetail = false
-    @State private var isLoading = false
+    @State private var isLoading = true
+    @State private var hasAppeared = false
     @Environment(\.managedObjectContext) private var viewContext
     @FetchRequest private var allNotes: FetchedResults<NoteEntity>
 
@@ -44,7 +45,11 @@ struct AudioPlayerView: View {
 
     var body: some View {
         ZStack {
-            // Main content (inner ZStack for existing structure)
+            // Background color to ensure view always renders
+            Color(.systemBackground)
+                .ignoresSafeArea()
+
+            // Main content
             ScrollView {
                 VStack(spacing: 20) {
                     // Episode Artwork
@@ -212,6 +217,9 @@ struct AudioPlayerView: View {
         .navigationTitle(episode.title)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
+            guard !hasAppeared else { return }
+            hasAppeared = true
+
             print("👀 AudioPlayerView appeared")
             print("   Episode: \(episode.title)")
             print("   Audio URL: \(episode.audioURL ?? "No URL")")
@@ -241,8 +249,9 @@ struct AudioPlayerView: View {
 
             player.showMiniPlayer = false
 
-            // Wait a brief moment for player to load, then hide loading indicator
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            // Wait for player to be ready, then hide loading indicator
+            // Use a longer delay for downloaded files to ensure UI renders
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 isLoading = false
             }
         }

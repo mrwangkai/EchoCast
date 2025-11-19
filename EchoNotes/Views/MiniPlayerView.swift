@@ -15,15 +15,11 @@ struct MiniPlayerView: View {
     @State private var dragOffset: CGFloat = 0
 
     var body: some View {
-        ZStack {
-            // Always present container to ensure sheets persist
-            Color.clear
-
-            // Mini player bar (only shown when needed)
-            if player.showMiniPlayer, let episode = player.currentEpisode {
-                VStack(spacing: 0) {
-                    // Mini player controls
-                    HStack(spacing: 12) {
+        // Mini player bar (only shown when needed)
+        if player.showMiniPlayer, let episode = player.currentEpisode {
+            VStack(spacing: 0) {
+                // Mini player controls
+                HStack(spacing: 12) {
                         // Artwork
                         Circle()
                             .fill(Color.blue.opacity(0.2))
@@ -110,25 +106,48 @@ struct MiniPlayerView: View {
                     Color(.systemBackground)
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
                 )
-            }
-        }
-        .sheet(isPresented: $showFullPlayer) {
+                .sheet(isPresented: $showFullPlayer) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
                 PlayerSheetWrapper(
                     episode: episode,
                     podcast: podcast,
-                    dismiss: { showFullPlayer = false }
+                    dismiss: { showFullPlayer = false },
+                    autoPlay: false  // Don't autoplay since episode is already playing
                 )
             }
         }
-        .sheet(isPresented: $showNoteCaptureSheet) {
-            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                QuickNoteCaptureView(
-                    podcast: podcast,
-                    episode: episode,
-                    timestamp: currentTimestamp
-                )
-            }
+                .sheet(isPresented: $showNoteCaptureSheet) {
+                    if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                        QuickNoteCaptureView(
+                            podcast: podcast,
+                            episode: episode,
+                            timestamp: currentTimestamp
+                        )
+                    }
+                }
+        } else {
+            // Empty view when mini player is hidden, but still handle sheets
+            Color.clear
+                .frame(height: 0)
+                .sheet(isPresented: $showFullPlayer) {
+                    if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                        PlayerSheetWrapper(
+                            episode: episode,
+                            podcast: podcast,
+                            dismiss: { showFullPlayer = false },
+                            autoPlay: false
+                        )
+                    }
+                }
+                .sheet(isPresented: $showNoteCaptureSheet) {
+                    if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                        QuickNoteCaptureView(
+                            podcast: podcast,
+                            episode: episode,
+                            timestamp: currentTimestamp
+                        )
+                    }
+                }
         }
     }
 

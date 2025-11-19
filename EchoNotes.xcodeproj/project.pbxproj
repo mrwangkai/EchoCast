@@ -28,6 +28,7 @@
 		A10000000000000000000012 /* AudioPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000013 /* AudioPlayerView.swift */; };
 		A10000000000000000000014 /* GlobalPlayerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000015 /* GlobalPlayerManager.swift */; };
 		A10000000000000000000016 /* MiniPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000017 /* MiniPlayerView.swift */; };
+		A10000000000000000000018 /* EpisodeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000019 /* EpisodeDetailView.swift */; };
 		A6EBAAFE65FA82B433B8E03E /* PlaybackHistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30833EA66B8D3ED18502B61 /* PlaybackHistoryManager.swift */; };
 /* End PBXBuildFile section */
 
@@ -54,6 +55,7 @@
 		A00000000000000000000013 /* AudioPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerView.swift; sourceTree = "<group>"; };
 		A00000000000000000000015 /* GlobalPlayerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalPlayerManager.swift; sourceTree = "<group>"; };
 		A00000000000000000000017 /* MiniPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerView.swift; sourceTree = "<group>"; };
+		A00000000000000000000019 /* EpisodeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeDetailView.swift; sourceTree = "<group>"; };
 		B30833EA66B8D3ED18502B61 /* PlaybackHistoryManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PlaybackHistoryManager.swift; sourceTree = "<group>"; };
 		DB22B81879EF1F1F4E09FFDE /* CachedAsyncImage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CachedAsyncImage.swift; path = EchoNotes/Views/CachedAsyncImage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -117,6 +119,7 @@
 				A00000000000000000000007 /* NoteCaptureView.swift */,
 				A00000000000000000000008 /* PodcastDiscoveryView.swift */,
 				A00000000000000000000011 /* PodcastDetailView.swift */,
+				A00000000000000000000019 /* EpisodeDetailView.swift */,
 				A00000000000000000000013 /* AudioPlayerView.swift */,
 				A00000000000000000000017 /* MiniPlayerView.swift */,
 				47EF9A3F2D199A93B819E676 /* DevStatusOverlay.swift */,
@@ -254,6 +257,7 @@
 				A1000000000000000000000D /* EchoNotes.xcdatamodeld in Sources */,
 				A1000000000000000000000E /* PodcastRSSService.swift in Sources */,
 				A10000000000000000000010 /* PodcastDetailView.swift in Sources */,
+				A10000000000000000000018 /* EpisodeDetailView.swift in Sources */,
 				A10000000000000000000012 /* AudioPlayerView.swift in Sources */,
 				A10000000000000000000014 /* GlobalPlayerManager.swift in Sources */,
 				A10000000000000000000016 /* MiniPlayerView.swift in Sources */,

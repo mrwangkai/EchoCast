@@ -325,13 +325,26 @@ class GlobalPlayerManager: ObservableObject {
 
 // MARK: - Episode Download Manager
 
+// MARK: - Episode Download Metadata
+
+struct DownloadedEpisodeMetadata: Codable {
+    let episodeID: String
+    let episodeTitle: String
+    let podcastTitle: String
+    let podcastFeedURL: String?
+    let downloadDate: Date
+}
+
 class EpisodeDownloadManager: NSObject, ObservableObject {
     static let shared = EpisodeDownloadManager()
 
     @Published var downloadProgress: [String: Double] = [:] // episodeID -> progress
     @Published var downloadedEpisodes: Set<String> = [] // episodeIDs
+    @Published var episodeMetadata: [String: DownloadedEpisodeMetadata] = [:] // episodeID -> metadata
 
     private var activeDownloads: [String: URLSessionDownloadTask] = [:]
+    private var pendingMetadata: [String: DownloadedEpisodeMetadata] = [:] // Store metadata until download completes
+
     private lazy var session: URLSession = {
         let config = URLSessionConfiguration.background(withIdentifier: "com.echonotes.downloads")
         config.isDiscretionary = false
@@ -342,11 +355,12 @@ class EpisodeDownloadManager: NSObject, ObservableObject {
     private override init() {
         super.init()
         loadDownloadedEpisodes()
+        loadEpisodeMetadata()
     }
 
     // MARK: - Download Management
 
-    func downloadEpisode(_ episode: RSSEpisode) {
+    func downloadEpisode(_ episode: RSSEpisode, podcastTitle: String = "Unknown Podcast", podcastFeedURL: String? = nil) {
         guard let audioURLString = episode.audioURL,
               let url = URL(string: audioURLString) else {
             print("Invalid audio URL for episode: \(episode.title)")
@@ -359,17 +373,32 @@ class EpisodeDownloadManager: NSObject, ObservableObject {
 
         let episodeID = episode.id.uuidString
 
+        print("📥 Download requested for: \(episode.title)")
+        print("   Episode ID: \(episodeID)")
+        print("   Already downloaded: \(downloadedEpisodes.contains(episodeID))")
+        print("   Currently downloading: \(activeDownloads[episodeID] != nil)")
+
         // Check if already downloaded
         if downloadedEpisodes.contains(episodeID) {
-            print("Episode already downloaded: \(episode.title)")
+            print("⚠️ Episode already downloaded, skipping: \(episode.title)")
             return
         }
 
         // Check if already downloading
         if activeDownloads[episodeID] != nil {
-            print("Episode already downloading: \(episode.title)")
+            print("⚠️ Episode already downloading, skipping: \(episode.title)")
             return
         }
+
+        // Store metadata for when download completes
+        let metadata = DownloadedEpisodeMetadata(
+            episodeID: episodeID,
+            episodeTitle: episode.title,
+            podcastTitle: podcastTitle,
+            podcastFeedURL: podcastFeedURL,
+            downloadDate: Date()
+        )
+        pendingMetadata[episodeID] = metadata
 
         // Start download
         let task = session.downloadTask(with: url)
@@ -391,6 +420,7 @@ class EpisodeDownloadManager: NSObject, ObservableObject {
     func cancelDownload(_ episodeID: String) {
         activeDownloads[episodeID]?.cancel()
         activeDownloads.removeValue(forKey: episodeID)
+        pendingMetadata.removeValue(forKey: episodeID)
 
         DispatchQueue.main.async {
             self.downloadProgress.removeValue(forKey: episodeID)
@@ -404,7 +434,9 @@ class EpisodeDownloadManager: NSObject, ObservableObject {
 
         DispatchQueue.main.async {
             self.downloadedEpisodes.remove(episodeID)
+            self.episodeMetadata.removeValue(forKey: episodeID)
             self.saveDownloadedEpisodes()
+            self.saveEpisodeMetadata()
         }
     }
 
@@ -445,6 +477,26 @@ class EpisodeDownloadManager: NSObject, ObservableObject {
             downloadedEpisodes = Set(array)
         }
     }
+
+    private func saveEpisodeMetadata() {
+        let encoder = JSONEncoder()
+        let metadataArray = Array(episodeMetadata.values)
+        if let encoded = try? encoder.encode(metadataArray) {
+            UserDefaults.standard.set(encoded, forKey: "episodeMetadata")
+        }
+    }
+
+    private func loadEpisodeMetadata() {
+        let decoder = JSONDecoder()
+        if let data = UserDefaults.standard.data(forKey: "episodeMetadata"),
+           let metadataArray = try? decoder.decode([DownloadedEpisodeMetadata].self, from: data) {
+            episodeMetadata = Dictionary(uniqueKeysWithValues: metadataArray.map { ($0.episodeID, $0) })
+        }
+    }
+
+    func getMetadata(for episodeID: String) -> DownloadedEpisodeMetadata? {
+        return episodeMetadata[episodeID]
+    }
 }
 
 // MARK: - URLSessionDownloadDelegate
@@ -466,12 +518,26 @@ extension EpisodeDownloadManager: URLSessionDownloadDelegate {
             try FileManager.default.moveItem(at: location, to: destinationURL)
 
             DispatchQueue.main.async {
+                // Explicitly trigger objectWillChange before modifying
+                self.objectWillChange.send()
+
                 self.downloadedEpisodes.insert(episodeID)
                 self.activeDownloads.removeValue(forKey: episodeID)
                 self.downloadProgress.removeValue(forKey: episodeID)
+
+                // Save metadata if available
+                if let metadata = self.pendingMetadata[episodeID] {
+                    self.episodeMetadata[episodeID] = metadata
+                    self.pendingMetadata.removeValue(forKey: episodeID)
+                    self.saveEpisodeMetadata()
+                }
+
                 self.saveDownloadedEpisodes()
 
-                print("Download completed for episode: \(episodeID)")
+                print("✅ Download completed for episode: \(episodeID)")
+                print("   Downloaded episodes count: \(self.downloadedEpisodes.count)")
+                print("   Is downloaded: \(self.downloadedEpisodes.contains(episodeID))")
+
                 Task { @MainActor in
                     DevStatusManager.shared.downloadStatus = .success
                     DevStatusManager.shared.addMessage("Download completed")

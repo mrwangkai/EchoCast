@@ -12,7 +12,12 @@ struct PodcastDetailView: View {
     let podcast: PodcastEntity
     @State private var episodes: [RSSEpisode] = []
     @State private var isLoadingEpisodes = false
+    @State private var showPlayerSheet = false
     @State private var selectedEpisode: RSSEpisode?
+    @State private var showDeleteConfirmation = false
+    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var downloadManager = EpisodeDownloadManager.shared
 
     var body: some View {
         VStack(spacing: 0) {
@@ -39,11 +44,17 @@ struct PodcastDetailView: View {
             } else {
                 List {
                     ForEach(episodes) { episode in
-                        EpisodeRowView(episode: episode, onPlay: {
-                            print("👆 Play tapped for episode: \(episode.title)")
+                        Button(action: {
                             selectedEpisode = episode
-                            print("   Selected episode set: \(selectedEpisode?.title ?? "nil")")
-                        })
+                            showPlayerSheet = true
+                        }) {
+                            EpisodeRowView(
+                                episode: episode,
+                                podcastTitle: podcast.title ?? "Unknown Podcast",
+                                podcastFeedURL: podcast.feedURL
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
                         .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
                                     deleteEpisode(episode)
@@ -58,22 +69,45 @@ struct PodcastDetailView: View {
         }
         .navigationTitle(podcast.title ?? "Podcast")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Menu {
+                    Button(role: .destructive) {
+                        showDeleteConfirmation = true
+                    } label: {
+                        Label("Delete Podcast", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.system(size: 20))
+                }
+            }
+        }
+        .alert("Delete Podcast", isPresented: $showDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                deletePodcast()
+            }
+        } message: {
+            Text("Are you sure you want to delete this podcast and all its downloaded episodes? This action cannot be undone.")
+        }
         .onAppear {
             loadEpisodes()
         }
-        .sheet(item: $selectedEpisode) { episode in
-            PlayerSheetWrapper(
-                episode: episode,
-                podcast: podcast,
-                dismiss: {
-                    print("❌ Dismissing player sheet")
-                    selectedEpisode = nil
+        .sheet(isPresented: $showPlayerSheet) {
+            if let episode = selectedEpisode {
+                NavigationStack {
+                    AudioPlayerView(episode: episode, podcast: podcast)
+                        .navigationTitle("Now Playing")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                Button("Done") {
+                                    showPlayerSheet = false
+                                }
+                            }
+                        }
                 }
-            )
-            .onAppear {
-                print("🎬 Opening player sheet for episode: \(episode.title)")
-                print("📱 Podcast: \(podcast.title ?? "Unknown")")
-                print("🔊 Audio URL: \(episode.audioURL ?? "No URL")")
             }
         }
     }
@@ -101,6 +135,29 @@ struct PodcastDetailView: View {
     private func deleteEpisode(_ episode: RSSEpisode) {
         episodes.removeAll { $0.id == episode.id }
     }
+
+    private func deletePodcast() {
+        // Delete all downloaded episodes for this podcast
+        let podcastFeedURL = podcast.feedURL
+        let downloadedEpisodes = Array(downloadManager.downloadedEpisodes)
+
+        for episodeID in downloadedEpisodes {
+            if let metadata = downloadManager.getMetadata(for: episodeID),
+               metadata.podcastFeedURL == podcastFeedURL {
+                downloadManager.deleteDownload(episodeID)
+            }
+        }
+
+        // Delete the podcast from Core Data
+        viewContext.delete(podcast)
+
+        do {
+            try viewContext.save()
+            dismiss()
+        } catch {
+            print("Error deleting podcast: \(error)")
+        }
+    }
 }
 
 // MARK: - Podcast Header
@@ -111,14 +168,22 @@ struct PodcastHeaderView: View {
     var body: some View {
         HStack(spacing: 16) {
             // Artwork
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.blue.opacity(0.2))
-                .frame(width: 100, height: 100)
-                .overlay(
-                    Image(systemName: "music.note")
-                        .font(.system(size: 40))
-                        .foregroundColor(.blue)
-                )
+            CachedAsyncImage(url: podcast.artworkURL) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 100, height: 100)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            } placeholder: {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.blue.opacity(0.2))
+                    .frame(width: 100, height: 100)
+                    .overlay(
+                        Image(systemName: "music.note")
+                            .font(.system(size: 40))
+                            .foregroundColor(.blue)
+                    )
+            }
 
             VStack(alignment: .leading, spacing: 8) {
                 if let title = podcast.title {
@@ -148,12 +213,16 @@ struct PodcastHeaderView: View {
 
 struct EpisodeRowView: View {
     let episode: RSSEpisode
+    var podcastTitle: String = "Unknown Podcast"
+    var podcastFeedURL: String? = nil
     var onPlay: () -> Void = {}
     @ObservedObject private var downloadManager = EpisodeDownloadManager.shared
     @FetchRequest private var episodeNotes: FetchedResults<NoteEntity>
 
-    init(episode: RSSEpisode, onPlay: @escaping () -> Void = {}) {
+    init(episode: RSSEpisode, podcastTitle: String = "Unknown Podcast", podcastFeedURL: String? = nil, onPlay: @escaping () -> Void = {}) {
         self.episode = episode
+        self.podcastTitle = podcastTitle
+        self.podcastFeedURL = podcastFeedURL
         self.onPlay = onPlay
 
         // Fetch notes for this episode
@@ -228,7 +297,7 @@ struct EpisodeRowView: View {
                 } else {
                     // Not downloaded
                     Button(action: {
-                        downloadManager.downloadEpisode(episode)
+                        downloadManager.downloadEpisode(episode, podcastTitle: podcastTitle, podcastFeedURL: podcastFeedURL)
                     }) {
                         Image(systemName: "arrow.down.circle")
                             .foregroundColor(.gray)
@@ -237,17 +306,6 @@ struct EpisodeRowView: View {
                     .buttonStyle(PlainButtonStyle())
                     .frame(width: 24)
                 }
-
-                // Play button
-                Button(action: {
-                    print("▶️ Play button tapped for: \(episode.title)")
-                    onPlay()
-                }) {
-                    Image(systemName: "play.circle.fill")
-                        .foregroundColor(.blue)
-                        .font(.title3)
-                }
-                .buttonStyle(PlainButtonStyle())
             }
         }
         .padding(.vertical, 8)
@@ -268,7 +326,7 @@ struct EpisodeRowView: View {
                 }
             } else {
                 Button(action: {
-                    downloadManager.downloadEpisode(episode)
+                    downloadManager.downloadEpisode(episode, podcastTitle: podcastTitle, podcastFeedURL: podcastFeedURL)
                 }) {
                     Label("Download Episode", systemImage: "arrow.down.circle")
                 }
