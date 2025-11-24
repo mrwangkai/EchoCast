@@ -454,48 +454,104 @@ struct QuickNoteCaptureView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \NoteEntity.createdAt, ascending: false)]
+    ) private var allNotes: FetchedResults<NoteEntity>
+
     @State private var noteText = ""
-    @State private var isPriority = false
+    @State private var selectedTags: [String] = []
+    @FocusState private var isTextEditorFocused: Bool
+
+    // Get all unique tags from existing notes
+    private var allExistingTags: [String] {
+        var tagSet = Set<String>()
+        for note in allNotes {
+            tagSet.formUnion(note.tagsArray)
+        }
+        return Array(tagSet).sorted()
+    }
 
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Episode Info")) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(episode.title)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        Text("at \(timestamp)")
-                            .font(.caption)
-                            .foregroundColor(.blue)
-                    }
-                }
+            ZStack(alignment: .bottom) {
+                // Main content
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Episode Info
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Episode")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .textCase(.uppercase)
 
-                Section(header: Text("Your Note")) {
-                    TextEditor(text: $noteText)
-                        .frame(minHeight: 120)
-                }
-
-                Section {
-                    Toggle(isOn: $isPriority) {
-                        HStack {
-                            Image(systemName: "star.fill")
-                                .foregroundColor(.yellow)
-                            Text("Mark as Important")
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(episode.title)
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                Text("at \(timestamp)")
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+                            }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+
+                        // Note Text Editor
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Your Note")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .textCase(.uppercase)
+
+                            TextEditor(text: $noteText)
+                                .frame(minHeight: 150)
+                                .padding(8)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                                .focused($isTextEditorFocused)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+
+                        // Tags
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Tags")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .textCase(.uppercase)
+
+                            TagInputView(
+                                selectedTags: $selectedTags,
+                                allExistingTags: allExistingTags
+                            )
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+
+                        // Spacer for floating button
+                        Spacer()
+                            .frame(height: 80)
                     }
                 }
 
-                Section {
+                // Floating Save Button
+                VStack(spacing: 0) {
+                    Divider()
+
                     Button(action: saveNote) {
-                        HStack {
-                            Spacer()
-                            Text("Save Note")
-                                .fontWeight(.semibold)
-                            Spacer()
-                        }
+                        Text("Save Note")
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(noteText.isEmpty ? Color.gray : Color.blue)
+                            .cornerRadius(12)
                     }
                     .disabled(noteText.isEmpty)
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+                    .background(Color(.systemBackground))
                 }
             }
             .navigationTitle("New Note")
@@ -519,8 +575,8 @@ struct QuickNoteCaptureView: View {
             episodeTitle: episode.title,
             timestamp: timestamp,
             noteText: noteText,
-            isPriority: isPriority,
-            tags: [],
+            isPriority: false,
+            tags: selectedTags,
             sourceApp: "EchoNotes Player"
         )
         dismiss()

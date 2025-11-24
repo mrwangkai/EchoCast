@@ -1436,14 +1436,14 @@ struct EpisodeCardView: View {
                     // Episode name
                     Text(item.episodeTitle)
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(item.isDownloaded ? .primary : .primary.opacity(0.45))
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
 
                     // Series name
                     Text(item.podcastTitle)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(item.isDownloaded ? .gray : .gray.opacity(0.45))
                         .lineLimit(1)
 
                     // Note count
@@ -1503,10 +1503,11 @@ struct IndividualEpisodeRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.episodeTitle)
                     .font(.headline)
+                    .foregroundColor(item.isDownloaded ? .primary : .primary.opacity(0.45))
                     .lineLimit(2)
                 Text(item.podcastTitle)
                     .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .foregroundColor(item.isDownloaded ? .gray : .gray.opacity(0.45))
                     .lineLimit(1)
 
                 HStack(spacing: 8) {
@@ -1779,7 +1780,7 @@ struct ExplorePodcastDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                    Button("Close") {
                         dismiss()
                     }
                 }
@@ -2211,7 +2212,7 @@ struct TagNotesSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
+                    Button("Close") {
                         dismiss()
                     }
                 }
@@ -2559,6 +2560,8 @@ struct PodcastSearchView: View {
     @State private var hasPerformedSearch = false
     @State private var showError = false
     @State private var errorMessage = ""
+    @FocusState private var isSearchFocused: Bool
+    @State private var searchTask: Task<Void, Never>?
 
     var body: some View {
         NavigationStack {
@@ -2571,6 +2574,26 @@ struct PodcastSearchView: View {
                     TextField("Search podcasts...", text: $searchText)
                         .textFieldStyle(.plain)
                         .autocorrectionDisabled()
+                        .focused($isSearchFocused)
+                        .onChange(of: searchText) { oldValue, newValue in
+                            // Cancel previous search task
+                            searchTask?.cancel()
+
+                            // Clear results if search is empty
+                            if newValue.isEmpty {
+                                searchResults = []
+                                hasPerformedSearch = false
+                                return
+                            }
+
+                            // Debounce: wait 0.3s before searching
+                            searchTask = Task {
+                                try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+                                if !Task.isCancelled {
+                                    await performSearchAsync()
+                                }
+                            }
+                        }
                         .onSubmit {
                             performSearch()
                         }
@@ -2677,7 +2700,7 @@ struct PodcastSearchView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
+                    Button("Close") {
                         dismiss()
                     }
                 }
@@ -2687,26 +2710,46 @@ struct PodcastSearchView: View {
             } message: {
                 Text(errorMessage)
             }
+            .onAppear {
+                // Auto-focus search field and show keyboard
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    isSearchFocused = true
+                }
+            }
         }
     }
 
     private func performSearch() {
+        Task {
+            await performSearchAsync()
+        }
+    }
+
+    private func performSearchAsync() async {
         guard !searchText.isEmpty else { return }
 
-        isSearching = true
-        hasPerformedSearch = true
-        Task {
-            do {
-                let results = try await iTunesSearchService.shared.search(query: searchText)
-                await MainActor.run {
-                    searchResults = results
-                    isSearching = false
-                }
-            } catch {
+        await MainActor.run {
+            isSearching = true
+            hasPerformedSearch = true
+        }
+
+        do {
+            let results = try await iTunesSearchService.shared.search(query: searchText)
+            await MainActor.run {
+                searchResults = results
+                isSearching = false
+            }
+        } catch {
+            // Don't show error for cancellation (happens when user keeps typing)
+            if (error as NSError).code != NSURLErrorCancelled {
                 await MainActor.run {
                     isSearching = false
                     errorMessage = "Failed to search: \(error.localizedDescription)"
                     showError = true
+                }
+            } else {
+                await MainActor.run {
+                    isSearching = false
                 }
             }
         }
@@ -3876,9 +3919,18 @@ struct SettingsView: View {
     @State private var showClearCacheAlert = false
     @State private var showOPMLOptions = false
 
+    private var currentPID: String {
+        String(ProcessInfo.processInfo.processIdentifier)
+    }
+
+    private var appVersion: String {
+        return "v0.01 + 2025.11.24.00.18"
+    }
+
     var body: some View {
         NavigationStack {
-            List {
+            ZStack(alignment: .bottom) {
+                List {
                 // Downloaded Episodes Section
                 Section {
                     NavigationLink(destination: DownloadedEpisodesView()) {
@@ -3960,6 +4012,18 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showOPMLOptions) {
                 OPMLOptionsView()
+            }
+
+                // PID and Version Display at bottom center
+                VStack(spacing: 4) {
+                    Text("PID: \(currentPID)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    Text(appVersion)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.bottom, 8)
             }
         }
     }
@@ -4051,7 +4115,7 @@ struct OPMLOptionsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
+                    Button("Close") {
                         dismiss()
                     }
                 }

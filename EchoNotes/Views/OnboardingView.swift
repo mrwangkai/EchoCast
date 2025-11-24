@@ -65,15 +65,18 @@ struct OnboardingView: View {
                 .padding(.top, 50)
                 .padding(.bottom, 20)
 
-                // Skip button
+                // Skip button (shown on first 2 pages only)
                 HStack {
                     Spacer()
-                    Button("Skip") {
-                        completeOnboarding()
+                    if currentPage < pages.count - 1 {
+                        Button("Skip") {
+                            completeOnboarding()
+                        }
+                        .foregroundColor(.gray)
+                        .padding(.horizontal)
                     }
-                    .foregroundColor(.gray)
-                    .padding(.horizontal)
                 }
+                .frame(height: 20)
                 .padding(.bottom, 40)
 
                 Spacer()
@@ -123,12 +126,28 @@ struct OnboardingView: View {
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
             }
-        }
-        .onAppear {
-            startTimer()
-        }
-        .onDisappear {
-            stopTimer()
+
+            // X button overlay (only on last page)
+            if currentPage == pages.count - 1 {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: completeOnboarding) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(14)
+                                .background(Color.black.opacity(0.6))
+                                .clipShape(Circle())
+                        }
+                        .padding(.top, 60)
+                        .padding(.trailing, 20)
+                        .zIndex(999)
+                    }
+                    Spacer()
+                }
+                .allowsHitTesting(true)
+            }
         }
         .gesture(
             DragGesture(minimumDistance: 50)
@@ -146,6 +165,12 @@ struct OnboardingView: View {
                     }
                 }
         )
+        .onAppear {
+            startTimer()
+        }
+        .onDisappear {
+            stopTimer()
+        }
     }
 
     private func startTimer() {

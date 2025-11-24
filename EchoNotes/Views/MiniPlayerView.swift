@@ -24,6 +24,7 @@ struct MiniPlayerView: View {
     @ObservedObject var player = GlobalPlayerManager.shared
     @State private var showNoteCaptureSheet = false
     @State private var currentTimestamp = ""
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         // Always render, no conditional wrapper
@@ -51,6 +52,7 @@ struct MiniPlayerView: View {
                                         .foregroundColor(.blue)
                                 )
                         }
+                        .id(episode.id)  // Force view recreation when episode changes
 
                         // Episode info
                         VStack(alignment: .leading, spacing: 2) {
@@ -143,9 +145,16 @@ struct MiniPlayerView: View {
             }
             .background(Color(.systemBackground))
             .cornerRadius(12)
-                .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 3)
-                .padding(.horizontal, 12)
-                .padding(.bottom, 74)
+            .shadow(
+                color: colorScheme == .dark
+                    ? Color.white.opacity(0.15)
+                    : Color.black.opacity(0.15),
+                radius: colorScheme == .dark ? 8 : 4,
+                x: 0,
+                y: colorScheme == .dark ? 4 : 3
+            )
+            .padding(.horizontal, 12)
+            .padding(.bottom, 74)
             }
         }
         // FULL PLAYER SHEET REMOVED - Now managed by ContentView at root level

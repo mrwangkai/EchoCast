@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		002F485A26DC52F5F6289CA8 /* DevStatusOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47EF9A3F2D199A93B819E676 /* DevStatusOverlay.swift */; };
+		167E480595F325A71FD4745F /* TagInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58DCA2B95824F1266C86D590 /* TagInputView.swift */; };
 		9BB4859B92DDF503220B8965 /* CachedAsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB22B81879EF1F1F4E09FFDE /* CachedAsyncImage.swift */; };
 		9FAB9D200AEB78399A453E70 /* AddNoteIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DD93D0AD7DDFDF76E41F9DF /* AddNoteIntent.swift */; };
 		A10000000000000000000001 /* EchoNotesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000001 /* EchoNotesApp.swift */; };
@@ -35,7 +36,11 @@
 /* Begin PBXFileReference section */
 		0DD93D0AD7DDFDF76E41F9DF /* AddNoteIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AddNoteIntent.swift; path = EchoNotes/AppIntents/AddNoteIntent.swift; sourceTree = "<group>"; };
 		2A7452EE2ED3D43A0049B7B0 /* debugging4.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = debugging4.md; sourceTree = "<group>"; };
+		2A7452EF2ED4056C0049B7B0 /* tagging_implementation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = tagging_implementation.md; sourceTree = "<group>"; };
+		2A7452F02ED4097A0049B7B0 /* tagging2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = tagging2.md; sourceTree = "<group>"; };
+		2A7452F12ED43D700049B7B0 /* search_experience.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = search_experience.md; sourceTree = "<group>"; };
 		47EF9A3F2D199A93B819E676 /* DevStatusOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DevStatusOverlay.swift; sourceTree = "<group>"; };
+		58DCA2B95824F1266C86D590 /* TagInputView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TagInputView.swift; path = EchoNotes/Views/TagInputView.swift; sourceTree = "<group>"; };
 		A00000000000000000000000 /* EchoNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EchoNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000001 /* EchoNotesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoNotesApp.swift; sourceTree = "<group>"; };
 		A00000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -83,7 +88,10 @@
 		A30000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
+				2A7452F12ED43D700049B7B0 /* search_experience.md */,
 				2A7452EE2ED3D43A0049B7B0 /* debugging4.md */,
+				2A7452EF2ED4056C0049B7B0 /* tagging_implementation.md */,
+				2A7452F02ED4097A0049B7B0 /* tagging2.md */,
 				A30000000000000000000002 /* EchoNotes */,
 				A30000000000000000000003 /* Products */,
 				161A209E01ED1DF8D14AF816 /* AppIntents */,
@@ -172,6 +180,7 @@
 			isa = PBXGroup;
 			children = (
 				DB22B81879EF1F1F4E09FFDE /* CachedAsyncImage.swift */,
+				58DCA2B95824F1266C86D590 /* TagInputView.swift */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -267,6 +276,7 @@
 				A6EBAAFE65FA82B433B8E03E /* PlaybackHistoryManager.swift in Sources */,
 				9FAB9D200AEB78399A453E70 /* AddNoteIntent.swift in Sources */,
 				9BB4859B92DDF503220B8965 /* CachedAsyncImage.swift in Sources */,
+				167E480595F325A71FD4745F /* TagInputView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
