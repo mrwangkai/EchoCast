@@ -45,8 +45,16 @@ struct PodcastDetailView: View {
                 List {
                     ForEach(episodes) { episode in
                         Button(action: {
-                            selectedEpisode = episode
-                            showPlayerSheet = true
+                            // Reset state first, then set in async to ensure proper timing
+                            selectedEpisode = nil
+                            showPlayerSheet = false
+
+                            DispatchQueue.main.async {
+                                selectedEpisode = episode
+                                DispatchQueue.main.async {
+                                    showPlayerSheet = true
+                                }
+                            }
                         }) {
                             EpisodeRowView(
                                 episode: episode,
@@ -96,17 +104,33 @@ struct PodcastDetailView: View {
         }
         .sheet(isPresented: $showPlayerSheet) {
             if let episode = selectedEpisode {
-                NavigationStack {
-                    AudioPlayerView(episode: episode, podcast: podcast)
-                        .navigationTitle("Now Playing")
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarTrailing) {
-                                Button("Done") {
-                                    showPlayerSheet = false
-                                }
-                            }
+                PlayerSheetWrapper(
+                    episode: episode,
+                    podcast: podcast,
+                    dismiss: { showPlayerSheet = false },
+                    autoPlay: true,
+                    seekToTime: nil
+                )
+            } else {
+                // Fallback if episode is missing
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                    Text("Loading episode...")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onAppear {
+                    print("⚠️ Episode sheet opened but selectedEpisode is nil")
+
+                    // Auto-dismiss after 5 seconds if still nil (DO NOT force re-render)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                        if selectedEpisode == nil {
+                            print("❌ Timeout: Episode data still nil after 5s - closing sheet")
+                            showPlayerSheet = false
                         }
+                    }
                 }
             }
         }
@@ -276,17 +300,29 @@ struct EpisodeRowView: View {
                 Spacer()
 
                 // Download status indicator
-                let episodeID = episode.id.uuidString
+                let episodeID = episode.id
 
                 if let progress = downloadManager.downloadProgress[episodeID] {
                     // Downloading - fixed width to prevent jitter
-                    HStack(spacing: 4) {
-                        ProgressView(value: progress)
-                            .frame(width: 40)
-                        Text("\(Int(progress * 100))%")
-                            .font(.caption2)
-                            .foregroundColor(.blue)
-                            .frame(width: 35, alignment: .trailing)
+                    if progress >= 0.99 {
+                        // Show "Downloaded" when at 100%
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                                .font(.caption)
+                            Text("Downloaded")
+                                .font(.caption2)
+                                .foregroundColor(.green)
+                        }
+                    } else {
+                        HStack(spacing: 4) {
+                            ProgressView(value: progress)
+                                .frame(width: 40)
+                            Text("\(Int(progress * 100))%")
+                                .font(.caption2)
+                                .foregroundColor(.blue)
+                                .frame(width: 35, alignment: .trailing)
+                        }
                     }
                 } else if downloadManager.isDownloaded(episodeID) {
                     // Downloaded
@@ -310,7 +346,7 @@ struct EpisodeRowView: View {
         }
         .padding(.vertical, 8)
         .contextMenu {
-            let episodeID = episode.id.uuidString
+            let episodeID = episode.id
 
             if downloadManager.isDownloading(episodeID) {
                 Button(role: .destructive, action: {

@@ -10,6 +10,7 @@ import AVFoundation
 import SwiftUI
 import Combine
 import MediaPlayer
+import CoreData
 
 class GlobalPlayerManager: ObservableObject {
     static let shared = GlobalPlayerManager()
@@ -104,6 +105,15 @@ class GlobalPlayerManager: ObservableObject {
     }
 
     func loadEpisode(_ episode: RSSEpisode, podcast: PodcastEntity) {
+        // Check if this is the same episode that's already loaded
+        if let currentEp = currentEpisode,
+           currentEp.id == episode.id,
+           currentPodcast?.id == podcast.id {
+            print("✅ Episode already loaded, resuming playback")
+            showMiniPlayer = true
+            return
+        }
+
         currentEpisode = episode
         currentPodcast = podcast
         playerError = nil
@@ -115,7 +125,7 @@ class GlobalPlayerManager: ObservableObject {
         }
 
         // Check if episode is downloaded locally
-        let episodeID = episode.id.uuidString
+        let episodeID = episode.id
         let downloadManager = EpisodeDownloadManager.shared
 
         let audioURL: URL?
@@ -193,6 +203,17 @@ class GlobalPlayerManager: ObservableObject {
                     print("✅ Player ready to play")
                     self?.playerError = nil
                     self?.isBuffering = false
+
+                    // Resume from saved position if available
+                    if let self = self, let episode = self.currentEpisode {
+                        let episodeID = episode.id
+                        if let savedPosition = PlaybackHistoryManager.shared.getPlaybackPosition(for: episodeID),
+                           savedPosition > 0 {
+                            print("⏭️ Resuming from saved position: \(savedPosition)s")
+                            self.seek(to: savedPosition)
+                        }
+                    }
+
                     Task { @MainActor in
                         DevStatusManager.shared.playerStatus = .success
                         DevStatusManager.shared.networkStatus = .success
@@ -276,6 +297,9 @@ class GlobalPlayerManager: ObservableObject {
     }
 
     func stop() {
+        // Save final position before stopping
+        savePlaybackHistory()
+
         player?.pause()
         player?.seek(to: .zero)
         isPlaying = false
@@ -284,10 +308,87 @@ class GlobalPlayerManager: ObservableObject {
         currentPodcast = nil
     }
 
+    func closeMiniPlayer() {
+        // Save position but keep episode loaded
+        if currentEpisode != nil && currentPodcast != nil {
+            savePlaybackHistory()
+        }
+        player?.pause()
+        isPlaying = false
+        showMiniPlayer = false
+    }
+
     func seek(to time: TimeInterval) {
         let cmTime = CMTime(seconds: time, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
         player?.seek(to: cmTime)
     }
+
+    // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
+    // /// Load an episode by ID and optionally seek to a timestamp
+    // /// Used for deep linking
+    // func loadEpisodeByID(_ episodeID: String, seekTo timestamp: TimeInterval? = nil, context: NSManagedObjectContext, completion: @escaping (Bool) -> Void) {
+    //     Task { @MainActor in
+    //         // Try to find the episode in playback history
+    //         if let historyEntry = PlaybackHistoryManager.shared.getPlaybackHistory(for: episodeID),
+    //            let podcast = fetchPodcast(byID: historyEntry.podcastID, context: context) {
+    //
+    //             // Create RSSEpisode from history
+    //             let episode = RSSEpisode(
+    //                 title: historyEntry.episodeTitle,
+    //                 description: nil,
+    //                 pubDate: nil,
+    //                 duration: formatDuration(historyEntry.duration),
+    //                 audioURL: historyEntry.audioURL,
+    //                 imageURL: nil
+    //             )
+    //
+    //             // Load the episode
+    //             self.loadEpisode(episode, podcast: podcast)
+    //
+    //             // Seek to timestamp if provided
+    //             if let timestamp = timestamp {
+    //                 // Wait a bit for the player to be ready
+    //                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+    //                     self.seek(to: timestamp)
+    //                 }
+    //             }
+    //
+    //             self.showMiniPlayer = true
+    //             completion(true)
+    //             return
+    //         }
+    //
+    //         // Episode not found in history
+    //         print("❌ Episode \(episodeID) not found in playback history")
+    //         completion(false)
+    //     }
+    // }
+    //
+    // private func fetchPodcast(byID podcastID: String, context: NSManagedObjectContext) -> PodcastEntity? {
+    //     let request = PodcastEntity.fetchRequest()
+    //     request.predicate = NSPredicate(format: "id == %@", podcastID)
+    //     request.fetchLimit = 1
+    //
+    //     do {
+    //         let results = try context.fetch(request)
+    //         return results.first
+    //     } catch {
+    //         print("❌ Error fetching podcast: \(error)")
+    //         return nil
+    //     }
+    // }
+    //
+    // private func formatDuration(_ seconds: TimeInterval) -> String {
+    //     let hours = Int(seconds) / 3600
+    //     let minutes = Int(seconds) / 60 % 60
+    //     let secs = Int(seconds) % 60
+    //
+    //     if hours > 0 {
+    //         return String(format: "%d:%02d:%02d", hours, minutes, secs)
+    //     } else {
+    //         return String(format: "%d:%02d", minutes, secs)
+    //     }
+    // }
 
     func skipForward(_ seconds: TimeInterval) {
         let newTime = min(currentTime + seconds, duration)
@@ -305,7 +406,7 @@ class GlobalPlayerManager: ObservableObject {
 
         Task { @MainActor in
             PlaybackHistoryManager.shared.updatePlayback(
-                episodeID: episode.id.uuidString,
+                episodeID: episode.id,
                 episodeTitle: episode.title,
                 podcastTitle: podcast.title ?? "Unknown Podcast",
                 podcastID: podcast.id ?? UUID().uuidString,
@@ -371,7 +472,7 @@ class EpisodeDownloadManager: NSObject, ObservableObject {
             return
         }
 
-        let episodeID = episode.id.uuidString
+        let episodeID = episode.id
 
         print("📥 Download requested for: \(episode.title)")
         print("   Episode ID: \(episodeID)")

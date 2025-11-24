@@ -53,39 +53,59 @@ struct AudioPlayerView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     // Episode Artwork
-                    Circle()
-                        .fill(Color.blue.opacity(0.2))
-                        .frame(width: 280, height: 280)
-                        .overlay(
-                            Group {
-                                if isLoading || player.isBuffering {
+                    ZStack {
+                        CachedAsyncImage(url: episode.imageURL ?? podcast.artworkURL) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 280, height: 280)
+                                .clipShape(RoundedRectangle(cornerRadius: 20))
+                        } placeholder: {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.blue.opacity(0.2))
+                                .frame(width: 280, height: 280)
+                                .overlay(
+                                    Image(systemName: "music.note")
+                                        .font(.system(size: 80))
+                                        .foregroundColor(.blue)
+                                )
+                        }
+                        .shadow(radius: 10)
+
+                        // Loading/Error overlay
+                        if isLoading || player.isBuffering {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.black.opacity(0.7))
+                                .frame(width: 280, height: 280)
+                                .overlay(
                                     VStack(spacing: 12) {
                                         ProgressView()
                                             .scaleEffect(1.5)
+                                            .tint(.white)
                                         Text("Loading...")
                                             .font(.caption)
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(.white)
                                     }
-                                } else if let error = player.playerError {
+                                )
+                        } else if let error = player.playerError {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.black.opacity(0.7))
+                                .frame(width: 280, height: 280)
+                                .overlay(
                                     VStack(spacing: 12) {
                                         Image(systemName: "exclamationmark.triangle.fill")
                                             .font(.system(size: 60))
                                             .foregroundColor(.orange)
                                         Text(error)
                                             .font(.caption)
-                                            .foregroundColor(.red)
+                                            .foregroundColor(.white)
                                             .multilineTextAlignment(.center)
                                             .padding(.horizontal)
                                     }
-                                } else {
-                                    Image(systemName: "music.note")
-                                        .font(.system(size: 80))
-                                        .foregroundColor(.blue)
-                                }
-                            }
-                        )
-                        .shadow(radius: 10)
-                        .padding(.top, 20)
+                                )
+                        }
+                    }
+                    .padding(.top, 20)
 
                 // Episode Info
                 VStack(spacing: 8) {
@@ -517,6 +537,8 @@ struct NoteDetailView: View {
     @State private var editedNoteText: String = ""
     @State private var editedIsPriority: Bool = false
     @State private var isEditing: Bool = false
+    @State private var showShareSheet = false
+    @State private var shareURL: URL?
 
     var body: some View {
         NavigationStack {
@@ -623,16 +645,26 @@ struct NoteDetailView: View {
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    if isEditing {
-                        Button("Save") {
-                            saveChanges()
-                            isEditing = false
+                    HStack(spacing: 16) {
+                        if !isEditing {
+                            Button(action: shareNote) {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.body)
+                                    .foregroundColor(.blue)
+                            }
                         }
-                    } else {
-                        Button("Edit") {
-                            editedNoteText = note.noteText ?? ""
-                            editedIsPriority = note.isPriority
-                            isEditing = true
+
+                        if isEditing {
+                            Button("Save") {
+                                saveChanges()
+                                isEditing = false
+                            }
+                        } else {
+                            Button("Edit") {
+                                editedNoteText = note.noteText ?? ""
+                                editedIsPriority = note.isPriority
+                                isEditing = true
+                            }
                         }
                     }
                 }
@@ -640,6 +672,11 @@ struct NoteDetailView: View {
             .onAppear {
                 editedNoteText = note.noteText ?? ""
                 editedIsPriority = note.isPriority
+            }
+            .sheet(isPresented: $showShareSheet) {
+                if let url = shareURL {
+                    ShareSheet(activityItems: [url])
+                }
             }
         }
     }
@@ -654,7 +691,79 @@ struct NoteDetailView: View {
             print("Error saving note changes: \(error)")
         }
     }
+
+    private func shareNote() {
+        // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
+        print("⚠️ Share functionality requires DeepLinkManager - see DEEP_LINKING_SETUP.md")
+
+        // For now, just share a placeholder URL
+        if note.noteText != nil {
+            shareURL = URL(string: "https://yourdomain.com")
+            showShareSheet = true
+        }
+
+        // // For now, we'll need to add episode ID storage to notes
+        // // This is a placeholder that shows instructions
+        // guard let episodeTitle = note.episodeTitle else {
+        //     print("❌ No episode title found")
+        //     return
+        // }
+        //
+        // // Try to find episode in playback history by title
+        // let historyManager = PlaybackHistoryManager.shared
+        // let matchingHistory = historyManager.recentlyPlayed.first { $0.episodeTitle == episodeTitle }
+        //
+        // guard let episodeID = matchingHistory?.id else {
+        //     print("❌ Episode ID not found in playback history")
+        //     return
+        // }
+        //
+        // // Parse timestamp to seconds
+        // var timestampSeconds: TimeInterval? = nil
+        // if let timestamp = note.timestamp {
+        //     timestampSeconds = parseTimestamp(timestamp)
+        // }
+        //
+        // // TODO: Replace "yourdomain.com" with your actual custom domain
+        // let customDomain = "yourdomain.com"
+        //
+        // guard let url = DeepLinkManager.generateShareURL(
+        //     episodeID: episodeID,
+        //     timestamp: timestampSeconds,
+        //     customDomain: customDomain
+        // ) else {
+        //     print("❌ Failed to generate share URL")
+        //     return
+        // }
+        //
+        // shareURL = url
+        // showShareSheet = true
+        // print("📤 Sharing URL: \(url.absoluteString)")
+    }
+
+    private func parseTimestamp(_ timestamp: String) -> TimeInterval? {
+        // Parse timestamp in format HH:MM:SS or MM:SS
+        let components = timestamp.split(separator: ":").compactMap { Int($0) }
+
+        guard !components.isEmpty else { return nil }
+
+        if components.count == 3 {
+            // HH:MM:SS
+            return TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
+        } else if components.count == 2 {
+            // MM:SS
+            return TimeInterval(components[0] * 60 + components[1])
+        } else if components.count == 1 {
+            // Just seconds
+            return TimeInterval(components[0])
+        }
+
+        return nil
+    }
 }
+
+// MARK: - Share Sheet
+// Note: ShareSheet is defined in ExportService.swift
 
 #Preview {
     let episode = RSSEpisode(

@@ -19,7 +19,15 @@ struct RSSPodcast: Identifiable {
 }
 
 struct RSSEpisode: Identifiable {
-    let id = UUID()
+    var id: String {
+        // Use audio URL as stable identifier, fallback to title hash
+        if let audioURL = audioURL, !audioURL.isEmpty {
+            return audioURL
+        } else {
+            return title.hashValue.description
+        }
+    }
+
     let title: String
     let description: String?
     let pubDate: Date?

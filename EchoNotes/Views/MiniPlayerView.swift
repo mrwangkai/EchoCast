@@ -7,28 +7,50 @@
 
 import SwiftUI
 
+// MARK: - Sheet Identifier
+
+struct SheetIdentifier: Identifiable, Equatable {
+    let id = UUID()  // Use unique ID each time to force sheet refresh
+    let episode: RSSEpisode
+    let podcast: PodcastEntity
+
+    static func == (lhs: SheetIdentifier, rhs: SheetIdentifier) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
 struct MiniPlayerView: View {
+    @Binding var showFullPlayer: Bool  // NOW CONTROLLED BY PARENT (ContentView)
     @ObservedObject var player = GlobalPlayerManager.shared
-    @State private var showFullPlayer = false
     @State private var showNoteCaptureSheet = false
     @State private var currentTimestamp = ""
-    @State private var dragOffset: CGFloat = 0
 
     var body: some View {
-        // Mini player bar (only shown when needed)
-        if player.showMiniPlayer, let episode = player.currentEpisode {
-            VStack(spacing: 0) {
-                // Mini player controls
-                HStack(spacing: 12) {
-                        // Artwork
-                        Circle()
-                            .fill(Color.blue.opacity(0.2))
-                            .frame(width: 48, height: 48)
-                            .overlay(
-                                Image(systemName: "music.note")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.blue)
-                            )
+        // Always render, no conditional wrapper
+        Group {
+            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                VStack(spacing: 0) {
+                // Mini player controls with padding
+                VStack(spacing: 12) {
+                    // First row: Episode info and playback controls
+                    HStack(spacing: 12) {
+                        // Artwork (square with 8px radius)
+                        CachedAsyncImage(url: episode.imageURL ?? player.currentPodcast?.artworkURL) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 48, height: 48)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        } placeholder: {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.blue.opacity(0.2))
+                                .frame(width: 48, height: 48)
+                                .overlay(
+                                    Image(systemName: "music.note")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(.blue)
+                                )
+                        }
 
                         // Episode info
                         VStack(alignment: .leading, spacing: 2) {
@@ -56,18 +78,8 @@ struct MiniPlayerView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                        // Controls
-                        HStack(spacing: 12) {
-                            Button(action: {
-                                currentTimestamp = formatTime(player.currentTime)
-                                player.pause()
-                                showNoteCaptureSheet = true
-                            }) {
-                                Image(systemName: "note.text.badge.plus")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.blue)
-                            }
-
+                        // Playback controls
+                        HStack(spacing: 16) {
                             Button(action: {
                                 player.togglePlayPause()
                             }) {
@@ -77,7 +89,7 @@ struct MiniPlayerView: View {
                             }
 
                             Button(action: {
-                                player.stop()
+                                player.closeMiniPlayer()
                             }) {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 20))
@@ -85,69 +97,66 @@ struct MiniPlayerView: View {
                             }
                         }
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 12)
-                    .padding(.bottom, 12)
-                    .background(Color(.systemBackground))
                     .contentShape(Rectangle())
                     .onTapGesture {
+                        print("📱 [MiniPlayer] Tap detected - opening full player")
                         showFullPlayer = true
                     }
 
-                    // Progress bar at bottom
-                    GeometryReader { geometry in
-                        Rectangle()
-                            .fill(Color.blue)
-                            .frame(width: geometry.size.width * CGFloat(player.currentTime / max(player.duration, 1)), height: 3)
+                    // Second row: Add note button (shortened to match artwork padding)
+                    HStack(spacing: 12) {
+                        Button(action: {
+                            currentTimestamp = formatTime(player.currentTime)
+                            player.pause()
+                            showNoteCaptureSheet = true
+                        }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "note.text.badge.plus")
+                                    .font(.system(size: 16))
+                                Text("Add Note")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Color.orange)
+                            .cornerRadius(8)
+                        }
+
+                        Spacer()
                     }
-                    .frame(height: 3)
+                    .padding(.leading, 48 + 12) // Artwork width + spacing
                 }
-                .background(
-                    Color(.systemBackground)
-                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
-                )
-                .sheet(isPresented: $showFullPlayer) {
-            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                PlayerSheetWrapper(
-                    episode: episode,
-                    podcast: podcast,
-                    dismiss: { showFullPlayer = false },
-                    autoPlay: false  // Don't autoplay since episode is already playing
-                )
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+                .background(Color(.systemBackground))
+
+                // Progress bar at bottom
+                GeometryReader { geometry in
+                    Rectangle()
+                        .fill(Color.blue)
+                        .frame(width: geometry.size.width * CGFloat(player.currentTime / max(player.duration, 1)), height: 3)
+                }
+                .frame(height: 3)
+            }
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+                .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 3)
+                .padding(.horizontal, 12)
+                .padding(.bottom, 74)
             }
         }
-                .sheet(isPresented: $showNoteCaptureSheet) {
-                    if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                        QuickNoteCaptureView(
-                            podcast: podcast,
-                            episode: episode,
-                            timestamp: currentTimestamp
-                        )
-                    }
-                }
-        } else {
-            // Empty view when mini player is hidden, but still handle sheets
-            Color.clear
-                .frame(height: 0)
-                .sheet(isPresented: $showFullPlayer) {
-                    if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                        PlayerSheetWrapper(
-                            episode: episode,
-                            podcast: podcast,
-                            dismiss: { showFullPlayer = false },
-                            autoPlay: false
-                        )
-                    }
-                }
-                .sheet(isPresented: $showNoteCaptureSheet) {
-                    if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                        QuickNoteCaptureView(
-                            podcast: podcast,
-                            episode: episode,
-                            timestamp: currentTimestamp
-                        )
-                    }
-                }
+        // FULL PLAYER SHEET REMOVED - Now managed by ContentView at root level
+        .sheet(isPresented: $showNoteCaptureSheet) {
+            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                QuickNoteCaptureView(
+                    podcast: podcast,
+                    episode: episode,
+                    timestamp: currentTimestamp
+                )
+            }
         }
     }
 
@@ -184,9 +193,17 @@ struct FullPlayerView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Episode Artwork
+            VStack(spacing: 0) {
+                // Drag indicator
+                RoundedRectangle(cornerRadius: 2.5)
+                    .fill(Color.gray.opacity(0.4))
+                    .frame(width: 40, height: 5)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Episode Artwork
                     Circle()
                         .fill(Color.blue.opacity(0.2))
                         .frame(width: 280, height: 280)
@@ -383,18 +400,12 @@ struct FullPlayerView: View {
                         .padding(.top, 20)
                     }
 
-                    Spacer(minLength: 20)
+                        Spacer(minLength: 20)
+                    }
                 }
             }
             .navigationTitle(episode.title)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
             .onAppear {
                 player.showMiniPlayer = false
             }

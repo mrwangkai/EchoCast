@@ -87,6 +87,10 @@ class PlaybackHistoryManager: ObservableObject {
         return recentlyPlayed.first { $0.id == episodeID }?.currentTime
     }
 
+    func getPlaybackHistory(for episodeID: String) -> PlaybackHistoryItem? {
+        return recentlyPlayed.first { $0.id == episodeID }
+    }
+
     // MARK: - Recently Played (Not Finished)
 
     func getRecentlyPlayed(limit: Int = 3) -> [PlaybackHistoryItem] {

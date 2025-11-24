@@ -34,6 +34,7 @@
 
 /* Begin PBXFileReference section */
 		0DD93D0AD7DDFDF76E41F9DF /* AddNoteIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AddNoteIntent.swift; path = EchoNotes/AppIntents/AddNoteIntent.swift; sourceTree = "<group>"; };
+		2A7452EE2ED3D43A0049B7B0 /* debugging4.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = debugging4.md; sourceTree = "<group>"; };
 		47EF9A3F2D199A93B819E676 /* DevStatusOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DevStatusOverlay.swift; sourceTree = "<group>"; };
 		A00000000000000000000000 /* EchoNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EchoNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000001 /* EchoNotesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoNotesApp.swift; sourceTree = "<group>"; };
@@ -82,6 +83,7 @@
 		A30000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
+				2A7452EE2ED3D43A0049B7B0 /* debugging4.md */,
 				A30000000000000000000002 /* EchoNotes */,
 				A30000000000000000000003 /* Products */,
 				161A209E01ED1DF8D14AF816 /* AppIntents */,
@@ -400,6 +402,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = BY2WMSQ7U3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = EchoNotes/Info.plist;

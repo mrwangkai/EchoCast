@@ -14,8 +14,8 @@ class ImageCache {
     private var cache = NSCache<NSString, UIImage>()
 
     private init() {
-        cache.countLimit = 100
-        cache.totalCostLimit = 50 * 1024 * 1024 // 50 MB
+        cache.countLimit = 200  // Increased from 100
+        cache.totalCostLimit = 100 * 1024 * 1024 // 100 MB (increased from 50 MB)
     }
 
     func get(_ url: String) -> UIImage? {

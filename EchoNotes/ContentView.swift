@@ -45,6 +45,7 @@ class OPMLImportService: NSObject, XMLParserDelegate, @unchecked Sendable {
 
         return await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                // Parse without capturing parser
                 let success = parser.parse()
                 if success {
                     continuation.resume(returning: self?.feeds ?? [])
@@ -95,49 +96,89 @@ struct ContentView: View {
     @StateObject private var devStatus = DevStatusManager.shared
     @State private var showSiriNoteCaptureSheet = false
     @State private var siriNoteTimestamp = ""
+    @State private var showFullPlayer = false  // NEW: Manage full player sheet at root level
     @Environment(\.managedObjectContext) private var viewContext
+    // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
+    // @EnvironmentObject private var deepLinkManager: DeepLinkManager
+    // @State private var showDeepLinkAlert = false
+    // @State private var deepLinkErrorMessage = ""
 
     var body: some View {
         ZStack {
-            VStack(spacing: 0) {
-                TabView(selection: $selectedTab) {
-                    HomeView(selectedTab: $selectedTab)
-                        .tabItem {
-                            Label("Home", systemImage: "house.fill")
-                        }
-                        .tag(0)
+            TabView(selection: $selectedTab) {
+                HomeView(selectedTab: $selectedTab)
+                    .tabItem {
+                        Label("Home", systemImage: "house.fill")
+                    }
+                    .tag(0)
 
-                    PodcastsListView()
-                        .tabItem {
-                            Label("Podcasts", systemImage: "mic.fill")
-                        }
-                        .tag(1)
+                PodcastsListView()
+                    .tabItem {
+                        Label("Podcasts", systemImage: "mic.fill")
+                    }
+                    .tag(1)
 
-                    NotesListView(selectedTab: $selectedTab)
-                        .tabItem {
-                            Label("Notes", systemImage: "note.text")
-                        }
-                        .tag(2)
+                NotesListView(selectedTab: $selectedTab)
+                    .tabItem {
+                        Label("Notes", systemImage: "note.text")
+                    }
+                    .tag(2)
 
-                    SettingsView()
-                        .tabItem {
-                            Label("Settings", systemImage: "gearshape.fill")
-                        }
-                        .tag(3)
-                }
-                .tint(.blue)
+                SettingsView()
+                    .tabItem {
+                        Label("Settings", systemImage: "gearshape.fill")
+                    }
+                    .tag(3)
             }
-
-            // Mini player sits above tab bar
-            VStack {
-                Spacer()
-                if player.showMiniPlayer {
-                    MiniPlayerView()
-                }
+            .tint(.blue)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                // Always render MiniPlayerView, control visibility via opacity
+                MiniPlayerView(showFullPlayer: $showFullPlayer)
+                    .opacity(player.showMiniPlayer ? 1 : 0)
+                    .frame(height: player.showMiniPlayer ? nil : 0)
+                    .clipped()
             }
 
             // Dev status overlay
             DevStatusOverlay()
+        }
+        // FULL PLAYER SHEET - Attached to root ZStack (always exists)
+        .sheet(isPresented: $showFullPlayer, onDismiss: {
+            print("🔴 [ContentView] Sheet onDismiss called")
+        }) {
+            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                PlayerSheetWrapper(
+                    episode: episode,
+                    podcast: podcast,
+                    dismiss: {
+                        print("🔴 [ContentView] Dismiss closure called")
+                        showFullPlayer = false
+                    },
+                    autoPlay: false
+                )
+                .id(episode.id)  // Stable ID to prevent recreation
+                .onAppear {
+                    print("👁️ [ContentView Sheet] PlayerSheetWrapper appeared")
+                }
+                .onDisappear {
+                    print("👁️ [ContentView Sheet] PlayerSheetWrapper disappeared")
+                }
+            } else {
+                VStack(spacing: 16) {
+                    ProgressView()
+                    Text("Loading...")
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(.systemBackground))
+                .onAppear {
+                    print("⚠️ [ContentView Sheet] Fallback view - episode/podcast is nil")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                        if player.currentEpisode == nil || player.currentPodcast == nil {
+                            showFullPlayer = false
+                        }
+                    }
+                }
+            }
         }
         .onAppear {
             checkForSiriIntent()
@@ -149,6 +190,12 @@ struct ContentView: View {
                 UserDefaults.standard.removeObject(forKey: "siriNoteTimestamp")
             }
         }
+        // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
+        // .onChange(of: deepLinkManager.pendingDeepLink) { _, newValue in
+        //     if let deepLink = newValue {
+        //         handleDeepLink(deepLink)
+        //     }
+        // }
         .sheet(isPresented: $showSiriNoteCaptureSheet) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
                 QuickNoteCaptureView(
@@ -158,7 +205,33 @@ struct ContentView: View {
                 )
             }
         }
+        // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
+        // .alert("Deep Link Error", isPresented: $showDeepLinkAlert) {
+        //     Button("OK", role: .cancel) { }
+        // } message: {
+        //     Text(deepLinkErrorMessage)
+        // }
     }
+
+    // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
+    // private func handleDeepLink(_ deepLink: DeepLinkDestination) {
+    //     switch deepLink {
+    //     case .episode(let episodeID, let timestamp):
+    //         print("🔗 Handling deep link for episode: \(episodeID), timestamp: \(timestamp?.description ?? "none")")
+    //
+    //         player.loadEpisodeByID(episodeID, seekTo: timestamp, context: viewContext) { success in
+    //             if success {
+    //                 print("✅ Deep link handled successfully")
+    //             } else {
+    //                 deepLinkErrorMessage = "Episode not found. Make sure you've played this episode before."
+    //                 showDeepLinkAlert = true
+    //             }
+    //
+    //             // Clear the deep link
+    //             deepLinkManager.clearPendingDeepLink()
+    //         }
+    //     }
+    // }
 
     private func checkForSiriIntent() {
         if UserDefaults.standard.bool(forKey: "shouldShowNoteCaptureFromSiri") {
@@ -195,19 +268,23 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            GeometryReader { geometry in
-                ScrollView {
-                    VStack(spacing: 24) {
-                        recentlyPlayedSection
+            ScrollView {
+                VStack(spacing: 24) {
+                    recentlyPlayedSection
 
+                    // Always show divider and notes section once playback history exists
+                    if !historyManager.recentlyPlayed.isEmpty {
                         Divider()
                             .padding(.horizontal)
 
                         recentNotesSection
+                    } else {
+                        // Show only notes section when no playback history
+                        recentNotesSection
                     }
-                    .padding(.bottom, 100)
-                    .frame(minHeight: geometry.size.height)
                 }
+                .padding(.bottom, 100)
+                .frame(maxWidth: .infinity, alignment: .top)
             }
             .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.large)
@@ -226,6 +303,25 @@ struct HomeView: View {
                 if let note = selectedNote {
                     NavigationStack {
                         NoteDetailSheetView(note: note)
+                    }
+                } else {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text("Loading note...")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onAppear {
+                        print("⚠️ Note sheet opened but selectedNote is nil")
+                        // Auto-dismiss after 5 seconds
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                            if selectedNote == nil {
+                                print("❌ Timeout: Note data still nil after 5s")
+                                showNoteDetail = false
+                            }
+                        }
                     }
                 }
             }
@@ -258,14 +354,56 @@ struct HomeView: View {
 
     @ViewBuilder
     private var recentEpisodePlayerSheet: some View {
-        if let episode = selectedRecentEpisode, let podcast = selectedRecentPodcast {
-            PlayerSheetWrapper(
-                episode: episode,
-                podcast: podcast,
-                dismiss: { showRecentEpisodePlayer = false },
-                autoPlay: true,
-                seekToTime: selectedRecentTimestamp
-            )
+        Group {
+            if let episode = selectedRecentEpisode, let podcast = selectedRecentPodcast {
+                PlayerSheetWrapper(
+                    episode: episode,
+                    podcast: podcast,
+                    dismiss: { showRecentEpisodePlayer = false },
+                    autoPlay: true,
+                    seekToTime: selectedRecentTimestamp
+                )
+            } else {
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                    Text("Loading podcast...")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+
+                    if let episode = selectedRecentEpisode {
+                        Text("Episode: \(episode.title)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+
+                    if let podcast = selectedRecentPodcast {
+                        Text("Podcast: \(podcast.title ?? "Unknown")")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onAppear {
+                    print("⚠️⚠️ Episode sheet opened but data is nil")
+                    print("   Episode object: \(selectedRecentEpisode != nil ? "EXISTS" : "nil")")
+                    print("   Episode title: \(selectedRecentEpisode?.title ?? "nil")")
+                    print("   Podcast object: \(selectedRecentPodcast != nil ? "EXISTS" : "nil")")
+                    print("   Podcast title: \(selectedRecentPodcast?.title ?? "nil")")
+
+                    // Auto-dismiss after 5 seconds if still nil (DO NOT force re-render)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                        if selectedRecentEpisode == nil || selectedRecentPodcast == nil {
+                            print("❌ Timeout: Episode data still nil after 5s - closing sheet")
+                            showRecentEpisodePlayer = false
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -355,25 +493,39 @@ struct HomeView: View {
 
     private var recentNotesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if !recentNotes.isEmpty {
+            // Always show header when Recently Played exists
+            if !historyManager.recentlyPlayed.isEmpty {
                 HStack {
                     Text("Recent Notes")
                         .font(.title2)
                         .fontWeight(.bold)
                     Spacer()
-                    NavigationLink(destination: NotesListView(selectedTab: $selectedTab)) {
-                        Text("view all")
-                            .font(.subheadline)
-                            .foregroundColor(.blue)
+                    if !recentNotes.isEmpty {
+                        NavigationLink(destination: NotesListView(selectedTab: $selectedTab)) {
+                            Text("view all")
+                                .font(.subheadline)
+                                .foregroundColor(.blue)
+                        }
                     }
                 }
                 .padding(.horizontal)
             }
 
             if recentNotes.isEmpty {
-                EmptyNotesHomeView(onFindPodcast: {
-                    selectedTab = 1  // Switch to Podcasts tab
-                })
+                // Show empty state only if no Recently Played
+                if historyManager.recentlyPlayed.isEmpty {
+                    EmptyNotesHomeView(onFindPodcast: {
+                        selectedTab = 1  // Switch to Podcasts tab
+                    })
+                } else {
+                    // Show minimal empty state when Recently Played exists
+                    Text("No notes yet. Add notes while listening to remember key moments.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 24)
+                }
             } else {
                 VStack(spacing: 12) {
                     ForEach(recentNotes.prefix(5)) { note in
@@ -384,23 +536,39 @@ struct HomeView: View {
                             NoteCardView(note: note)
                         }
                         .buttonStyle(PlainButtonStyle())
-                    }
-
-                    // View all link at bottom
-                    if recentNotes.count > 5 {
-                        NavigationLink(destination: NotesListView(selectedTab: $selectedTab)) {
-                            HStack {
-                                Spacer()
-                                Text("view all (\(recentNotes.count) notes)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.blue)
-                                Spacer()
+                        .contextMenu {
+                            Button(action: {
+                                print("Share note: \(note.noteText ?? "")")
+                            }) {
+                                Label("Share", systemImage: "square.and.arrow.up")
                             }
-                            .padding(.vertical, 8)
+
+                            Button(role: .destructive, action: {
+                                viewContext.delete(note)
+                                try? viewContext.save()
+                            }) {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
                     }
+
                 }
                 .padding(.horizontal)
+
+                // View all link at bottom
+                if recentNotes.count > 5 {
+                    NavigationLink(destination: NotesListView(selectedTab: $selectedTab)) {
+                        HStack {
+                            Spacer()
+                            Text("view all (\(recentNotes.count) notes)")
+                                .font(.subheadline)
+                                .foregroundColor(.blue)
+                            Spacer()
+                        }
+                        .padding(.vertical, 8)
+                    }
+                    .padding(.horizontal)
+                }
             }
         }
     }
@@ -432,19 +600,44 @@ struct HomeView: View {
     }
 
     private func handleRecentEpisodeTap(_ item: PlaybackHistoryItem) {
-        if let podcast = podcasts.first(where: { $0.id == item.podcastID }) {
-            let episode = RSSEpisode(
-                title: item.episodeTitle,
-                description: "",
-                pubDate: item.lastPlayed,
-                duration: String(Int(item.duration)),
-                audioURL: item.audioURL,
-                imageURL: nil
-            )
-            selectedRecentEpisode = episode
-            selectedRecentPodcast = podcast
-            selectedRecentTimestamp = item.currentTime
-            showRecentEpisodePlayer = true
+        print("📱 handleRecentEpisodeTap called for: \(item.episodeTitle)")
+        print("   Looking for podcast ID: \(item.podcastID)")
+
+        guard let podcast = podcasts.first(where: { $0.id == item.podcastID }) else {
+            print("   ❌ Could not find podcast with ID: \(item.podcastID)")
+            return
+        }
+
+        print("   ✅ Found podcast: \(podcast.title ?? "Unknown")")
+
+        let episode = RSSEpisode(
+            title: item.episodeTitle,
+            description: "",
+            pubDate: item.lastPlayed,
+            duration: String(Int(item.duration)),
+            audioURL: item.audioURL,
+            imageURL: nil
+        )
+
+        print("   ✅ Setting state variables...")
+        print("   Episode ID: \(episode.id)")
+        print("   Podcast ID: \(podcast.id ?? "nil")")
+
+        // Reset any previous state first
+        selectedRecentEpisode = nil
+        selectedRecentPodcast = nil
+        showRecentEpisodePlayer = false
+
+        // Then set new state and show sheet in next run loop
+        DispatchQueue.main.async {
+            self.selectedRecentEpisode = episode
+            self.selectedRecentPodcast = podcast
+            self.selectedRecentTimestamp = item.currentTime
+
+            DispatchQueue.main.async {
+                self.showRecentEpisodePlayer = true
+                print("   ✅ Sheet should now be showing")
+            }
         }
     }
 }
@@ -801,27 +994,29 @@ struct PodcastsListView: View {
                     .padding(.horizontal)
                     .padding(.top, 8)
 
-                    // Explore Section (Grid of Top Podcasts)
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Explore")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .padding(.horizontal)
+                    // Explore Section (Grid of Top Podcasts) - only show when no podcasts
+                    if podcasts.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Explore")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .padding(.horizontal)
 
-                        LazyVGrid(columns: [
-                            GridItem(.flexible(), spacing: 12),
-                            GridItem(.flexible(), spacing: 12),
-                            GridItem(.flexible(), spacing: 12),
-                            GridItem(.flexible(), spacing: 12)
-                        ], spacing: 16) {
-                            ForEach(recommendedPodcasts.prefix(12)) { podcast in
-                                ExplorePodcastCard(podcast: podcast, onTap: {
-                                    selectedExplorePodcast = podcast
-                                    showExplorePodcastDetail = true
-                                })
+                            LazyVGrid(columns: [
+                                GridItem(.flexible(), spacing: 12),
+                                GridItem(.flexible(), spacing: 12),
+                                GridItem(.flexible(), spacing: 12),
+                                GridItem(.flexible(), spacing: 12)
+                            ], spacing: 16) {
+                                ForEach(recommendedPodcasts.prefix(12)) { podcast in
+                                    ExplorePodcastCard(podcast: podcast, onTap: {
+                                        selectedExplorePodcast = podcast
+                                        showExplorePodcastDetail = true
+                                    })
+                                }
                             }
+                            .padding(.horizontal)
                         }
-                        .padding(.horizontal)
                     }
 
                     // Episodes Section (Carousel)
@@ -1092,7 +1287,7 @@ struct PodcastsListView: View {
         // Build lookup dictionaries once - O(n) instead of O(n²)
         let podcastsByTitle: [String: PodcastEntity] = Dictionary(uniqueKeysWithValues:
             podcasts.compactMap { podcast -> (String, PodcastEntity)? in
-                guard let title = podcast.title else { return nil }
+                guard let title = podcast.title, !title.isEmpty else { return nil }
                 return (title, podcast)
             }
         )
@@ -1100,9 +1295,13 @@ struct PodcastsListView: View {
         let noteCountsByEpisode = Dictionary(grouping: allNotes) { $0.episodeTitle ?? "" }
             .mapValues { $0.count }
 
-        let playbackItemsByEpisode = Dictionary(uniqueKeysWithValues:
-            PlaybackHistoryManager.shared.recentlyPlayed.map { ($0.episodeTitle, $0) }
-        )
+        // Safe dictionary creation to avoid duplicate keys crash
+        var playbackItemsByEpisode: [String: PlaybackHistoryItem] = [:]
+        for item in PlaybackHistoryManager.shared.recentlyPlayed {
+            if !item.episodeTitle.isEmpty {
+                playbackItemsByEpisode[item.episodeTitle] = item
+            }
+        }
 
         // Get episodes with notes - now O(n)
         for note in allNotes {
@@ -1690,6 +1889,24 @@ struct NotesListView: View {
                     NavigationStack {
                         NoteDetailSheetView(note: note)
                     }
+                } else {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text("Loading note...")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onAppear {
+                        print("⚠️ Note sheet opened but selectedNote is nil")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                            if selectedNote == nil {
+                                print("❌ Timeout: Note data still nil after 5s")
+                                showNoteDetail = false
+                            }
+                        }
+                    }
                 }
             }
             .alert("Delete Note", isPresented: $showDeleteConfirmation) {
@@ -1774,9 +1991,30 @@ struct NotesListView: View {
                         selectedNote = note
                         showNoteDetail = true
                     }) {
-                        NoteRowDetailView(note: note)
+                        NoteCardView(note: note)
+                            .padding(.horizontal)
+                            .padding(.vertical, 6)
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            noteToDelete = note
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+
+                        Button {
+                            shareNote = note
+                            showShareSheet = true
+                        } label: {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                        }
+                        .tint(.blue)
+                    }
                 }
             }
         }
@@ -1791,9 +2029,30 @@ struct NotesListView: View {
                         selectedNote = note
                         showNoteDetail = true
                     }) {
-                        NoteRowDetailView(note: note)
+                        NoteCardView(note: note)
+                            .padding(.horizontal)
+                            .padding(.vertical, 6)
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            noteToDelete = note
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+
+                        Button {
+                            shareNote = note
+                            showShareSheet = true
+                        } label: {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                        }
+                        .tint(.blue)
+                    }
                 }
             }
         }
@@ -2600,6 +2859,8 @@ struct PlayerSheetWrapper: View {
     var autoPlay: Bool = true
     var seekToTime: TimeInterval? = nil
     @ObservedObject private var player = GlobalPlayerManager.shared
+    @ObservedObject private var downloadManager = EpisodeDownloadManager.shared
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
         ZStack {
@@ -2621,8 +2882,43 @@ struct PlayerSheetWrapper: View {
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
-                            Button(action: dismiss) {
-                                Image(systemName: "xmark.circle.fill")
+                            Menu {
+                                let episodeID = episode.id
+
+                                if downloadManager.isDownloading(episodeID) {
+                                    Button(role: .destructive, action: {
+                                        downloadManager.cancelDownload(episodeID)
+                                    }) {
+                                        Label("Cancel Download", systemImage: "xmark.circle")
+                                    }
+                                } else if downloadManager.isDownloaded(episodeID) {
+                                    Button(role: .destructive, action: {
+                                        showDeleteConfirmation = true
+                                    }) {
+                                        Label("Delete Download", systemImage: "trash")
+                                    }
+                                } else {
+                                    Button(action: {
+                                        downloadManager.downloadEpisode(
+                                            episode,
+                                            podcastTitle: podcast.title ?? "Unknown Podcast",
+                                            podcastFeedURL: podcast.feedURL
+                                        )
+                                    }) {
+                                        Label("Download Episode", systemImage: "arrow.down.circle")
+                                    }
+                                }
+
+                                Divider()
+
+                                Button(action: {
+                                    print("🔽 [PlayerSheet] Hide button tapped - dismissing to mini player")
+                                    dismiss()
+                                }) {
+                                    Label("Hide", systemImage: "chevron.down")
+                                }
+                            } label: {
+                                Image(systemName: "ellipsis.circle.fill")
                                     .font(.title3)
                                     .foregroundColor(.gray)
                             }
@@ -2636,6 +2932,14 @@ struct PlayerSheetWrapper: View {
                 Color.black.opacity(0.5)
                     .ignoresSafeArea()
             }
+        }
+        .alert("Delete Download", isPresented: $showDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                downloadManager.deleteDownload(episode.id)
+            }
+        } message: {
+            Text("Are you sure you want to delete this downloaded episode?")
         }
     }
 }
@@ -3570,6 +3874,7 @@ struct SettingsView: View {
     @ObservedObject var historyManager = PlaybackHistoryManager.shared
     @State private var showOnboarding = false
     @State private var showClearCacheAlert = false
+    @State private var showOPMLOptions = false
 
     var body: some View {
         NavigationStack {
@@ -3588,6 +3893,28 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("Downloads")
+                }
+
+                // OPML Import/Export Section
+                Section {
+                    Button(action: {
+                        showOPMLOptions = true
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.up.arrow.down.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Import/Export OPML")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                } header: {
+                    Text("Podcast Subscriptions")
+                } footer: {
+                    Text("Import subscriptions from other apps or export your current subscriptions.")
                 }
 
                 // Dev Mode Section
@@ -3631,6 +3958,9 @@ struct SettingsView: View {
             .fullScreenCover(isPresented: $showOnboarding) {
                 OnboardingView(isOnboardingComplete: $showOnboarding)
             }
+            .sheet(isPresented: $showOPMLOptions) {
+                OPMLOptionsView()
+            }
         }
     }
 
@@ -3665,10 +3995,205 @@ struct SettingsView: View {
     }
 }
 
+// MARK: - OPML Options View
+
+struct OPMLOptionsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.managedObjectContext) private var viewContext
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \PodcastEntity.title, ascending: true)],
+        animation: .default)
+    private var podcasts: FetchedResults<PodcastEntity>
+
+    @State private var showImportPicker = false
+    @State private var showExportShare = false
+    @State private var exportURL: URL?
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Button(action: {
+                        showImportPicker = true
+                    }) {
+                        HStack {
+                            Image(systemName: "square.and.arrow.down")
+                                .foregroundColor(.blue)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Import OPML")
+                                    .foregroundColor(.primary)
+                                Text("Import your podcast subscriptions from other apps")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+
+                    Button(action: {
+                        exportOPML()
+                    }) {
+                        HStack {
+                            Image(systemName: "square.and.arrow.up")
+                                .foregroundColor(.green)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Export OPML")
+                                    .foregroundColor(.primary)
+                                Text("Save your subscriptions (\(podcasts.count) podcasts)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    .disabled(podcasts.isEmpty)
+                }
+            }
+            .navigationTitle("Import/Export")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            .fileImporter(
+                isPresented: $showImportPicker,
+                allowedContentTypes: [.xml],
+                allowsMultipleSelection: false
+            ) { result in
+                handleImport(result)
+            }
+            .sheet(isPresented: $showExportShare) {
+                if let url = exportURL {
+                    ShareSheet(activityItems: [url])
+                }
+            }
+        }
+    }
+
+    private func exportOPML() {
+        let opml = generateOPML()
+
+        // Save to temp directory
+        let tempDir = FileManager.default.temporaryDirectory
+        let filename = "echonotes_subscriptions_\(Date().timeIntervalSince1970).opml"
+        let fileURL = tempDir.appendingPathComponent(filename)
+
+        do {
+            try opml.write(to: fileURL, atomically: true, encoding: .utf8)
+            exportURL = fileURL
+            showExportShare = true
+        } catch {
+            print("❌ Error exporting OPML: \(error)")
+        }
+    }
+
+    private func generateOPML() -> String {
+        var opml = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <opml version="2.0">
+            <head>
+                <title>EchoNotes Subscriptions</title>
+                <dateCreated>\(Date())</dateCreated>
+            </head>
+            <body>
+        """
+
+        for podcast in podcasts {
+            let title = podcast.title?.replacingOccurrences(of: "&", with: "&amp;")
+                .replacingOccurrences(of: "<", with: "&lt;")
+                .replacingOccurrences(of: ">", with: "&gt;")
+                .replacingOccurrences(of: "\"", with: "&quot;") ?? "Unknown"
+
+            let feedURL = podcast.feedURL ?? ""
+
+            opml += """
+                    <outline type="rss" text="\(title)" xmlUrl="\(feedURL)" />
+
+            """
+        }
+
+        opml += """
+            </body>
+        </opml>
+        """
+
+        return opml
+    }
+
+    private func handleImport(_ result: Result<[URL], Error>) {
+        do {
+            guard let fileURL = try result.get().first else { return }
+
+            // Make sure we can access the file
+            guard fileURL.startAccessingSecurityScopedResource() else {
+                print("❌ Couldn't access file")
+                return
+            }
+
+            defer { fileURL.stopAccessingSecurityScopedResource() }
+
+            Task {
+                do {
+                    let feeds = try await OPMLImportService().parsePOML(from: fileURL)
+
+                    await MainActor.run {
+                        print("✅ Found \(feeds.count) feeds in OPML")
+                        // Import the feeds
+                        for feed in feeds {
+                            importPodcast(feedURL: feed.feedURL)
+                        }
+                        dismiss()
+                    }
+                } catch {
+                    print("❌ Error parsing OPML: \(error)")
+                }
+            }
+        } catch {
+            print("❌ Error importing OPML: \(error)")
+        }
+    }
+
+    private func importPodcast(feedURL: String) {
+        // Check if already exists
+        if podcasts.first(where: { $0.feedURL == feedURL }) != nil {
+            return
+        }
+
+        Task {
+            do {
+                let rssPodcast = try await PodcastRSSService.shared.fetchPodcast(from: feedURL)
+                await MainActor.run {
+                    let newPodcast = PodcastEntity(context: viewContext)
+                    newPodcast.id = rssPodcast.id.uuidString
+                    newPodcast.title = rssPodcast.title
+                    newPodcast.author = rssPodcast.author
+                    newPodcast.podcastDescription = rssPodcast.description
+                    newPodcast.artworkURL = rssPodcast.imageURL
+                    newPodcast.feedURL = rssPodcast.feedURL
+
+                    try? viewContext.save()
+                }
+            } catch {
+                print("❌ Error importing podcast: \(error)")
+            }
+        }
+    }
+}
+
 // MARK: - Downloaded Episodes View
 
 struct DownloadedEpisodesView: View {
     @ObservedObject var downloadManager = EpisodeDownloadManager.shared
+    @Environment(\.managedObjectContext) private var viewContext
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \PodcastEntity.title, ascending: true)],
+        animation: .default)
+    private var podcasts: FetchedResults<PodcastEntity>
+
+    @State private var selectedEpisode: RSSEpisode?
+    @State private var selectedPodcast: PodcastEntity?
+    @State private var showPlayerSheet = false
 
     // Group episodes by podcast title
     var groupedEpisodes: [(podcast: String, episodes: [DownloadedEpisodeInfo])] {
@@ -3679,6 +4204,7 @@ struct DownloadedEpisodesView: View {
                     episodeID: episodeID,
                     episodeTitle: metadata.episodeTitle,
                     podcastTitle: metadata.podcastTitle,
+                    podcastFeedURL: metadata.podcastFeedURL,
                     downloadDate: metadata.downloadDate
                 )
             } else {
@@ -3687,6 +4213,7 @@ struct DownloadedEpisodesView: View {
                     episodeID: episodeID,
                     episodeTitle: "Episode \(episodeID.prefix(8))...",
                     podcastTitle: "Unknown Podcast",
+                    podcastFeedURL: nil,
                     downloadDate: Date.distantPast
                 )
             }
@@ -3722,34 +4249,40 @@ struct DownloadedEpisodesView: View {
                 ForEach(groupedEpisodes, id: \.podcast) { group in
                     Section(header: Text(group.podcast).font(.headline)) {
                         ForEach(group.episodes, id: \.episodeID) { info in
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(info.episodeTitle)
-                                        .font(.headline)
-                                        .lineLimit(2)
+                            Button(action: {
+                                handleDownloadedEpisodeTap(info)
+                            }) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(info.episodeTitle)
+                                            .font(.headline)
+                                            .lineLimit(2)
+                                            .foregroundColor(.primary)
 
-                                    if info.downloadDate != Date.distantPast {
-                                        Text("Downloaded \(info.downloadDate.formatted(date: .abbreviated, time: .omitted))")
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                    } else {
-                                        Text("Downloaded")
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
+                                        if info.downloadDate != Date.distantPast {
+                                            Text("Downloaded \(info.downloadDate.formatted(date: .abbreviated, time: .omitted))")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        } else {
+                                            Text("Downloaded")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        }
                                     }
-                                }
 
-                                Spacer()
+                                    Spacer()
 
-                                Button(action: {
-                                    downloadManager.deleteDownload(info.episodeID)
-                                }) {
-                                    Image(systemName: "trash")
-                                        .foregroundColor(.red)
+                                    Button(action: {
+                                        downloadManager.deleteDownload(info.episodeID)
+                                    }) {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.red)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
+                                .padding(.vertical, 4)
                             }
-                            .padding(.vertical, 4)
+                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                 }
@@ -3757,6 +4290,87 @@ struct DownloadedEpisodesView: View {
         }
         .navigationTitle("Downloaded Episodes")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showPlayerSheet) {
+            if let episode = selectedEpisode, let podcast = selectedPodcast {
+                PlayerSheetWrapper(
+                    episode: episode,
+                    podcast: podcast,
+                    dismiss: { showPlayerSheet = false },
+                    autoPlay: true,
+                    seekToTime: nil
+                )
+            } else {
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                    Text("Loading podcast...")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    Text("Episode: \(selectedEpisode?.title ?? "Unknown")")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onAppear {
+                    print("⚠️ Downloaded episode sheet opened but data is nil")
+                    print("   Episode: \(selectedEpisode?.title ?? "nil")")
+                    print("   Podcast: \(selectedPodcast?.title ?? "nil")")
+
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                        if selectedEpisode == nil || selectedPodcast == nil {
+                            print("❌ Timeout: Downloaded episode data still nil after 5s")
+                            showPlayerSheet = false
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func handleDownloadedEpisodeTap(_ info: DownloadedEpisodeInfo) {
+        print("🎵 Tapped downloaded episode: \(info.episodeTitle)")
+
+        // Try to find podcast by feed URL first (most reliable)
+        var podcast: PodcastEntity?
+        if let feedURL = info.podcastFeedURL {
+            podcast = podcasts.first(where: { $0.feedURL == feedURL })
+            print("   Found podcast by feed URL: \(podcast?.title ?? "nil")")
+        }
+
+        // Fallback: find by title
+        if podcast == nil {
+            podcast = podcasts.first(where: { $0.title == info.podcastTitle })
+            print("   Found podcast by title: \(podcast?.title ?? "nil")")
+        }
+
+        guard let foundPodcast = podcast else {
+            print("❌ Could not find podcast for downloaded episode")
+            return
+        }
+
+        // Get local file URL for downloaded episode
+        guard let localURL = downloadManager.getLocalFileURL(for: info.episodeID) else {
+            print("❌ Could not get local URL for downloaded episode")
+            return
+        }
+
+        print("✅ Playing from local file: \(localURL.path)")
+
+        // Create RSSEpisode from downloaded metadata
+        let episode = RSSEpisode(
+            title: info.episodeTitle,
+            description: "",
+            pubDate: info.downloadDate,
+            duration: "",
+            audioURL: localURL.absoluteString,  // Use local file URL
+            imageURL: nil
+        )
+
+        selectedEpisode = episode
+        selectedPodcast = foundPodcast
+        showPlayerSheet = true
     }
 }
 
@@ -3764,6 +4378,7 @@ struct DownloadedEpisodeInfo {
     let episodeID: String
     let episodeTitle: String
     let podcastTitle: String
+    let podcastFeedURL: String?
     let downloadDate: Date
 }
 
