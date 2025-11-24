@@ -233,6 +233,163 @@ struct DevStatusToggleButton: View {
     }
 }
 
+// MARK: - Debug Console Sheet View
+
+struct DebugConsoleView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.managedObjectContext) private var viewContext
+    @ObservedObject var statusManager = DevStatusManager.shared
+    @State private var showClearConfirmation = false
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Status indicators
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("System Status")
+                            .font(.headline)
+
+                        HStack(spacing: 20) {
+                            StatusIndicator(status: statusManager.rssLoadingStatus, label: "RSS")
+                            StatusIndicator(status: statusManager.playerStatus, label: "Player")
+                            StatusIndicator(status: statusManager.downloadStatus, label: "Downloads")
+                            StatusIndicator(status: statusManager.networkStatus, label: "Network")
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
+
+                    // Log messages
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Activity Log")
+                            .font(.headline)
+
+                        if statusManager.statusMessages.isEmpty {
+                            Text("No activity yet")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding()
+                        } else {
+                            ForEach(statusManager.statusMessages, id: \.self) { message in
+                                Text(message)
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundColor(.primary)
+                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, 8)
+                                    .background(Color(.systemGray6))
+                                    .cornerRadius(6)
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
+
+                    // Clear cache button
+                    Button(action: {
+                        showClearConfirmation = true
+                    }) {
+                        HStack {
+                            Image(systemName: "trash.fill")
+                            Text("Clear All Cache")
+                                .fontWeight(.semibold)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.red)
+                        .cornerRadius(12)
+                    }
+                    .padding(.horizontal)
+                }
+                .padding()
+            }
+            .navigationTitle("Debug Console")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                }
+            }
+            .alert("Clear All Cache?", isPresented: $showClearConfirmation) {
+                Button("Cancel", role: .cancel) {}
+                Button("Clear All", role: .destructive) {
+                    clearAllCache()
+                }
+            } message: {
+                Text("This will delete all podcasts, notes, playback history, and downloaded files. This action cannot be undone.")
+            }
+        }
+    }
+
+    private func clearAllCache() {
+        // Stop player and clear state
+        GlobalPlayerManager.shared.stop()
+
+        // Delete all Core Data entities
+        let fetchRequest1: NSFetchRequest<NSFetchRequestResult> = PodcastEntity.fetchRequest()
+        let deleteRequest1 = NSBatchDeleteRequest(fetchRequest: fetchRequest1)
+
+        let fetchRequest2: NSFetchRequest<NSFetchRequestResult> = NoteEntity.fetchRequest()
+        let deleteRequest2 = NSBatchDeleteRequest(fetchRequest: fetchRequest2)
+
+        do {
+            try viewContext.execute(deleteRequest1)
+            try viewContext.execute(deleteRequest2)
+            try viewContext.save()
+            statusManager.addMessage("✅ Core Data cleared")
+        } catch {
+            statusManager.addMessage("❌ Core Data error: \(error.localizedDescription)")
+        }
+
+        // Clear UserDefaults
+        UserDefaults.standard.removeObject(forKey: "playbackHistory")
+        UserDefaults.standard.removeObject(forKey: "downloadedEpisodes")
+        statusManager.addMessage("✅ UserDefaults cleared")
+
+        // Clear downloaded files
+        if let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let downloadsPath = documentsPath.appendingPathComponent("Downloads", isDirectory: true)
+            do {
+                if FileManager.default.fileExists(atPath: downloadsPath.path) {
+                    try FileManager.default.removeItem(at: downloadsPath)
+                    statusManager.addMessage("✅ Downloaded files cleared")
+                }
+            } catch {
+                statusManager.addMessage("❌ File deletion error: \(error.localizedDescription)")
+            }
+        }
+
+        // Reset managers
+        PlaybackHistoryManager.shared.recentlyPlayed.removeAll()
+        EpisodeDownloadManager.shared.downloadedEpisodes.removeAll()
+        EpisodeDownloadManager.shared.downloadProgress.removeAll()
+
+        statusManager.addMessage("🎉 Cache cleared! App reset to zero state")
+    }
+}
+
+struct StatusIndicator: View {
+    let status: DevStatusManager.LoadingStatus
+    let label: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: status.icon)
+                .font(.title2)
+                .foregroundColor(status.color)
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
 #Preview {
     ZStack {
         Color.blue.ignoresSafeArea()

@@ -404,12 +404,28 @@ class GlobalPlayerManager: ObservableObject {
         guard let episode = currentEpisode,
               let podcast = currentPodcast else { return }
 
+        // Use feedURL as fallback ID if podcast.id is nil
+        // This ensures consistent identification across app sessions
+        let podcastID: String
+        if let id = podcast.id {
+            podcastID = id
+        } else if let feedURL = podcast.feedURL {
+            // Generate deterministic ID from feed URL
+            podcastID = "feed_\(abs(feedURL.hashValue))"
+            print("⚠️ Podcast ID is nil, using feed URL hash: \(podcastID)")
+        } else {
+            // Last resort: use podcast title hash
+            let title = podcast.title ?? "Unknown"
+            podcastID = "title_\(abs(title.hashValue))"
+            print("⚠️ Podcast ID and feedURL are nil, using title hash: \(podcastID)")
+        }
+
         Task { @MainActor in
             PlaybackHistoryManager.shared.updatePlayback(
                 episodeID: episode.id,
                 episodeTitle: episode.title,
                 podcastTitle: podcast.title ?? "Unknown Podcast",
-                podcastID: podcast.id ?? UUID().uuidString,
+                podcastID: podcastID,
                 audioURL: episode.audioURL ?? "",
                 currentTime: self.currentTime,
                 duration: self.duration
@@ -543,8 +559,35 @@ class EpisodeDownloadManager: NSObject, ObservableObject {
 
     // MARK: - File Management
 
+    /// Sanitizes episode ID (which is often a full URL) into a safe filename
+    private func sanitizeFilename(from episodeID: String) -> String {
+        // Create a hash for long URLs to ensure consistent, valid filenames
+        let hash = abs(episodeID.hashValue)
+
+        // Also create a readable prefix from the URL
+        var sanitized = episodeID
+            .replacingOccurrences(of: "https://", with: "")
+            .replacingOccurrences(of: "http://", with: "")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: ":", with: "_")
+            .replacingOccurrences(of: "?", with: "_")
+            .replacingOccurrences(of: "&", with: "_")
+            .replacingOccurrences(of: "=", with: "_")
+            .replacingOccurrences(of: "%", with: "_")
+            .replacingOccurrences(of: "#", with: "_")
+            .replacingOccurrences(of: " ", with: "_")
+
+        // Limit prefix length and add hash for uniqueness
+        if sanitized.count > 50 {
+            sanitized = String(sanitized.prefix(50))
+        }
+
+        return "\(sanitized)_\(hash)"
+    }
+
     func getLocalFileURL(for episodeID: String) -> URL? {
         guard let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            print("❌ Could not get documents path")
             return nil
         }
 
@@ -552,10 +595,24 @@ class EpisodeDownloadManager: NSObject, ObservableObject {
 
         // Create directory if needed
         if !FileManager.default.fileExists(atPath: downloadsPath.path) {
-            try? FileManager.default.createDirectory(at: downloadsPath, withIntermediateDirectories: true)
+            do {
+                try FileManager.default.createDirectory(at: downloadsPath, withIntermediateDirectories: true)
+                print("✅ Created Downloads directory: \(downloadsPath.path)")
+            } catch {
+                print("❌ Failed to create Downloads directory: \(error)")
+                return nil
+            }
         }
 
-        return downloadsPath.appendingPathComponent("\(episodeID).mp3")
+        let safeFilename = sanitizeFilename(from: episodeID)
+        let fileURL = downloadsPath.appendingPathComponent("\(safeFilename).mp3")
+
+        print("📁 File path for episode:")
+        print("   Original ID: \(episodeID.prefix(100))...")
+        print("   Safe filename: \(safeFilename).mp3")
+        print("   Full path: \(fileURL.path)")
+
+        return fileURL
     }
 
     func isDownloaded(_ episodeID: String) -> Bool {
@@ -604,8 +661,18 @@ class EpisodeDownloadManager: NSObject, ObservableObject {
 
 extension EpisodeDownloadManager: URLSessionDownloadDelegate {
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        guard let episodeID = downloadTask.taskDescription,
-              let destinationURL = getLocalFileURL(for: episodeID) else {
+        print("\n📥 Download finished!")
+        print("   Temp location: \(location.path)")
+
+        guard let episodeID = downloadTask.taskDescription else {
+            print("❌ No episode ID in task description")
+            return
+        }
+
+        print("   Episode ID: \(episodeID.prefix(100))...")
+
+        guard let destinationURL = getLocalFileURL(for: episodeID) else {
+            print("❌ Could not get destination URL for episode")
             return
         }
 
@@ -613,10 +680,22 @@ extension EpisodeDownloadManager: URLSessionDownloadDelegate {
         do {
             // Remove existing file if it exists
             if FileManager.default.fileExists(atPath: destinationURL.path) {
+                print("   Removing existing file at destination")
                 try FileManager.default.removeItem(at: destinationURL)
             }
 
+            print("   Moving file from temp to permanent location...")
             try FileManager.default.moveItem(at: location, to: destinationURL)
+            print("   ✅ File moved successfully!")
+
+            // Verify file exists
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+                let attributes = try? FileManager.default.attributesOfItem(atPath: destinationURL.path)
+                let fileSize = attributes?[.size] as? Int64 ?? 0
+                print("   ✅ File verified! Size: \(fileSize) bytes")
+            } else {
+                print("   ⚠️ File does not exist after move!")
+            }
 
             DispatchQueue.main.async {
                 // Explicitly trigger objectWillChange before modifying
@@ -631,11 +710,12 @@ extension EpisodeDownloadManager: URLSessionDownloadDelegate {
                     self.episodeMetadata[episodeID] = metadata
                     self.pendingMetadata.removeValue(forKey: episodeID)
                     self.saveEpisodeMetadata()
+                    print("   ✅ Metadata saved")
                 }
 
                 self.saveDownloadedEpisodes()
 
-                print("✅ Download completed for episode: \(episodeID)")
+                print("✅ Download completed for episode: \(episodeID.prefix(100))...")
                 print("   Downloaded episodes count: \(self.downloadedEpisodes.count)")
                 print("   Is downloaded: \(self.downloadedEpisodes.contains(episodeID))")
 
@@ -645,10 +725,14 @@ extension EpisodeDownloadManager: URLSessionDownloadDelegate {
                 }
             }
         } catch {
-            print("Error moving downloaded file: \(error)")
+            print("❌ Error moving downloaded file: \(error)")
+            print("   From: \(location.path)")
+            print("   To: \(destinationURL.path)")
+            print("   Error details: \(error.localizedDescription)")
+
             Task { @MainActor in
                 DevStatusManager.shared.downloadStatus = .error("Move failed")
-                DevStatusManager.shared.addMessage("Error: \(error.localizedDescription)")
+                DevStatusManager.shared.addMessage("❌ Error: \(error.localizedDescription)")
             }
         }
     }

@@ -138,9 +138,6 @@ struct ContentView: View {
                     .frame(height: player.showMiniPlayer ? nil : 0)
                     .clipped()
             }
-
-            // Dev status overlay
-            DevStatusOverlay()
         }
         // FULL PLAYER SHEET - Attached to root ZStack (always exists)
         .sheet(isPresented: $showFullPlayer, onDismiss: {
@@ -262,7 +259,6 @@ struct HomeView: View {
     @State private var selectedRecentEpisode: RSSEpisode?
     @State private var selectedRecentPodcast: PodcastEntity?
     @State private var selectedRecentTimestamp: TimeInterval = 0
-    @State private var showNoteDetail = false
     @State private var selectedNote: NoteEntity?
     @State private var versionString: String = ""
 
@@ -288,49 +284,15 @@ struct HomeView: View {
             }
             .navigationTitle("Home")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    DevStatusToggleButton()
-                }
-            }
             .sheet(isPresented: $showAddPodcastSheet) {
                 PodcastDiscoveryView()
             }
             .sheet(isPresented: $showRecentEpisodePlayer) {
                 recentEpisodePlayerSheet
             }
-            .sheet(isPresented: $showNoteDetail) {
-                if let note = selectedNote {
-                    NavigationStack {
-                        NoteDetailSheetView(note: note)
-                    }
-                } else {
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                        Text("Loading note...")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .onAppear {
-                        print("⚠️ Note sheet opened but selectedNote is nil")
-                        // Auto-dismiss after 5 seconds
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                            if selectedNote == nil {
-                                print("❌ Timeout: Note data still nil after 5s")
-                                showNoteDetail = false
-                            }
-                        }
-                    }
-                }
-            }
-            .safeAreaInset(edge: .bottom) {
-                versionFooter
-            }
-            .onAppear {
-                if versionString.isEmpty {
-                    versionString = generateVersionString()
+            .sheet(item: $selectedNote) { note in
+                NavigationStack {
+                    NoteDetailSheetView(note: note)
                 }
             }
         }
@@ -531,7 +493,6 @@ struct HomeView: View {
                     ForEach(recentNotes.prefix(5)) { note in
                         Button(action: {
                             selectedNote = note
-                            showNoteDetail = true
                         }) {
                             NoteCardView(note: note)
                         }
@@ -600,15 +561,67 @@ struct HomeView: View {
     }
 
     private func handleRecentEpisodeTap(_ item: PlaybackHistoryItem) {
-        print("📱 handleRecentEpisodeTap called for: \(item.episodeTitle)")
-        print("   Looking for podcast ID: \(item.podcastID)")
+        print("\n📱 handleRecentEpisodeTap called for: \(item.episodeTitle)")
+        print("   Looking for podcast:")
+        print("   - ID from history: \(item.podcastID)")
+        print("   - Title from history: \(item.podcastTitle)")
 
-        guard let podcast = podcasts.first(where: { $0.id == item.podcastID }) else {
-            print("   ❌ Could not find podcast with ID: \(item.podcastID)")
+        // Multi-strategy podcast lookup:
+        // 1. Try exact ID match
+        var podcast = podcasts.first(where: { $0.id == item.podcastID })
+
+        if podcast == nil {
+            print("   ⚠️ No exact ID match, trying feedURL hash match...")
+            // 2. If saved ID is a feed hash, find by feed hash
+            if item.podcastID.starts(with: "feed_") {
+                podcast = podcasts.first(where: {
+                    if let feedURL = $0.feedURL {
+                        return "feed_\(abs(feedURL.hashValue))" == item.podcastID
+                    }
+                    return false
+                })
+            }
+        }
+
+        if podcast == nil {
+            print("   ⚠️ No feed hash match, trying title hash match...")
+            // 3. If saved ID is a title hash, find by title hash
+            if item.podcastID.starts(with: "title_") {
+                podcast = podcasts.first(where: {
+                    let title = $0.title ?? "Unknown"
+                    return "title_\(abs(title.hashValue))" == item.podcastID
+                })
+            }
+        }
+
+        if podcast == nil {
+            print("   ⚠️ No hash matches, trying exact title match...")
+            // 4. Try exact title match
+            podcast = podcasts.first(where: {
+                ($0.title ?? "").lowercased() == item.podcastTitle.lowercased()
+            })
+        }
+
+        if podcast == nil {
+            print("   ⚠️ No exact title match, trying partial title match...")
+            // 5. Try partial title match
+            podcast = podcasts.first(where: {
+                ($0.title ?? "").lowercased().contains(item.podcastTitle.lowercased()) ||
+                item.podcastTitle.lowercased().contains(($0.title ?? "").lowercased())
+            })
+        }
+
+        guard let foundPodcast = podcast else {
+            print("   ❌ Could not find podcast with any strategy")
+            print("   Available podcasts:")
+            for p in podcasts.prefix(5) {
+                print("     - \(p.title ?? "Unknown") (ID: \(p.id ?? "nil"))")
+            }
             return
         }
 
-        print("   ✅ Found podcast: \(podcast.title ?? "Unknown")")
+        print("   ✅ Found podcast: \(foundPodcast.title ?? "Unknown")")
+        print("   ✅ Podcast ID: \(foundPodcast.id ?? "nil")")
 
         let episode = RSSEpisode(
             title: item.episodeTitle,
@@ -621,7 +634,6 @@ struct HomeView: View {
 
         print("   ✅ Setting state variables...")
         print("   Episode ID: \(episode.id)")
-        print("   Podcast ID: \(podcast.id ?? "nil")")
 
         // Reset any previous state first
         selectedRecentEpisode = nil
@@ -631,7 +643,7 @@ struct HomeView: View {
         // Then set new state and show sheet in next run loop
         DispatchQueue.main.async {
             self.selectedRecentEpisode = episode
-            self.selectedRecentPodcast = podcast
+            self.selectedRecentPodcast = foundPodcast
             self.selectedRecentTimestamp = item.currentTime
 
             DispatchQueue.main.async {
@@ -1850,7 +1862,6 @@ struct NotesListView: View {
     @State private var showTagNotesSheet = false
     @State private var noteToDelete: NoteEntity?
     @State private var showDeleteConfirmation = false
-    @State private var showNoteDetail = false
     @State private var selectedNote: NoteEntity?
 
     var filteredNotes: [NoteEntity] {
@@ -1885,29 +1896,9 @@ struct NotesListView: View {
                     TagNotesSheet(tag: tag, notes: getNotesForTag(tag))
                 }
             }
-            .sheet(isPresented: $showNoteDetail) {
-                if let note = selectedNote {
-                    NavigationStack {
-                        NoteDetailSheetView(note: note)
-                    }
-                } else {
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                        Text("Loading note...")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .onAppear {
-                        print("⚠️ Note sheet opened but selectedNote is nil")
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                            if selectedNote == nil {
-                                print("❌ Timeout: Note data still nil after 5s")
-                                showNoteDetail = false
-                            }
-                        }
-                    }
+            .sheet(item: $selectedNote) { note in
+                NavigationStack {
+                    NoteDetailSheetView(note: note)
                 }
             }
             .alert("Delete Note", isPresented: $showDeleteConfirmation) {
@@ -1990,7 +1981,6 @@ struct NotesListView: View {
                 ForEach(notesForDate) { note in
                     Button(action: {
                         selectedNote = note
-                        showNoteDetail = true
                     }) {
                         NoteCardView(note: note)
                             .padding(.horizontal)
@@ -2028,7 +2018,6 @@ struct NotesListView: View {
                 ForEach(notesForEpisode) { note in
                     Button(action: {
                         selectedNote = note
-                        showNoteDetail = true
                     }) {
                         NoteCardView(note: note)
                             .padding(.horizontal)
@@ -3918,13 +3907,14 @@ struct SettingsView: View {
     @State private var showOnboarding = false
     @State private var showClearCacheAlert = false
     @State private var showOPMLOptions = false
+    @State private var showDebugConsole = false
 
     private var currentPID: String {
         String(ProcessInfo.processInfo.processIdentifier)
     }
 
     private var appVersion: String {
-        return "v0.01 + 2025.11.24.00.18"
+        return "v0.01 + 2025.11.24.02.05"
     }
 
     var body: some View {
@@ -3972,6 +3962,21 @@ struct SettingsView: View {
                 // Dev Mode Section
                 Section {
                     Button(action: {
+                        showDebugConsole = true
+                    }) {
+                        HStack {
+                            Image(systemName: "ant.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Debug Console")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                    }
+
+                    Button(action: {
                         showClearCacheAlert = true
                     }) {
                         HStack {
@@ -4012,6 +4017,9 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showOPMLOptions) {
                 OPMLOptionsView()
+            }
+            .sheet(isPresented: $showDebugConsole) {
+                DebugConsoleView()
             }
 
                 // PID and Version Display at bottom center
@@ -4255,9 +4263,7 @@ struct DownloadedEpisodesView: View {
         animation: .default)
     private var podcasts: FetchedResults<PodcastEntity>
 
-    @State private var selectedEpisode: RSSEpisode?
-    @State private var selectedPodcast: PodcastEntity?
-    @State private var showPlayerSheet = false
+    @State private var episodePlayerData: EpisodePlayerData?
 
     // Group episodes by podcast title
     var groupedEpisodes: [(podcast: String, episodes: [DownloadedEpisodeInfo])] {
@@ -4354,42 +4360,14 @@ struct DownloadedEpisodesView: View {
         }
         .navigationTitle("Downloaded Episodes")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showPlayerSheet) {
-            if let episode = selectedEpisode, let podcast = selectedPodcast {
-                PlayerSheetWrapper(
-                    episode: episode,
-                    podcast: podcast,
-                    dismiss: { showPlayerSheet = false },
-                    autoPlay: true,
-                    seekToTime: nil
-                )
-            } else {
-                VStack(spacing: 16) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                    Text("Loading podcast...")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    Text("Episode: \(selectedEpisode?.title ?? "Unknown")")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .onAppear {
-                    print("⚠️ Downloaded episode sheet opened but data is nil")
-                    print("   Episode: \(selectedEpisode?.title ?? "nil")")
-                    print("   Podcast: \(selectedPodcast?.title ?? "nil")")
-
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                        if selectedEpisode == nil || selectedPodcast == nil {
-                            print("❌ Timeout: Downloaded episode data still nil after 5s")
-                            showPlayerSheet = false
-                        }
-                    }
-                }
-            }
+        .sheet(item: $episodePlayerData) { playerData in
+            PlayerSheetWrapper(
+                episode: playerData.episode,
+                podcast: playerData.podcast,
+                dismiss: { episodePlayerData = nil },
+                autoPlay: true,
+                seekToTime: playerData.seekToTime
+            )
         }
     }
 
@@ -4422,19 +4400,35 @@ struct DownloadedEpisodesView: View {
 
         print("✅ Playing from local file: \(localURL.path)")
 
+        // Verify file exists
+        if !FileManager.default.fileExists(atPath: localURL.path) {
+            print("❌ Local file does not exist at path: \(localURL.path)")
+            return
+        }
+
+        // Get file size for verification
+        if let attributes = try? FileManager.default.attributesOfItem(atPath: localURL.path),
+           let fileSize = attributes[.size] as? Int64 {
+            print("📦 Local file size: \(fileSize) bytes")
+            if fileSize == 0 {
+                print("❌ Local file is empty!")
+                return
+            }
+        }
+
         // Create RSSEpisode from downloaded metadata
+        // IMPORTANT: Must use absoluteString to preserve file:// scheme for AVPlayer
         let episode = RSSEpisode(
             title: info.episodeTitle,
             description: "",
             pubDate: info.downloadDate,
             duration: "",
-            audioURL: localURL.absoluteString,  // Use local file URL
+            audioURL: localURL.absoluteString,
             imageURL: nil
         )
 
-        selectedEpisode = episode
-        selectedPodcast = foundPodcast
-        showPlayerSheet = true
+        print("✅ Setting episode player data - sheet will open")
+        episodePlayerData = EpisodePlayerData(episode: episode, podcast: foundPodcast)
     }
 }
 
@@ -4444,6 +4438,19 @@ struct DownloadedEpisodeInfo {
     let podcastTitle: String
     let podcastFeedURL: String?
     let downloadDate: Date
+}
+
+struct EpisodePlayerData: Identifiable {
+    let id = UUID()
+    let episode: RSSEpisode
+    let podcast: PodcastEntity
+    let seekToTime: TimeInterval?
+
+    init(episode: RSSEpisode, podcast: PodcastEntity, seekToTime: TimeInterval? = nil) {
+        self.episode = episode
+        self.podcast = podcast
+        self.seekToTime = seekToTime
+    }
 }
 
 // MARK: - Episode Detail View
