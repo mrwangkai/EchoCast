@@ -20,144 +20,44 @@ struct SheetIdentifier: Identifiable, Equatable {
 }
 
 struct MiniPlayerView: View {
-    @Binding var showFullPlayer: Bool  // NOW CONTROLLED BY PARENT (ContentView)
+    @Binding var showFullPlayer: Bool
     @ObservedObject var player = GlobalPlayerManager.shared
     @State private var showNoteCaptureSheet = false
     @State private var currentTimestamp = ""
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        // Always render, no conditional wrapper
         Group {
-            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                VStack(spacing: 0) {
-                // Mini player controls with padding
-                VStack(spacing: 12) {
-                    // First row: Episode info and playback controls
-                    HStack(spacing: 12) {
-                        // Artwork (square with 8px radius)
-                        CachedAsyncImage(url: episode.imageURL ?? player.currentPodcast?.artworkURL) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 48, height: 48)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        } placeholder: {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.blue.opacity(0.2))
-                                .frame(width: 48, height: 48)
-                                .overlay(
-                                    Image(systemName: "music.note")
-                                        .font(.system(size: 20))
-                                        .foregroundColor(.blue)
-                                )
-                        }
-                        .id(episode.id)  // Force view recreation when episode changes
+            if let episode = player.currentEpisode, let _ = player.currentPodcast {
+                // STATE B: Episode playing - single row layout
+                HStack(spacing: 12) {
+                    // Artwork
+                    artworkView(for: episode)
 
-                        // Episode info
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(episode.title)
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .lineLimit(1)
+                    // Episode info
+                    episodeInfoView(for: episode)
 
-                            HStack(spacing: 4) {
-                                if let podcastTitle = player.currentPodcast?.title {
-                                    Text(podcastTitle)
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                        .lineLimit(1)
-                                }
+                    Spacer()
 
-                                Text("•")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-
-                                Text(formatTime(player.currentTime))
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        // Playback controls
-                        HStack(spacing: 16) {
-                            Button(action: {
-                                player.togglePlayPause()
-                            }) {
-                                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                                    .font(.system(size: 28))
-                                    .foregroundColor(.primary)
-                            }
-
-                            Button(action: {
-                                player.closeMiniPlayer()
-                            }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.gray)
-                            }
-                        }
+                    // Action buttons
+                    HStack(spacing: 8) {
+                        addNoteButton
+                        playPauseButton
                     }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        print("📱 [MiniPlayer] Tap detected - opening full player")
-                        showFullPlayer = true
-                    }
-
-                    // Second row: Add note button (shortened to match artwork padding)
-                    HStack(spacing: 12) {
-                        Button(action: {
-                            currentTimestamp = formatTime(player.currentTime)
-                            player.pause()
-                            showNoteCaptureSheet = true
-                        }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "note.text.badge.plus")
-                                    .font(.system(size: 16))
-                                Text("Add Note")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(Color.orange)
-                            .cornerRadius(8)
-                        }
-
-                        Spacer()
-                    }
-                    .padding(.leading, 48 + 12) // Artwork width + spacing
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 8)
-                .background(Color(.systemBackground))
-
-                // Progress bar at bottom
-                GeometryReader { geometry in
-                    Rectangle()
-                        .fill(Color.blue)
-                        .frame(width: geometry.size.width * CGFloat(player.currentTime / max(player.duration, 1)), height: 3)
+                .padding(12)
+                .background(Color(red: 0.2, green: 0.2, blue: 0.2))
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: -2)
+                .padding(.horizontal, 12)
+                .padding(.bottom, 74)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    // Only open full player if not tapping buttons
+                    showFullPlayer = true
                 }
-                .frame(height: 3)
-            }
-            .background(Color(.systemBackground))
-            .cornerRadius(12)
-            .shadow(
-                color: colorScheme == .dark
-                    ? Color.white.opacity(0.15)
-                    : Color.black.opacity(0.15),
-                radius: colorScheme == .dark ? 8 : 4,
-                x: 0,
-                y: colorScheme == .dark ? 4 : 3
-            )
-            .padding(.horizontal, 12)
-            .padding(.bottom, 74)
             }
         }
-        // FULL PLAYER SHEET REMOVED - Now managed by ContentView at root level
         .sheet(isPresented: $showNoteCaptureSheet) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
                 QuickNoteCaptureView(
@@ -167,6 +67,77 @@ struct MiniPlayerView: View {
                 )
             }
         }
+    }
+
+    // MARK: - Component Views
+
+    private func artworkView(for episode: RSSEpisode) -> some View {
+        AsyncImage(url: URL(string: episode.imageURL ?? player.currentPodcast?.artworkURL ?? "")) { phase in
+            switch phase {
+            case .success(let image):
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            case .empty, .failure:
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.gray.opacity(0.3))
+                    .overlay(
+                        Image(systemName: "podcast.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.white.opacity(0.5))
+                    )
+            default:
+                EmptyView()
+            }
+        }
+        .frame(width: 48, height: 48)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func episodeInfoView(for episode: RSSEpisode) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(episode.title)
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundColor(.white)
+                .lineLimit(1)
+
+            if let podcastTitle = player.currentPodcast?.title {
+                Text(podcastTitle)
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundColor(.white.opacity(0.7))
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    private var addNoteButton: some View {
+        Button(action: {
+            currentTimestamp = formatTime(player.currentTime)
+            player.pause()
+            showNoteCaptureSheet = true
+        }) {
+            Image(systemName: "note.text.badge.plus")
+                .font(.system(size: 20, weight: .medium))
+                .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702))
+        }
+        .frame(width: 40, height: 40)
+        .buttonStyle(.plain)
+    }
+
+    private var playPauseButton: some View {
+        Button(action: {
+            if player.isPlaying {
+                player.pause()
+            } else {
+                player.play()
+            }
+        }) {
+            Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                .font(.system(size: 20, weight: .medium))
+                .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702))
+        }
+        .frame(width: 40, height: 40)
+        .buttonStyle(.plain)
     }
 
     private func formatTime(_ time: TimeInterval) -> String {
