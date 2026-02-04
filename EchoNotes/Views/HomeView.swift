@@ -103,10 +103,8 @@ struct HomeView: View {
             }
         }
         .sheet(isPresented: $showingPlayerSheet) {
-            if let episode = player.currentEpisode, let _ = player.currentPodcast {
-                // TODO: Replace with EpisodePlayerView when created
-                Text("Player for: \(episode.title)")
-                    .padding()
+            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                EpisodePlayerView(episode: episode, podcast: podcast)
             }
         }
     }

@@ -71,22 +71,13 @@ struct ContentView: View {
             print("🔴 [ContentView] Sheet onDismiss called")
         }) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                PlayerSheetWrapper(
-                    episode: episode,
-                    podcast: podcast,
-                    dismiss: {
-                        print("🔴 [ContentView] Dismiss closure called")
-                        showFullPlayer = false
-                    },
-                    autoPlay: false
-                )
-                .id(episode.id)  // Stable ID to prevent recreation
-                .onAppear {
-                    print("👁️ [ContentView Sheet] PlayerSheetWrapper appeared")
-                }
-                .onDisappear {
-                    print("👁️ [ContentView Sheet] PlayerSheetWrapper disappeared")
-                }
+                EpisodePlayerView(episode: episode, podcast: podcast)
+                    .onAppear {
+                        print("👁️ [ContentView Sheet] EpisodePlayerView appeared")
+                    }
+                    .onDisappear {
+                        print("👁️ [ContentView Sheet] EpisodePlayerView disappeared")
+                    }
             } else {
                 VStack(spacing: 16) {
                     ProgressView()
