@@ -17,7 +17,7 @@ struct OPMLFeed {
 
 // MARK: - OPML Import Service
 
-class OPMLImportService: NSObject, XMLParserDelegate {
+class OPMLImportService: NSObject, XMLParserDelegate, @unchecked Sendable {
     private var feeds: [OPMLFeed] = []
     private var currentElement = ""
     private var currentTitle = ""
