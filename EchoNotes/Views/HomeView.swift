@@ -81,14 +81,21 @@ struct HomeView: View {
                 .foregroundColor(.echoTextPrimary)
 
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                ContinueListeningPlaceholder(
-                    episodeTitle: episode.title,
-                    podcastTitle: podcast.title ?? "Unknown Podcast",
-                    progress: player.duration > 0 ? player.currentTime / player.duration : 0
+                ContinueListeningCard(
+                    episode: continueListeningEpisodeFromPlayer(episode: episode, podcast: podcast),
+                    onTap: {
+                        showingPlayerSheet = true
+                    },
+                    onPlayTap: {
+                        // Resume/toggle playback
+                        if player.isPlaying {
+                            player.pause()
+                        } else {
+                            player.play()
+                        }
+                    }
                 )
-                .onTapGesture {
-                    showingPlayerSheet = true
-                }
+                .frame(width: 327)
             } else {
                 Text("No episodes playing")
                     .font(.bodyEcho())
@@ -104,6 +111,33 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Helper Methods
+
+    private func continueListeningEpisodeFromPlayer(episode: RSSEpisode, podcast: PodcastEntity) -> ContinueListeningEpisode {
+        let notesCount = recentNotes.filter { $0.episodeTitle == episode.title }.count
+        let remaining = (player.duration - player.currentTime)
+        let timeRemaining = formatTimeRemaining(remaining)
+
+        return ContinueListeningEpisode(
+            id: episode.id,
+            title: episode.title,
+            podcastName: podcast.title ?? "Unknown Podcast",
+            artworkURL: episode.imageURL ?? podcast.artworkURL,
+            progress: player.duration > 0 ? player.currentTime / player.duration : 0,
+            notesCount: notesCount,
+            timeRemaining: timeRemaining,
+            audioURL: episode.audioURL,
+            duration: player.duration,
+            currentTime: player.currentTime
+        )
+    }
+
+    private func formatTimeRemaining(_ seconds: TimeInterval) -> String {
+        let mins = Int(seconds) / 60
+        let secs = Int(seconds) % 60
+        return String(format: "%d:%02d", mins, secs)
+    }
+
     // MARK: - Recent Notes Section
 
     private var recentNotesSection: some View {
@@ -113,7 +147,7 @@ struct HomeView: View {
                 .foregroundColor(.echoTextPrimary)
 
             ForEach(recentNotes.prefix(5)) { note in
-                NoteCardPlaceholder(note: note)
+                NoteCardView(note: note)
             }
         }
     }
@@ -147,66 +181,3 @@ struct HomeView: View {
     }
 }
 
-// MARK: - Placeholder Components (Temporary)
-
-struct ContinueListeningPlaceholder: View {
-    let episodeTitle: String
-    let podcastTitle: String
-    let progress: Double
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(episodeTitle)
-                .font(.bodyRoundedMedium())
-                .foregroundColor(.echoTextPrimary)
-                .lineLimit(2)
-
-            Text(podcastTitle)
-                .font(.captionRounded())
-                .foregroundColor(.echoTextSecondary)
-
-            ProgressView(value: progress)
-                .tint(.mintAccent)
-        }
-        .padding(EchoSpacing.noteCardPadding)
-        .background(Color.noteCardBackground)
-        .cornerRadius(EchoSpacing.noteCardCornerRadius)
-    }
-}
-
-struct NoteCardPlaceholder: View {
-    let note: NoteEntity
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if let showTitle = note.showTitle {
-                Text(showTitle)
-                    .font(.captionRounded())
-                    .foregroundColor(.echoTextSecondary)
-            }
-
-            if let noteText = note.noteText {
-                Text(noteText)
-                    .font(.bodyEcho())
-                    .foregroundColor(.echoTextPrimary)
-                    .lineLimit(3)
-            }
-
-            if let timestamp = note.timestamp {
-                Text(timestamp)
-                    .font(.caption2Medium())
-                    .foregroundColor(.mintAccent)
-            }
-        }
-        .padding(EchoSpacing.noteCardPadding)
-        .background(Color.noteCardBackground)
-        .cornerRadius(EchoSpacing.noteCardCornerRadius)
-    }
-}
-
-// MARK: - Preview
-
-#Preview {
-    HomeView()
-        .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
-}
