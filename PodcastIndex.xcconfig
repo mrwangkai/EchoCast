@@ -1,0 +1,5 @@
+// Taddy API Configuration
+// API key and user ID from taddy.org
+
+TADDY_API_KEY = a98822277e6e78216beac2b42c4db68a3606fc5dfc23c54bf1188daa7e4f7b40d1f4cd3f31a46549630bc5d7983f6a2398
+TADDY_USER_ID = 1

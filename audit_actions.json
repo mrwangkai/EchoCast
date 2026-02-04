@@ -1,0 +1,129 @@
+[
+  {
+    "type": "duplicate",
+    "filename": "AddNoteSheet.swift",
+    "keep": "EchoNotes/Views/Player/AddNoteSheet.swift",
+    "remove": "EchoNotes/Views/AddNoteSheet.swift",
+    "identical": true
+  },
+  {
+    "type": "duplicate",
+    "filename": "EpisodeInfoView.swift",
+    "keep": "EchoNotes/Views/Player/EpisodeInfoView.swift",
+    "remove": "EchoNotes/Views/EpisodeInfoView.swift",
+    "identical": false
+  },
+  {
+    "type": "duplicate",
+    "filename": "ListeningView.swift",
+    "keep": "EchoNotes/Views/Player/ListeningView.swift",
+    "remove": "EchoNotes/Views/ListeningView.swift",
+    "identical": false
+  },
+  {
+    "type": "duplicate",
+    "filename": "NotesView.swift",
+    "keep": "EchoNotes/Views/Player/NotesView.swift",
+    "remove": "EchoNotes/Views/NotesView.swift",
+    "identical": true
+  },
+  {
+    "type": "duplicate",
+    "filename": "PlayerView.swift",
+    "keep": "EchoNotes/Views/Player/PlayerView.swift",
+    "remove": "EchoNotes/Views/PlayerView.swift",
+    "identical": true
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/ViewModels/PodcastBrowseViewModel.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Models/PlayerState 2.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Models/iTunesPodcast.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Models/PodcastGenre.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Extensions/Font+Rounded.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Views/LiquidGlassTabBarAccessory.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Views/LiquidGlassComponents.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Views/NoteDetailSheetView.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Views/FlowLayout.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Views/NotesListView.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Views/PodcastBrowseRealView.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Views/LiquidGlassTabBar.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Views/NotesHomeEmptyState.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Views/EpisodeListView.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Views/EchoCastDesignTokens.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Views/PlayerSheetWrapper.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Services/PodcastSearchService 2.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Services/PodcastAPIService.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Services/ApplePodcastsService.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Services/TimeIntervalFormatting.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Services/DeepLinkManager.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Services/OPMLImportService.swift"
+  },
+  {
+    "type": "orphan",
+    "path": "EchoNotes/Services/PodcastSearchService.swift"
+  }
+]
