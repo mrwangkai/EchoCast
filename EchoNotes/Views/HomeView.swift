@@ -22,6 +22,8 @@ struct HomeView: View {
     @ObservedObject private var player = GlobalPlayerManager.shared
 
     @State private var showingPlayerSheet = false
+    @State private var showingBrowse = false
+    @State private var showingSettings = false
 
     var body: some View {
         NavigationStack {
@@ -50,7 +52,7 @@ struct HomeView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
                         Button(action: {
-                            // TODO: Implement Find/Search functionality
+                            showingBrowse = true
                         }) {
                             Image(systemName: "magnifyingglass")
                                 .font(.body)
@@ -58,7 +60,7 @@ struct HomeView: View {
                         }
 
                         Button(action: {
-                            // TODO: Navigate to Settings
+                            showingSettings = true
                         }) {
                             Image(systemName: "gearshape")
                                 .font(.body)
@@ -67,6 +69,12 @@ struct HomeView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showingBrowse) {
+            PodcastDiscoveryView()
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
         }
     }
 

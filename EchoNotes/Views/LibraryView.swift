@@ -10,6 +10,8 @@ import SwiftUI
 struct LibraryView: View {
     @StateObject private var viewModel = NoteViewModel()
     @State private var showingSortOptions = false
+    @State private var showingBrowse = false
+    @State private var showingSettings = false
 
     var body: some View {
         NavigationView {
@@ -117,8 +119,7 @@ struct LibraryView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
                         Button(action: {
-                            // Focus search bar
-                            viewModel.searchText = ""
+                            showingBrowse = true
                         }) {
                             Image(systemName: "magnifyingglass")
                                 .font(.body)
@@ -126,7 +127,7 @@ struct LibraryView: View {
                         }
 
                         Button(action: {
-                            // TODO: Navigate to Settings
+                            showingSettings = true
                         }) {
                             Image(systemName: "gearshape")
                                 .font(.body)
@@ -150,6 +151,12 @@ struct LibraryView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             }
+        }
+        .sheet(isPresented: $showingBrowse) {
+            PodcastDiscoveryView()
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
         }
     }
 }
