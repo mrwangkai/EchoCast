@@ -2,7 +2,7 @@
 //  ContinueListeningCard.swift
 //  EchoNotes
 //
-//  Pixel-perfect continue listening card matching Figma design
+//  Figma-accurate continue listening card (node-id=1878-4000)
 //  Displays podcast episode with playback progress
 //
 
@@ -35,116 +35,116 @@ struct ContinueListeningCard: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 12) {
-                // Artwork
-                artworkView
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    // Album artwork with play button overlay
+                    ZStack(alignment: .center) {
+                        AsyncImage(url: URL(string: episode.artworkURL ?? "")) { phase in
+                            switch phase {
+                            case .empty:
+                                Rectangle()
+                                    .fill(Color.noteCardBackground)
+                                    .frame(width: 88, height: 88)
+                                    .overlay {
+                                        ProgressView()
+                                    }
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 88, height: 88)
+                                    .clipped()
+                            case .failure:
+                                Rectangle()
+                                    .fill(Color.noteCardBackground)
+                                    .frame(width: 88, height: 88)
+                                    .overlay {
+                                        Image(systemName: "music.note")
+                                            .font(.system(size: 32))
+                                            .foregroundColor(.echoTextTertiary)
+                                    }
+                            @unknown default:
+                                Rectangle()
+                                    .fill(Color.noteCardBackground)
+                                    .frame(width: 88, height: 88)
+                            }
+                        }
+                        .cornerRadius(8)
 
-                // Episode Info
-                episodeInfoView
+                        // Play button overlay
+                        Circle()
+                            .fill(Color.black.opacity(0.6))
+                            .frame(width: 36, height: 36)
+                            .overlay {
+                                Image(systemName: "play.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white)
+                            }
+                    }
 
-                // Play Button
-                playButton
+                    // Episode metadata
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(episode.title)
+                            .font(.bodyRoundedMedium())
+                            .foregroundColor(.echoTextPrimary)
+                            .lineLimit(2)
+
+                        Text(episode.podcastName)
+                            .font(.captionRounded())
+                            .foregroundColor(.echoTextSecondary)
+                            .lineLimit(1)
+
+                        Spacer()
+                    }
+
+                    Spacer()
+                }
+
+                // Progress bar with time
+                VStack(spacing: 4) {
+                    // Progress bar
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            // Track
+                            Rectangle()
+                                .fill(Color.echoTextTertiary.opacity(0.2))
+                                .frame(height: 4)
+
+                            // Progress
+                            Rectangle()
+                                .fill(Color.mintAccent)
+                                .frame(width: geometry.size.width * episode.progress, height: 4)
+
+                            // Note markers (future: show as 8pt circles at specific positions)
+                            // TODO: Add note markers based on note timestamps
+                        }
+                    }
+                    .frame(height: 4)
+                    .cornerRadius(2)
+
+                    // Time remaining
+                    HStack {
+                        Spacer()
+                        Text("-\(episode.timeRemaining)")
+                            .font(.caption2Medium())
+                            .foregroundColor(.echoTextTertiary)
+                    }
+                }
             }
-            .padding(EchoSpacing.noteCardPadding)
-            .background(Color(red: 0.2, green: 0.2, blue: 0.2))
-            .cornerRadius(EchoSpacing.noteCardCornerRadius)
+            .padding(16)
+            .background(Color.noteCardBackground)
+            .cornerRadius(12)
             .shadow(color: Color.black.opacity(0.3), radius: 3, x: 0, y: 1)
-            .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(episode.title) by \(episode.podcastName)")
         .accessibilityHint("Double tap to open episode. \(episode.timeRemaining) remaining with \(episode.notesCount) notes.")
         .accessibilityAddTraits(.isButton)
-    }
-
-    // MARK: - Subviews
-
-    private var artworkView: some View {
-        AsyncImage(url: URL(string: episode.artworkURL ?? "")) { phase in
-            switch phase {
-            case .success(let image):
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            case .empty, .failure:
-                placeholderArtwork
-            default:
-                placeholderArtwork
-            }
+        .onTapGesture {
+            print("🎧 [ContinueListening] Card tapped: \(episode.title)")
+            onTap()
         }
-        .frame(width: 88, height: 88)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-
-    private var placeholderArtwork: some View {
-        RoundedRectangle(cornerRadius: 8)
-            .fill(Color.gray.opacity(0.3))
-            .overlay(
-                Image(systemName: "podcast.fill")
-                    .font(.system(size: 30))
-                    .foregroundColor(.white.opacity(0.5))
-            )
-    }
-
-    private var episodeInfoView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Episode Title
-            Text(episode.title)
-                .font(.bodyRoundedMedium())
-                .foregroundColor(.white)
-                .lineLimit(2)
-
-            // Podcast Name
-            Text(episode.podcastName)
-                .font(.system(size: 15, weight: .regular))
-                .foregroundColor(.white.opacity(0.85))
-                .lineLimit(1)
-
-            // Progress Bar
-            ProgressView(value: episode.progress)
-                .tint(Color(red: 0.0, green: 0.784, blue: 0.702))
-                .frame(height: 4)
-
-            // Metadata Row
-            HStack(spacing: 8) {
-                // Notes Indicator
-                if episode.notesCount > 0 {
-                    HStack(spacing: 4) {
-                        Image(systemName: "doc.text")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.7))
-
-                        Text("\(episode.notesCount) notes")
-                            .font(.caption2Medium())
-                            .foregroundColor(.white.opacity(0.7))
-                    }
-                }
-
-                Spacer()
-
-                // Time Remaining
-                Text("\(episode.timeRemaining) left")
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundColor(.white.opacity(0.7))
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var playButton: some View {
-        Button(action: onPlayTap) {
-            ZStack {
-                Circle()
-                    .fill(Color(red: 0.0, green: 0.784, blue: 0.702))
-                    .frame(width: 48, height: 48)
-
-                Image(systemName: "play.fill")
-                    .font(.system(size: 20, weight: .regular))
-                    .foregroundColor(Color(red: 0.102, green: 0.235, blue: 0.204))
-            }
-        }
-        .buttonStyle(.plain)
     }
 }
 
@@ -169,7 +169,7 @@ struct ContinueListeningCard: View {
     )
     .frame(width: 327)
     .padding()
-    .background(Color(red: 0.149, green: 0.149, blue: 0.149))
+    .background(Color.echoBackground)
 }
 
 #Preview("Continue Listening Card - No Notes") {
@@ -191,5 +191,5 @@ struct ContinueListeningCard: View {
     )
     .frame(width: 327)
     .padding()
-    .background(Color(red: 0.149, green: 0.149, blue: 0.149))
+    .background(Color.echoBackground)
 }
