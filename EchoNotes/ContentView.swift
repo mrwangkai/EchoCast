@@ -2979,79 +2979,152 @@ struct FlowLayout: Layout {
 
 struct NoteCardView: View {
     let note: NoteEntity
+    let onTap: () -> Void = {}
+
+    // MARK: - Computed Properties
+
+    private var visibleTags: [String] {
+        let tags = note.tagsArray
+        return Array(tags.prefix(3))  // Show max 3 tags
+    }
+
+    private var additionalTagsCount: Int {
+        max(0, note.tagsArray.count - 3)
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header row with timestamp and priority
-            HStack {
-                if let timestamp = note.timestamp {
-                    HStack(spacing: 4) {
-                        Image(systemName: "clock.fill")
-                            .font(.caption2)
-                        Text(timestamp)
-                            .font(.caption2Medium())
-                    }
-                    .foregroundColor(.mintAccent)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.mintAccent.opacity(0.15))
-                    .cornerRadius(4)
+        VStack(alignment: .leading, spacing: 0) {
+            // TOP: Note content + metadata
+            VStack(alignment: .leading, spacing: 12) {
+                // Note text
+                if let noteText = note.noteText, !noteText.isEmpty {
+                    Text(noteText)
+                        .font(.bodyEcho())
+                        .foregroundColor(.echoTextPrimary)
+                        .lineLimit(4)
+                        .lineSpacing(4)
                 }
 
-                Spacer()
-
-                if note.isPriority {
-                    Image(systemName: "flag.fill")
-                        .font(.system(size: 12))
+                // Timestamp (left) + Tags (right, max 225px)
+                HStack(alignment: .top) {
+                    // Timestamp badge (fixed left)
+                    if let timestamp = note.timestamp {
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock.fill")
+                                .font(.system(size: 10))
+                            Text(timestamp)
+                                .font(.caption2Medium())
+                        }
                         .foregroundColor(.mintAccent)
-                }
-            }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.mintAccent.opacity(0.15))
+                        .cornerRadius(6)
+                    }
 
-            // Note content
-            if let noteText = note.noteText, !noteText.isEmpty {
-                Text(noteText)
-                    .font(.bodyEcho())
-                    .foregroundColor(.echoTextPrimary)
-                    .lineSpacing(4)
-                    .lineLimit(3)
-            }
+                    Spacer()
 
-            // Footer with show title and tags
-            HStack {
-                if let showTitle = note.showTitle, !showTitle.isEmpty {
-                    Text(showTitle)
-                        .font(.captionRounded())
-                        .foregroundColor(.echoTextTertiary)
-                }
+                    // Tags (fixed right, max 225px)
+                    if !note.tagsArray.isEmpty {
+                        HStack(spacing: 6) {
+                            ForEach(visibleTags, id: \.self) { tag in
+                                Text(tag)
+                                    .font(.caption2Medium())
+                                    .foregroundColor(.echoTextSecondary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.noteCardBackground)
+                                    .cornerRadius(6)
+                                    .lineLimit(1)
+                            }
 
-                Spacer()
-
-                if !note.tagsArray.isEmpty {
-                    HStack(spacing: 4) {
-                        ForEach(note.tagsArray.prefix(2), id: \.self) { tag in
-                            Text(tag)
-                                .font(.caption2)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.orange.opacity(0.2))
-                                .foregroundColor(.orange)
-                                .cornerRadius(4)
+                            if additionalTagsCount > 0 {
+                                Text("+\(additionalTagsCount)")
+                                    .font(.caption2Medium())
+                                    .foregroundColor(.echoTextSecondary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.noteCardBackground)
+                                    .cornerRadius(6)
+                            }
                         }
-
-                        if note.tagsArray.count > 2 {
-                            Text("+\(note.tagsArray.count - 2)")
-                                .font(.caption2)
-                                .foregroundColor(.echoTextTertiary)
-                        }
+                        .frame(maxWidth: 225)  // Max width constraint
                     }
                 }
             }
+            .padding(16)
+
+            // SEPARATOR
+            Divider()
+                .background(Color.echoTextTertiary.opacity(0.2))
+
+            // BOTTOM: Podcast metadata
+            HStack(spacing: 8) {
+                // Mini album art (88x88)
+                AsyncImage(url: URL(string: note.podcast?.artworkURL ?? "")) { phase in
+                    switch phase {
+                    case .empty:
+                        Rectangle()
+                            .fill(Color.echoTextTertiary.opacity(0.2))
+                            .frame(width: 88, height: 88)
+                            .overlay {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            }
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 88, height: 88)
+                            .clipped()
+                    case .failure:
+                        Rectangle()
+                            .fill(Color.echoTextTertiary.opacity(0.2))
+                            .frame(width: 88, height: 88)
+                            .overlay {
+                                Image(systemName: "music.note")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.echoTextTertiary)
+                            }
+                    @unknown default:
+                        Rectangle()
+                            .fill(Color.echoTextTertiary.opacity(0.2))
+                            .frame(width: 88, height: 88)
+                    }
+                }
+                .frame(width: 88, height: 88)
+                .cornerRadius(8)
+
+                // Episode information
+                VStack(alignment: .leading, spacing: 4) {
+                    // Episode name (Caption 1 Regular = 12pt)
+                    if let episodeTitle = note.episodeTitle {
+                        Text(episodeTitle)
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundColor(.echoTextPrimary)
+                            .lineLimit(2)
+                    }
+
+                    // Series name (Caption 2 Regular = 11pt)
+                    if let showTitle = note.showTitle {
+                        Text(showTitle)
+                            .font(.system(size: 11, weight: .regular))
+                            .foregroundColor(.echoTextSecondary)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer()
+            }
+            .padding(16)
         }
-        .padding(EchoSpacing.noteCardPadding)
         .background(Color.noteCardBackground)
-        .cornerRadius(EchoSpacing.noteCardCornerRadius)
+        .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.3), radius: 3, x: 0, y: 1)
-        .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
+        .onTapGesture {
+            print("📝 [NoteCard] Card tapped: \(note.id?.uuidString ?? "unknown")")
+            onTap()
+        }
     }
 }
 
