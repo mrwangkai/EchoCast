@@ -12,6 +12,8 @@ struct LibraryView: View {
     @State private var showingSortOptions = false
     @State private var showingBrowse = false
     @State private var showingSettings = false
+    @State private var selectedNote: NoteEntity?
+    @State private var showingNoteDetail = false
 
     var body: some View {
         NavigationView {
@@ -102,6 +104,11 @@ struct LibraryView: View {
                                     NoteRowView(note: note, onTogglePriority: {
                                         viewModel.togglePriority(note)
                                     })
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        selectedNote = note
+                                        showingNoteDetail = true
+                                    }
                                 }
                                 .onDelete { indexSet in
                                     indexSet.forEach { index in
@@ -157,6 +164,11 @@ struct LibraryView: View {
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
+        }
+        .sheet(isPresented: $showingNoteDetail) {
+            if let note = selectedNote {
+                NoteDetailSheet(note: note)
+            }
         }
     }
 }

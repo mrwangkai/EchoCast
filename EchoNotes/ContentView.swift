@@ -3097,6 +3097,135 @@ struct NoteCardView: View {
     }
 }
 
+// MARK: - Note Detail Sheet
+
+struct NoteDetailSheet: View {
+    let note: NoteEntity
+    @Environment(\.dismiss) private var dismiss
+    @State private var showingEditSheet = false
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Episode context header
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let showTitle = note.showTitle {
+                            Text(showTitle)
+                                .font(.captionRounded())
+                                .foregroundColor(.echoTextSecondary)
+                        }
+
+                        if let episodeTitle = note.episodeTitle {
+                            Text(episodeTitle)
+                                .font(.bodyRoundedMedium())
+                                .foregroundColor(.echoTextPrimary)
+                        }
+                    }
+
+                    Divider()
+
+                    // Timestamp badge
+                    if let timestamp = note.timestamp {
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock.fill")
+                                .font(.caption)
+                            Text(timestamp)
+                                .font(.caption2Medium())
+                        }
+                        .foregroundColor(.mintAccent)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.mintAccent.opacity(0.2))
+                        .cornerRadius(8)
+                    }
+
+                    // Note content
+                    if let noteText = note.noteText, !noteText.isEmpty {
+                        Text(noteText)
+                            .font(.bodyEcho())
+                            .foregroundColor(.echoTextPrimary)
+                            .lineSpacing(6)
+                    }
+
+                    // Tags
+                    if !note.tagsArray.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Tags")
+                                .font(.captionRounded())
+                                .foregroundColor(.echoTextSecondary)
+
+                            FlowLayout(spacing: 8) {
+                                ForEach(note.tagsArray, id: \.self) { tag in
+                                    Text(tag)
+                                        .font(.caption2Medium())
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 4)
+                                        .background(Color.noteCardBackground)
+                                        .foregroundColor(.echoTextPrimary)
+                                        .cornerRadius(6)
+                                }
+                            }
+                        }
+                    }
+
+                    // Metadata
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Details")
+                            .font(.captionRounded())
+                            .foregroundColor(.echoTextSecondary)
+
+                        HStack {
+                            if note.isPriority {
+                                Label("Important", systemImage: "flag.fill")
+                                    .font(.caption)
+                                    .foregroundColor(.mintAccent)
+                            }
+
+                            if let sourceApp = note.sourceApp {
+                                Label(sourceApp, systemImage: "app.badge")
+                                    .font(.caption)
+                                    .foregroundColor(.echoTextSecondary)
+                            }
+
+                            Spacer()
+
+                            if let createdAt = note.createdAt {
+                                Text(createdAt, style: .relative)
+                                    .font(.caption)
+                                    .foregroundColor(.echoTextTertiary)
+                            }
+                        }
+                    }
+                }
+                .padding(EchoSpacing.screenPadding)
+            }
+            .background(Color.echoBackground)
+            .navigationTitle("Note")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                    .foregroundColor(.mintAccent)
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Edit") {
+                        showingEditSheet = true
+                    }
+                    .foregroundColor(.mintAccent)
+                    .font(.bodyRoundedMedium())
+                }
+            }
+        }
+        .sheet(isPresented: $showingEditSheet) {
+            NoteCaptureView(existingNote: note)
+        }
+    }
+}
+
 // MARK: - Settings View
 
 struct SettingsView: View {

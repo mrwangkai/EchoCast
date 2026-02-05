@@ -13,12 +13,19 @@ struct NoteCaptureView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
 
+    // Optional existing note for editing
+    let existingNote: NoteEntity?
+
     @State private var showTitle: String = ""
     @State private var episodeTitle: String = ""
     @State private var timestamp: String = ""
     @State private var noteText: String = ""
     @State private var isPriority: Bool = false
     @State private var sourceApp: String = ""
+
+    init(existingNote: NoteEntity? = nil) {
+        self.existingNote = existingNote
+    }
 
     @State private var isRecording: Bool = false
     @State private var showPermissionAlert: Bool = false
@@ -93,7 +100,7 @@ struct NoteCaptureView: View {
                     Button(action: saveNote) {
                         HStack {
                             Spacer()
-                            Text("Save Note")
+                            Text(existingNote == nil ? "Save Note" : "Update Note")
                                 .fontWeight(.semibold)
                             Spacer()
                         }
@@ -101,8 +108,19 @@ struct NoteCaptureView: View {
                     .disabled(noteText.isEmpty)
                 }
             }
-            .navigationTitle("Capture Note")
+            .navigationTitle(existingNote == nil ? "Capture Note" : "Edit Note")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                // Pre-populate fields when editing
+                if let note = existingNote {
+                    showTitle = note.showTitle ?? ""
+                    episodeTitle = note.episodeTitle ?? ""
+                    timestamp = note.timestamp ?? ""
+                    noteText = note.noteText ?? ""
+                    isPriority = note.isPriority
+                    sourceApp = note.sourceApp ?? ""
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
@@ -134,16 +152,34 @@ struct NoteCaptureView: View {
     }
 
     private func saveNote() {
-        let persistence = PersistenceController.shared
-        persistence.createNote(
-            showTitle: showTitle.isEmpty ? nil : showTitle,
-            episodeTitle: episodeTitle.isEmpty ? nil : episodeTitle,
-            timestamp: timestamp.isEmpty ? nil : timestamp,
-            noteText: noteText,
-            isPriority: isPriority,
-            tags: [],
-            sourceApp: sourceApp.isEmpty ? nil : sourceApp
-        )
+        if let note = existingNote {
+            // Update existing note
+            note.showTitle = showTitle.isEmpty ? nil : showTitle
+            note.episodeTitle = episodeTitle.isEmpty ? nil : episodeTitle
+            note.timestamp = timestamp.isEmpty ? nil : timestamp
+            note.noteText = noteText.isEmpty ? nil : noteText
+            note.isPriority = isPriority
+            note.sourceApp = sourceApp.isEmpty ? nil : sourceApp
+
+            do {
+                try viewContext.save()
+                print("✅ Note updated successfully")
+            } catch {
+                print("❌ Error updating note: \(error)")
+            }
+        } else {
+            // Create new note
+            let persistence = PersistenceController.shared
+            persistence.createNote(
+                showTitle: showTitle.isEmpty ? nil : showTitle,
+                episodeTitle: episodeTitle.isEmpty ? nil : episodeTitle,
+                timestamp: timestamp.isEmpty ? nil : timestamp,
+                noteText: noteText,
+                isPriority: isPriority,
+                tags: [],
+                sourceApp: sourceApp.isEmpty ? nil : sourceApp
+            )
+        }
         dismiss()
     }
 

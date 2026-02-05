@@ -34,6 +34,8 @@ struct HomeView: View {
     @State private var showingSettings = false
     @State private var selectedPodcast: PodcastEntity?
     @State private var showingPodcastDetail = false
+    @State private var selectedNote: NoteEntity?
+    @State private var showingNoteDetail = false
 
     var body: some View {
         NavigationStack {
@@ -94,6 +96,11 @@ struct HomeView: View {
         .sheet(isPresented: $showingPodcastDetail) {
             if let podcast = selectedPodcast {
                 PodcastDetailView(podcast: podcast)
+            }
+        }
+        .sheet(isPresented: $showingNoteDetail) {
+            if let note = selectedNote {
+                NoteDetailSheet(note: note)
             }
         }
     }
@@ -218,6 +225,11 @@ struct HomeView: View {
 
             ForEach(recentNotes.prefix(5)) { note in
                 NoteCardView(note: note)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedNote = note
+                        showingNoteDetail = true
+                    }
             }
         }
     }
