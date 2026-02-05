@@ -283,3 +283,59 @@ None currently. Awaiting approval to proceed to Phase 2.
 - `NoteCaptureView.swift`
 - `ContentView.swift`
 - `EchoNotes.xcdatamodeld/EchoNotes.xcdatamodel/contents` (Core Data schema)
+
+---
+
+# Bug Fixes Progress
+
+**Last Updated:** February 5, 2026
+
+## Fix: iTunes API Endpoint Issue ✅ COMPLETED
+
+**Started:** February 5, 2026
+**Completed:** February 5, 2026
+
+### Problem:
+Using iTunes RSS Generator API endpoint (`/us/rss/toppodcasts/...`) which returns
+different JSON structure than expected by the `iTunesPodcast` model.
+
+**Error:** `keyNotFound "resultCount"` - The RSS feed JSON has `feed.entry` structure,
+but our model expects `resultCount` and `results` from the Search API.
+
+### Solution:
+Changed from RSS feed endpoint to Search API endpoint which returns the correct
+JSON structure.
+
+### Tasks Completed:
+- [x] Changed endpoint from `/us/rss/toppodcasts/limit=.../genre=.../json`
+       to `/search?media=podcast&entity=podcast&genreId=...&limit=...`
+- [x] Used URLComponents for proper query parameter construction
+- [x] Expanded iTunesPodcast model to include all Search API fields
+  - Added: collectionId, collectionName, artworkUrl100, genres, genreIds, etc.
+- [x] Added displayName computed property (prefers collectionName over trackName)
+- [x] Updated PodcastDiscoveryView to use displayName instead of collectionName
+- [x] Added comprehensive error logging with raw JSON dump for debugging
+- [x] Test build succeeded
+
+### Key Changes:
+- Modified: `iTunesSearchService.swift`
+  - Expanded iTunesPodcast struct with all Search API fields
+  - Added displayName computed property
+
+- Modified: `PodcastAPIService.swift`
+  - Changed getTopPodcasts() to use Search API endpoint
+  - Used URLComponents with proper query items
+  - Added debug logging for first podcast result
+
+- Modified: `PodcastDiscoveryView.swift`
+  - Updated all references from podcast.collectionName to podcast.displayName
+
+### Expected Result:
+- Console shows: "Successfully decoded 10 podcasts"
+- Browse view shows podcast artwork correctly
+- No more "No podcasts available" errors
+
+### Commit:
+- `Fix: Use iTunes Search API instead of RSS feed API` - February 5, 2026
+
+---
