@@ -65,10 +65,17 @@ struct HomeView: View {
                 .padding(.top, EchoSpacing.headerTopPadding)
             }
             .background(Color.echoBackground)
+            .onAppear {
+                print("🏠 [HomeView] View appeared")
+                print("🏠 [HomeView] Recent notes count: \(recentNotes.count)")
+                print("🏠 [HomeView] Followed podcasts count: \(followedPodcasts.count)")
+                print("🏠 [HomeView] Player episode loaded: \(player.currentEpisode != nil)")
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
                         Button(action: {
+                            print("🔍 [HomeView] Browse button tapped")
                             showingBrowse = true
                         }) {
                             Image(systemName: "magnifyingglass")
@@ -77,6 +84,7 @@ struct HomeView: View {
                         }
 
                         Button(action: {
+                            print("⚙️ [HomeView] Settings button tapped")
                             showingSettings = true
                         }) {
                             Image(systemName: "gearshape")
@@ -140,9 +148,11 @@ struct HomeView: View {
                 ContinueListeningCard(
                     episode: continueListeningEpisodeFromPlayer(episode: episode, podcast: podcast),
                     onTap: {
+                        print("🎧 [HomeView] Continue Listening card tapped: \(episode.title)")
                         showingPlayerSheet = true
                     },
                     onPlayTap: {
+                        print("🎮 [HomeView] Play button tapped, current state: \(player.isPlaying)")
                         // Resume/toggle playback
                         if player.isPlaying {
                             player.pause()
@@ -152,6 +162,9 @@ struct HomeView: View {
                     }
                 )
                 .frame(width: 327)
+                .onAppear {
+                    print("🎧 [HomeView] Showing Continue Listening section")
+                }
             } else {
                 Text("No episodes playing")
                     .font(.bodyEcho())
@@ -178,6 +191,7 @@ struct HomeView: View {
                     ForEach(followedPodcasts) { podcast in
                         PodcastFollowingCard(podcast: podcast)
                             .onTapGesture {
+                                print("🎙️ [HomeView] Podcast tapped: \(podcast.title ?? "Unknown")")
                                 selectedPodcast = podcast
                                 showingPodcastDetail = true
                             }
@@ -185,6 +199,9 @@ struct HomeView: View {
                 }
                 .padding(.trailing, EchoSpacing.screenPadding)
             }
+        }
+        .onAppear {
+            print("🎙️ [HomeView] Showing Following section (\(followedPodcasts.count) podcasts)")
         }
     }
 
@@ -225,12 +242,15 @@ struct HomeView: View {
 
             ForEach(recentNotes.prefix(5)) { note in
                 NoteCardView(note: note)
-                    .contentShape(Rectangle())
                     .onTapGesture {
+                        print("📝 [HomeView] Note tapped: \(note.noteText?.prefix(50) ?? "No text")...")
                         selectedNote = note
                         showingNoteDetail = true
                     }
             }
+        }
+        .onAppear {
+            print("📝 [HomeView] Showing Recent Notes section (\(recentNotes.count) notes)")
         }
     }
 
@@ -260,6 +280,9 @@ struct HomeView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity)
+        .onAppear {
+            print("🏠 [HomeView] Showing empty state")
+        }
     }
 }
 
