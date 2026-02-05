@@ -115,3 +115,109 @@ Legend:
 ## Blockers / Questions
 
 None currently. Awaiting approval to proceed to Phase 2.
+
+---
+
+# Feature Recovery Progress - 4-Phase Lost Features Restoration
+
+**Last Updated:** February 5, 2026
+
+## PHASE A: Restore Browse Genre Carousel ✅ COMPLETED
+
+**Started:** February 5, 2026
+**Completed:** February 5, 2026
+
+### Tasks Completed:
+- [x] Created PodcastGenre.swift model with 13 genres (All, Comedy, News, True Crime, Sports, Business, Education, Arts, Health, TV & Film, Music, Technology, Science, Society)
+- [x] Added PodcastGenre.swift to Xcode project
+- [x] Created GenreChip component with selection styling (mint accent when selected)
+- [x] Added horizontal scrolling genre chips carousel to PodcastDiscoveryView
+- [x] Fixed AsyncImage usage in SavedPodcastRowView and PodcastSearchRowView
+- [x] Test build succeeded
+
+### Key Changes:
+- New file: `EchoNotes/Models/PodcastGenre.swift` (70 lines)
+- Modified: `EchoNotes/Views/PodcastDiscoveryView.swift`
+  - Added `@State private var selectedGenre: PodcastGenre? = nil`
+  - Added `genreChipsScrollView` view with horizontal ScrollView
+  - Added `GenreChip` component with icon, display name, and selection styling
+
+### Testing:
+- Build succeeded
+- Genre carousel displays with horizontal scrolling
+- Chips show correct icons and names
+- Selection state properly toggles mint accent color
+
+---
+
+## PHASE B: Fix RSS Episode Loading ✅ COMPLETED
+
+**Started:** February 5, 2026
+**Completed:** February 5, 2026
+
+### Issues Fixed:
+1. **Artwork not loading** - Replaced CachedAsyncImage with AsyncImage in PodcastHeaderView
+2. **Poor error handling** - Added errorMessage state and error UI with retry button
+3. **No user feedback** - Enhanced loading states and empty state with feed URL display
+4. **Silent failures** - Added proper error capture and logging
+
+### Tasks Completed:
+- [x] Replaced CachedAsyncImage with AsyncImage in PodcastHeaderView
+- [x] Added @State var errorMessage: String? for error state
+- [x] Created error state UI with exclamationmark.triangle icon and retry button
+- [x] Enhanced empty state to show feed URL for debugging
+- [x] Improved loadEpisodes() with error message capture and console logging
+- [x] Test build succeeded
+
+### Key Changes:
+- Modified: `EchoNotes/Views/PodcastDetailView.swift`
+  - Line 15: Added `@State private var errorMessage: String?`
+  - Lines 35-53: Added error state UI with retry button
+  - Lines 62-67: Enhanced empty state with feed URL display
+  - Lines 165-189: Improved loadEpisodes() with error handling and logging
+  - Lines 227-257: Replaced CachedAsyncImage with AsyncImage (3-phase: empty, success, failure)
+
+### Testing:
+- Build succeeded
+- Episodes now load from RSS feeds with proper error handling
+- Album artwork displays correctly with AsyncImage
+- Users see helpful error messages with retry option
+- Feed URL shown in empty state for debugging
+
+---
+
+## PHASE C: Add Following Section to Home ⏳ PENDING
+
+**Estimated Time:** 1 hour
+
+### Tasks:
+- [ ] Add Follow/Unfollow button to PodcastDetailView
+- [ ] Store following state in PodcastEntity Core Data model
+- [ ] Add Following section to HomeView between Continue Listening and Recent Notes
+- [ ] Create horizontal scrolling PodcastFollowingCard component
+- [ ] Wire up @FetchRequest to filter followed podcasts
+- [ ] Test following functionality
+
+---
+
+## PHASE D: Wire Note Detail/Edit ⏳ PENDING
+
+**Estimated Time:** 30 minutes
+
+### Tasks:
+- [ ] Update AddNoteSheet to support editing mode (accept existingNote parameter)
+- [ ] Create NoteDetailSheet component with note display and Edit button
+- [ ] Wire up note card tap in HomeView to open detail sheet
+- [ ] Test note detail view and editing workflow
+
+---
+
+## Commit History
+
+### Feature Recovery:
+- `Phase A complete: Restore Browse Genre Carousel` - February 5, 2026
+- `Phase B complete: Fix RSS Episode Loading and Artwork Display` - February 5, 2026
+
+### Original 3-Phase Workflow:
+- `Phase 1 complete: Inventory report created` (pending push)
+- (Phase 2 & 3 pending)
