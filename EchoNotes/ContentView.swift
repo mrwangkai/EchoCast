@@ -3023,30 +3023,77 @@ struct NoteCardView: View {
     let note: NoteEntity
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if let showTitle = note.showTitle {
-                Text(showTitle)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: 12) {
+            // Header row with timestamp and priority
+            HStack {
+                if let timestamp = note.timestamp {
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock.fill")
+                            .font(.caption2)
+                        Text(timestamp)
+                            .font(.caption2Medium())
+                    }
+                    .foregroundColor(.mintAccent)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.mintAccent.opacity(0.15))
+                    .cornerRadius(4)
+                }
+
+                Spacer()
+
+                if note.isPriority {
+                    Image(systemName: "flag.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.mintAccent)
+                }
             }
 
-            if let noteText = note.noteText {
+            // Note content
+            if let noteText = note.noteText, !noteText.isEmpty {
                 Text(noteText)
-                    .font(.body)
-                    .foregroundColor(.primary)
+                    .font(.bodyEcho())
+                    .foregroundColor(.echoTextPrimary)
+                    .lineSpacing(4)
                     .lineLimit(3)
             }
 
-            if let timestamp = note.timestamp {
-                Text(timestamp)
-                    .font(.caption2)
-                    .foregroundColor(.blue)
+            // Footer with show title and tags
+            HStack {
+                if let showTitle = note.showTitle, !showTitle.isEmpty {
+                    Text(showTitle)
+                        .font(.captionRounded())
+                        .foregroundColor(.echoTextTertiary)
+                }
+
+                Spacer()
+
+                if !note.tagsArray.isEmpty {
+                    HStack(spacing: 4) {
+                        ForEach(note.tagsArray.prefix(2), id: \.self) { tag in
+                            Text(tag)
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.orange.opacity(0.2))
+                                .foregroundColor(.orange)
+                                .cornerRadius(4)
+                        }
+
+                        if note.tagsArray.count > 2 {
+                            Text("+\(note.tagsArray.count - 2)")
+                                .font(.caption2)
+                                .foregroundColor(.echoTextTertiary)
+                        }
+                    }
+                }
             }
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .padding(EchoSpacing.noteCardPadding)
+        .background(Color.noteCardBackground)
+        .cornerRadius(EchoSpacing.noteCardCornerRadius)
+        .shadow(color: Color.black.opacity(0.3), radius: 3, x: 0, y: 1)
+        .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
     }
 }
 
