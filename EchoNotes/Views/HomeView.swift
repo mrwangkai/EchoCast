@@ -18,12 +18,22 @@ struct HomeView: View {
     )
     private var recentNotes: FetchedResults<NoteEntity>
 
+    // Fetch followed podcasts
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \PodcastEntity.title, ascending: true)],
+        predicate: NSPredicate(format: "isFollowing == YES"),
+        animation: .default
+    )
+    private var followedPodcasts: FetchedResults<PodcastEntity>
+
     // Player state
     @ObservedObject private var player = GlobalPlayerManager.shared
 
     @State private var showingPlayerSheet = false
     @State private var showingBrowse = false
     @State private var showingSettings = false
+    @State private var selectedPodcast: PodcastEntity?
+    @State private var showingPodcastDetail = false
 
     var body: some View {
         NavigationStack {
@@ -35,6 +45,11 @@ struct HomeView: View {
                     // Continue Listening Section
                     if player.currentEpisode != nil || !recentNotes.isEmpty {
                         continueListeningSection
+                    }
+
+                    // Following Section
+                    if !followedPodcasts.isEmpty {
+                        followingSection
                     }
 
                     // Recent Notes Section
@@ -75,6 +90,11 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
+        }
+        .sheet(isPresented: $showingPodcastDetail) {
+            if let podcast = selectedPodcast {
+                PodcastDetailView(podcast: podcast)
+            }
         }
     }
 
@@ -134,6 +154,29 @@ struct HomeView: View {
         .sheet(isPresented: $showingPlayerSheet) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
                 EpisodePlayerView(episode: episode, podcast: podcast)
+            }
+        }
+    }
+
+    // MARK: - Following Section
+
+    private var followingSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Following")
+                .font(.title2Echo())
+                .foregroundColor(.echoTextPrimary)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(followedPodcasts) { podcast in
+                        PodcastFollowingCard(podcast: podcast)
+                            .onTapGesture {
+                                selectedPodcast = podcast
+                                showingPodcastDetail = true
+                            }
+                    }
+                }
+                .padding(.trailing, EchoSpacing.screenPadding)
             }
         }
     }
@@ -205,6 +248,64 @@ struct HomeView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Podcast Following Card
+
+struct PodcastFollowingCard: View {
+    let podcast: PodcastEntity
+
+    var body: some View {
+        VStack(spacing: 8) {
+            // Album artwork
+            AsyncImage(url: URL(string: podcast.artworkURL ?? "")) { phase in
+                switch phase {
+                case .empty:
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.noteCardBackground)
+                        .frame(width: 120, height: 120)
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 120, height: 120)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                case .failure:
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.noteCardBackground)
+                        .frame(width: 120, height: 120)
+                        .overlay(
+                            Image(systemName: "music.note")
+                                .font(.system(size: 32))
+                                .foregroundColor(.echoTextTertiary)
+                        )
+                @unknown default:
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.noteCardBackground)
+                        .frame(width: 120, height: 120)
+                }
+            }
+
+            // Podcast title
+            Text(podcast.title ?? "Unknown Podcast")
+                .font(.captionRounded())
+                .foregroundColor(.echoTextPrimary)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .frame(width: 120)
+
+            // Follow indicator
+            HStack(spacing: 4) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.caption2)
+                    .foregroundColor(.mintAccent)
+                Text("Following")
+                    .font(.caption2)
+                    .foregroundColor(.echoTextSecondary)
+            }
+        }
+        .contentShape(Rectangle())
     }
 }
 

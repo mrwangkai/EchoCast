@@ -23,7 +23,7 @@ struct PodcastDetailView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Podcast Header
-            PodcastHeaderView(podcast: podcast)
+            PodcastHeaderView(podcast: podcast, onToggleFollow: toggleFollow)
                 .padding()
 
             Divider()
@@ -214,12 +214,24 @@ struct PodcastDetailView: View {
             print("Error deleting podcast: \(error)")
         }
     }
+
+    private func toggleFollow() {
+        podcast.isFollowing.toggle()
+
+        do {
+            try viewContext.save()
+            print("✅ Podcast follow state changed: \(podcast.isFollowing ? "Following" : "Unfollowed")")
+        } catch {
+            print("❌ Error toggling follow: \(error)")
+        }
+    }
 }
 
 // MARK: - Podcast Header
 
 struct PodcastHeaderView: View {
     let podcast: PodcastEntity
+    let onToggleFollow: () -> Void
 
     var body: some View {
         HStack(spacing: 16) {
@@ -275,7 +287,26 @@ struct PodcastHeaderView: View {
                         .lineLimit(2)
                 }
             }
+
             Spacer()
+
+            // Follow/Unfollow button
+            Button(action: onToggleFollow) {
+                HStack(spacing: 6) {
+                    Image(systemName: podcast.isFollowing ? "checkmark" : "plus")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    Text(podcast.isFollowing ? "Following" : "Follow")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+                .foregroundColor(podcast.isFollowing ? .echoTextPrimary : .white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(podcast.isFollowing ? Color.noteCardBackground : Color.mintAccent)
+                .cornerRadius(20)
+            }
+            .buttonStyle(.plain)
         }
     }
 }

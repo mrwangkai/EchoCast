@@ -17,6 +17,7 @@
         <attribute name="author" optional="YES" attributeType="String"/>
         <attribute name="feedURL" optional="YES" attributeType="String"/>
         <attribute name="id" optional="NO" attributeType="String"/>
+        <attribute name="isFollowing" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="podcastDescription" optional="YES" attributeType="String"/>
         <attribute name="title" optional="NO" attributeType="String"/>
         <relationship name="notes" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="NoteEntity" inverseName="podcast" inverseEntity="NoteEntity"/>
