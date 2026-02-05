@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0206BDAFA97C63E6C9BE00F5 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97B336D73F6E2BC5950A352B /* HomeView.swift */; };
 		109A73E1374BD17B86D18612 /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D53090821F8BAFE1DA68424 /* Note.swift */; };
+		2DC01F93397A5FD79DFF1C40 /* EchoCastDesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = A889EAE90DD5982B6BF699CC /* EchoCastDesignTokens.swift */; };
 		2EBA34DB950BD2AAAED22196 /* NoteCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B924F6A7F976B983E1F11C4 /* NoteCaptureView.swift */; };
 		35F1A89D8755CF0C326046EA /* DevStatusOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D86BD8271F50A31B9BF357F /* DevStatusOverlay.swift */; };
 		40B41DD5A35FDAB9F5DCAD59 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 233F1BE5E4D7277CAE91BD20 /* LibraryView.swift */; };
@@ -24,6 +26,7 @@
 		99C510E92096FC2D6FD5105A /* NoteViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54D628832EEB20F4375BCF9D /* NoteViewModel.swift */; };
 		A10000000000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000003 /* Assets.xcassets */; };
 		A1000000000000000000000D /* EchoNotes.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000D /* EchoNotes.xcdatamodeld */; };
+		A352AE1B30F57053B2F44445 /* ContinueListeningCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64F8F7BFD5C955E7D638CF72 /* ContinueListeningCard.swift */; };
 		A393F34ADA1C6570A1C5DB1B /* TagInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A954A076AB095DE7903B3B5 /* TagInputView.swift */; };
 		A6C751F49B50AB8C7DEE741E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B01276756CBF1F6C45AB7677 /* ContentView.swift */; };
 		A715819144FB62C0B169C5D9 /* DeepLinkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0B9E736394AE5D3705E7F1 /* DeepLinkManager.swift */; };
@@ -31,13 +34,10 @@
 		B019C4E07965C65CC57A335A /* PodcastRSSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5740F3ADA838A89AAE98902C /* PodcastRSSService.swift */; };
 		BE245BBE30074AACA289C192 /* EpisodeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29B3BD3927C3A99156079726 /* EpisodeDetailView.swift */; };
 		C8ADB94949E1542B64678C06 /* AddNoteIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAC0568ECC00DF51EF175765 /* AddNoteIntent.swift */; };
-		2DC01F93397A5FD79DFF1C40 /* EchoCastDesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = A889EAE90DD5982B6BF699CC /* EchoCastDesignTokens.swift */; };
+		E4P1AYER78VIEW90BUILDFILE23456 /* Player/EpisodePlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4P1AYER78VIEW0FILEREFGHIJKL /* Player/EpisodePlayerView.swift */; };
 		E8B0FC6D8C4B1BE4CD420BF7 /* SiriShortcutsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 543B86F71016EB6FBBDE162E /* SiriShortcutsManager.swift */; };
 		EBBC5664163B5EEAF0595A57 /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAB032ABF6B07EDBEB3E5FC7 /* ExportService.swift */; };
 		FD37D2967810FF926CCDB9BC /* CachedAsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9C0C11EEA60C007F10FA350 /* CachedAsyncImage.swift */; };
-		0206BDAFA97C63E6C9BE00F5 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97B336D73F6E2BC5950A352B /* HomeView.swift */; };
-		A352AE1B30F57053B2F44445 /* ContinueListeningCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64F8F7BFD5C955E7D638CF72 /* ContinueListeningCard.swift */; };
-		E4P1AYER78VIEW90BUILDFILE23456 /* EpisodePlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4P1AYER78VIEW0FILEREFGHIJKL /* EpisodePlayerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +56,7 @@
 		56A10B3EA8425F797B107908 /* EchoNotesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoNotesApp.swift; sourceTree = "<group>"; };
 		5740F3ADA838A89AAE98902C /* PodcastRSSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastRSSService.swift; sourceTree = "<group>"; };
 		5B0B9E736394AE5D3705E7F1 /* DeepLinkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkManager.swift; sourceTree = "<group>"; };
+		64F8F7BFD5C955E7D638CF72 /* ContinueListeningCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinueListeningCard.swift; sourceTree = "<group>"; };
 		6A954A076AB095DE7903B3B5 /* TagInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagInputView.swift; sourceTree = "<group>"; };
 		7B924F6A7F976B983E1F11C4 /* NoteCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteCaptureView.swift; sourceTree = "<group>"; };
 		7D86BD8271F50A31B9BF357F /* DevStatusOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevStatusOverlay.swift; sourceTree = "<group>"; };
@@ -63,20 +64,19 @@
 		8ABF5412E4E8F3CDC970E96D /* AudioPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerView.swift; sourceTree = "<group>"; };
 		8DF4B0585A696406E2E943BE /* Podcast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Podcast.swift; sourceTree = "<group>"; };
 		92FA7184CFBE6C3A2C89D11C /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
+		97B336D73F6E2BC5950A352B /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		A00000000000000000000000 /* EchoNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EchoNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A0000000000000000000000E /* EchoNotes.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = EchoNotes.xcdatamodel; sourceTree = "<group>"; };
 		A00000000000000000000010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A4B4374ACBF2F8DF02D162D8 /* MiniPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerView.swift; sourceTree = "<group>"; };
+		A889EAE90DD5982B6BF699CC /* EchoCastDesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoCastDesignTokens.swift; sourceTree = "<group>"; };
 		AAC0568ECC00DF51EF175765 /* AddNoteIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddNoteIntent.swift; sourceTree = "<group>"; };
 		B01276756CBF1F6C45AB7677 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		CA2011DE4F5DA850C5620FBC /* PodcastDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastDetailView.swift; sourceTree = "<group>"; };
 		D6FD48759719F0A48ACDFE95 /* GlobalPlayerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalPlayerManager.swift; sourceTree = "<group>"; };
 		DAB032ABF6B07EDBEB3E5FC7 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
-		A889EAE90DD5982B6BF699CC /* EchoCastDesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoCastDesignTokens.swift; sourceTree = "<group>"; };
-		97B336D73F6E2BC5950A352B /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		64F8F7BFD5C955E7D638CF72 /* ContinueListeningCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinueListeningCard.swift; sourceTree = "<group>"; };
-		E4P1AYER78VIEW0FILEREFGHIJKL /* EpisodePlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player/EpisodePlayerView.swift; sourceTree = "<group>"; };
+		E4P1AYER78VIEW0FILEREFGHIJKL /* Player/EpisodePlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player/EpisodePlayerView.swift; sourceTree = "<group>"; };
 		E9C0C11EEA60C007F10FA350 /* CachedAsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedAsyncImage.swift; sourceTree = "<group>"; };
 		F4DE2007AA9B048CE314EB86 /* PlaybackHistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackHistoryManager.swift; sourceTree = "<group>"; };
 		PIXC00000000000000000001 /* PodcastIndex.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = PodcastIndex.xcconfig; sourceTree = "<group>"; };
@@ -178,7 +178,7 @@
 				A4B4374ACBF2F8DF02D162D8 /* MiniPlayerView.swift */,
 				7B924F6A7F976B983E1F11C4 /* NoteCaptureView.swift */,
 				2E4B2DF356B22A670EED39CD /* OnboardingView.swift */,
-				E4P1AYER78VIEW0FILEREFGHIJKL /* EpisodePlayerView.swift */,
+				E4P1AYER78VIEW0FILEREFGHIJKL /* Player/EpisodePlayerView.swift */,
 				CA2011DE4F5DA850C5620FBC /* PodcastDetailView.swift */,
 				8353810688BA319356A456B9 /* PodcastDiscoveryView.swift */,
 				6A954A076AB095DE7903B3B5 /* TagInputView.swift */,
@@ -324,7 +324,7 @@
 				4826A78D2588E06B9758D964 /* PodcastDetailView.swift in Sources */,
 				432A173623AAB8F5C169FEBB /* PodcastDiscoveryView.swift in Sources */,
 				A393F34ADA1C6570A1C5DB1B /* TagInputView.swift in Sources */,
-				E4P1AYER78VIEW90BUILDFILE23456 /* EpisodePlayerView.swift in Sources */,
+				E4P1AYER78VIEW90BUILDFILE23456 /* Player/EpisodePlayerView.swift in Sources */,
 				A1000000000000000000000D /* EchoNotes.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
