@@ -1799,50 +1799,8 @@ struct PodcastPreviewView: View {
     }
 }
 
-// MARK: - iTunes Search Service
-
-class iTunesSearchService {
-    static let shared = iTunesSearchService()
-
-    private var searchCache: [String: [iTunesPodcast]] = [:]
-
-    struct iTunesPodcast: Identifiable, Codable {
-        let trackId: Int
-        let trackName: String
-        let artistName: String
-        let artworkUrl600: String?
-        let feedUrl: String?
-
-        var id: Int { trackId }
-    }
-
-    struct SearchResponse: Codable {
-        let resultCount: Int
-        let results: [iTunesPodcast]
-    }
-
-    func search(query: String) async throws -> [iTunesPodcast] {
-        // Check cache first
-        if let cached = searchCache[query.lowercased()] {
-            return cached
-        }
-
-        guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "https://itunes.apple.com/search?term=\(encodedQuery)&media=podcast&limit=20") else {
-            throw URLError(.badURL)
-        }
-
-        let (data, _) = try await URLSession.shared.data(from: url)
-        let response = try JSONDecoder().decode(SearchResponse.self, from: data)
-
-        // Cache results
-        searchCache[query.lowercased()] = response.results
-
-        return response.results
-    }
-}
-
 // MARK: - Podcast Search View
+// Note: iTunesSearchService and iTunesPodcast are now defined in EchoNotes/Services/iTunesSearchService.swift
 
 struct PodcastSearchView: View {
     let recommendedPodcasts: [RecommendedPodcast]

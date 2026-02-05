@@ -30,6 +30,7 @@ extension Color {
     // UI element colors
     static let menuIndicatorBackground = Color(red: 0.071, green: 0.071, blue: 0.071)
     static let playerProgressBackground = Color(red: 0.2, green: 0.2, blue: 0.2)
+    static let searchFieldBackground = Color(red: 0.22, green: 0.22, blue: 0.22)
 }
 
 // MARK: - Color Helper
@@ -77,7 +78,8 @@ extension Font {
 
     // Caption fonts
     static func captionRounded() -> Font { .system(size: 13, design: .rounded) }
-    static func caption2Medium() -> Font { .system(size: 12, weight: .medium) }
+    static func caption2Medium() -> Font { .system(size: 11, weight: .medium) }
+    static func caption2Rounded() -> Font { .system(size: 11, design: .rounded) }
 
     // Tab fonts
     static func tabLabel() -> Font { .system(size: 10, weight: .semibold) }

@@ -2,7 +2,7 @@
 //  PodcastDiscoveryView.swift
 //  EchoNotes
 //
-//  Enhanced browse view with genre carousel
+//  Redesigned browse view with genre carousels
 //
 
 import SwiftUI
@@ -10,65 +10,54 @@ import CoreData
 
 struct PodcastDiscoveryView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \PodcastEntity.title, ascending: true)],
-        animation: .default)
-    private var savedPodcasts: FetchedResults<PodcastEntity>
-
-    @State private var searchText: String = ""
-    @State private var isSearching: Bool = false
-    @State private var showAddRSSSheet: Bool = false
-    @State private var rssURL: String = ""
-    @State private var isLoadingRSS: Bool = false
-    @State private var rssError: String?
-    @State private var loadedRSSPodcast: RSSPodcast?
-    @State private var selectedPodcast: PodcastEntity?
-    @State private var showPodcastDetail = false
-
-    // Genre selection
+    @StateObject private var viewModel = PodcastBrowseViewModel()
     @State private var selectedGenre: PodcastGenre? = nil
-
-    // Mock search results (in production, this would call Listen Notes API)
-    private let mockPodcasts = Podcast.samples
-
-    var filteredPodcasts: [Podcast] {
-        if searchText.isEmpty {
-            return mockPodcasts
-        } else {
-            return mockPodcasts.filter {
-                $0.title.localizedCaseInsensitiveContains(searchText) ||
-                ($0.author?.localizedCaseInsensitiveContains(searchText) ?? false)
-            }
-        }
-    }
+    @State private var showingViewAll = false
+    @State private var viewAllGenre: PodcastGenre?
+    @State private var searchText = ""
+    @State private var showAddRSSSheet = false
+    @State private var rssURL: String = ""
+    @State private var isLoadingRSS = false
+    @State private var rssError: String?
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Search bar
-                searchBar
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Search bar
+                    searchBar
+                        .padding(.horizontal, EchoSpacing.screenPadding)
+                        .padding(.vertical, 12)
 
-                // Horizontal genre chips
-                genreChipsScrollView
+                    // Genre chips carousel
+                    genreChipsScrollView
 
-                if isSearching {
-                    ProgressView()
-                        .padding()
-                } else if savedPodcasts.isEmpty && searchText.isEmpty && selectedGenre == nil {
-                    // Empty state for first-time users
-                    EmptyPodcastsView(onAddRSSFeed: {
-                        showAddRSSSheet = true
-                    })
-                } else {
-                    podcastsList
+                    // Podcasts by category OR search results
+                    if searchText.isEmpty {
+                        categoryCarouselsView
+                    } else {
+                        searchResultsView
+                    }
                 }
             }
+            .background(Color.echoBackground)
             .navigationTitle("Browse")
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add URL") {
                         showAddRSSSheet = true
                     }
+                }
+            }
+            .task {
+                print("📡 [Browse] Loading all genres...")
+                await viewModel.loadAllGenres()
+                print("✅ [Browse] All genres loaded")
+            }
+            .sheet(isPresented: $showingViewAll) {
+                if let genre = viewAllGenre {
+                    GenreViewAllView(genre: genre, podcasts: viewModel.genreResults[genre] ?? [])
                 }
             }
             .sheet(isPresented: $showAddRSSSheet) {
@@ -79,40 +68,43 @@ struct PodcastDiscoveryView: View {
                     onAdd: loadRSSFeed
                 )
             }
-            .sheet(isPresented: $showPodcastDetail) {
-                if let podcast = selectedPodcast {
-                    PodcastDetailView(podcast: podcast)
-                }
-            }
         }
     }
 
     // MARK: - Search Bar
 
     private var searchBar: some View {
-        HStack {
+        HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.gray)
-            TextField("Search podcasts...", text: $searchText)
+                .foregroundColor(.echoTextTertiary)
+                .font(.system(size: 17))
+
+            TextField("Search podcasts", text: $searchText)
                 .textFieldStyle(.plain)
-                .onSubmit {
-                    performSearch()
+                .font(.bodyEcho())
+                .foregroundColor(.echoTextPrimary)
+                .onChange(of: searchText) { oldValue, newValue in
+                    if !newValue.isEmpty {
+                        Task {
+                            await viewModel.search(query: newValue)
+                        }
+                    }
                 }
+
             if !searchText.isEmpty {
                 Button(action: {
                     searchText = ""
+                    viewModel.searchResults = []
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextTertiary)
                 }
             }
         }
-        .padding(12)
-        .background(Color(.systemGray6))
-        .cornerRadius(10)
-        .padding(.horizontal)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.searchFieldBackground)
+        .cornerRadius(8)
     }
 
     // MARK: - Genre Chips Carousel
@@ -125,9 +117,9 @@ struct PodcastDiscoveryView: View {
                         genre: genre,
                         isSelected: selectedGenre == genre,
                         action: {
+                            print("🎯 [Browse] Genre tapped: \(genre.displayName)")
                             selectedGenre = genre
-                            // Genre filtering would go here when API is connected
-                            print("Selected genre: \(genre.displayName)")
+                            // Scroll to that section (future enhancement)
                         }
                     )
                 }
@@ -138,45 +130,56 @@ struct PodcastDiscoveryView: View {
         .background(Color.echoBackground)
     }
 
-    // MARK: - Podcasts List
+    // MARK: - Category Carousels View
 
-    private var podcastsList: some View {
-        List {
-            // Saved podcasts section
-            if !savedPodcasts.isEmpty {
-                Section(header: Text("My Podcasts")) {
-                    ForEach(savedPodcasts) { podcast in
-                        SavedPodcastRowView(podcast: podcast)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedPodcast = podcast
-                                showPodcastDetail = true
-                            }
+    private var categoryCarouselsView: some View {
+        VStack(spacing: 24) {
+            ForEach(PodcastGenre.mainGenres.filter { $0 != .all }) { genre in
+                CategoryCarouselSection(
+                    genre: genre,
+                    podcasts: Array((viewModel.genreResults[genre] ?? []).prefix(10)),
+                    isLoading: viewModel.isLoadingGenre(genre),
+                    onViewAll: {
+                        print("🔍 [Browse] View all tapped for: \(genre.displayName)")
+                        viewAllGenre = genre
+                        showingViewAll = true
+                    },
+                    onPodcastTap: { podcast in
+                        print("🎧 [Browse] Podcast tapped: \(podcast.collectionName)")
+                        addAndOpenPodcast(podcast)
                     }
-                    .onDelete(perform: deletePodcast)
-                }
-            }
-
-            // Search results
-            if !searchText.isEmpty {
-                Section(header: Text("Search Results")) {
-                    ForEach(filteredPodcasts) { podcast in
-                        PodcastSearchRowView(podcast: podcast, onAdd: {
-                            addPodcast(podcast)
-                        })
-                    }
-                }
-            } else if selectedGenre == nil {
-                Section(header: Text("Popular Podcasts")) {
-                    ForEach(mockPodcasts) { podcast in
-                        PodcastSearchRowView(podcast: podcast, onAdd: {
-                            addPodcast(podcast)
-                        })
-                    }
-                }
+                )
             }
         }
-        .listStyle(.insetGrouped)
+        .padding(.top, 8)
+    }
+
+    // MARK: - Search Results View
+
+    private var searchResultsView: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Search Results")
+                .font(.title2Echo())
+                .foregroundColor(.echoTextPrimary)
+                .padding(.horizontal, EchoSpacing.screenPadding)
+
+            // Grid of search results
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 16) {
+                ForEach(viewModel.searchResults) { podcast in
+                    PodcastArtworkCard(podcast: podcast)
+                        .onTapGesture {
+                            print("🎧 [Browse] Search result tapped: \(podcast.collectionName)")
+                            addAndOpenPodcast(podcast)
+                        }
+                }
+            }
+            .padding(.horizontal, EchoSpacing.screenPadding)
+        }
+        .padding(.top, 8)
     }
 
     // MARK: - RSS Feed Loading
@@ -191,7 +194,6 @@ struct PodcastDiscoveryView: View {
             do {
                 let podcast = try await PodcastRSSService.shared.fetchPodcast(from: rssURL)
                 await MainActor.run {
-                    loadedRSSPodcast = podcast
                     saveRSSPodcast(podcast)
                     isLoadingRSS = false
                     showAddRSSSheet = false
@@ -217,245 +219,188 @@ struct PodcastDiscoveryView: View {
 
         do {
             try viewContext.save()
+            print("✅ [Browse] RSS podcast saved")
         } catch {
-            print("Error saving RSS podcast: \(error)")
+            print("❌ [Browse] Error saving RSS podcast: \(error)")
         }
     }
 
-    // MARK: - Actions
-
-    private func performSearch() {
-        isSearching = true
-        // In production, call Listen Notes API here
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            isSearching = false
-        }
-    }
-
-    private func addPodcast(_ podcast: Podcast) {
+    private func addAndOpenPodcast(_ podcast: iTunesSearchService.iTunesPodcast) {
+        // Save to Core Data
         let newPodcast = PodcastEntity(context: viewContext)
-        newPodcast.id = podcast.id.uuidString
-        newPodcast.title = podcast.title
-        newPodcast.author = podcast.author
-        newPodcast.podcastDescription = podcast.podcastDescription
-        newPodcast.artworkURL = podcast.artworkURL
+        newPodcast.id = String(podcast.trackId)
+        newPodcast.title = podcast.trackName
+        newPodcast.author = podcast.artistName
+        newPodcast.artworkURL = podcast.artworkUrl600
+        newPodcast.feedURL = podcast.feedUrl
 
         do {
             try viewContext.save()
-        } catch {
-            print("Error saving podcast: \(error)")
-        }
-    }
+            print("✅ [Browse] Podcast saved: \(podcast.trackName)")
 
-    private func deletePodcast(at offsets: IndexSet) {
-        offsets.forEach { index in
-            let podcast = savedPodcasts[index]
-            viewContext.delete(podcast)
-        }
-
-        do {
-            try viewContext.save()
+            // Open podcast detail
+            // TODO: Navigate to podcast detail view
         } catch {
-            print("Error deleting podcast: \(error)")
+            print("❌ [Browse] Error saving podcast: \(error)")
         }
     }
 }
 
-// MARK: - Genre Chip Component
+// MARK: - Category Carousel Section
 
-struct GenreChip: View {
+struct CategoryCarouselSection: View {
     let genre: PodcastGenre
-    let isSelected: Bool
-    let action: () -> Void
+    let podcasts: [iTunesSearchService.iTunesPodcast]
+    let isLoading: Bool
+    let onViewAll: () -> Void
+    let onPodcastTap: (iTunesSearchService.iTunesPodcast) -> Void
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: genre.iconName)
-                    .font(.system(size: 14))
-
+        VStack(alignment: .leading, spacing: 12) {
+            // Section header
+            HStack {
                 Text(genre.displayName)
-                    .font(.subheadlineRounded())
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(isSelected ? Color.mintAccent : Color.noteCardBackground)
-            .foregroundColor(isSelected ? Color.mintButtonText : Color.echoTextPrimary)
-            .cornerRadius(20)
-        }
-        .buttonStyle(.plain)
-    }
-}
+                    .font(.title2Echo())
+                    .foregroundColor(.echoTextPrimary)
 
-// MARK: - Saved Podcast Row
+                Spacer()
 
-struct SavedPodcastRowView: View {
-    let podcast: PodcastEntity
-
-    var body: some View {
-        HStack(spacing: 12) {
-            // Artwork
-            AsyncImage(url: URL(string: podcast.artworkURL ?? "")) { phase in
-                switch phase {
-                case .empty, .failure:
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.blue.opacity(0.2))
-                        .overlay(
-                            Image(systemName: "music.note")
-                                .foregroundColor(.blue)
-                        )
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                @unknown default:
-                    EmptyView()
-                }
-            }
-            .frame(width: 60, height: 60)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-
-            VStack(alignment: .leading, spacing: 4) {
-                if let title = podcast.title {
-                    Text(title)
-                        .font(.headline)
-                        .lineLimit(2)
-                }
-                if let author = podcast.author {
-                    Text(author)
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .lineLimit(1)
-                }
-            }
-
-            Spacer()
-
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
-        }
-        .padding(.vertical, 4)
-    }
-}
-
-// MARK: - Podcast Search Row
-
-struct PodcastSearchRowView: View {
-    let podcast: Podcast
-    let onAdd: () -> Void
-    @FetchRequest(sortDescriptors: []) private var savedPodcasts: FetchedResults<PodcastEntity>
-
-    private var isAdded: Bool {
-        savedPodcasts.contains { $0.id == podcast.id.uuidString }
-    }
-
-    var body: some View {
-        HStack(spacing: 12) {
-            // Artwork
-            AsyncImage(url: URL(string: podcast.artworkURL ?? "")) { phase in
-                switch phase {
-                case .empty, .failure:
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.blue.opacity(0.2))
-                        .overlay(
-                            Image(systemName: "music.note")
-                                .foregroundColor(.blue)
-                        )
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                @unknown default:
-                    EmptyView()
-                }
-            }
-            .frame(width: 60, height: 60)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(podcast.title)
-                    .font(.headline)
-                    .lineLimit(2)
-                if let author = podcast.author {
-                    Text(author)
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .lineLimit(1)
-                }
-                if let description = podcast.podcastDescription {
-                    Text(description)
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .lineLimit(2)
-                }
-            }
-
-            Spacer()
-
-            Button(action: onAdd) {
-                Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle")
-                    .foregroundColor(isAdded ? .green : .blue)
-                    .font(.title2)
-            }
-            .disabled(isAdded)
-        }
-        .padding(.vertical, 4)
-    }
-}
-
-// MARK: - Empty Podcasts View
-
-struct EmptyPodcastsView: View {
-    let onAddRSSFeed: () -> Void
-
-    var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
-
-            Image(systemName: "mic.circle.fill")
-                .font(.system(size: 80))
-                .foregroundColor(.blue)
-
-            VStack(spacing: 12) {
-                Text("Welcome to EchoNotes")
-                    .font(.title)
-                    .fontWeight(.bold)
-
-                Text("Capture timestamped notes while listening to podcasts")
-                    .font(.body)
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
-
-            VStack(spacing: 16) {
-                Button(action: onAddRSSFeed) {
-                    HStack {
-                        Image(systemName: "link.badge.plus")
-                        Text("Add Your First Podcast")
+                if !podcasts.isEmpty {
+                    Button(action: onViewAll) {
+                        Text("View all")
+                            .font(.bodyRoundedMedium())
+                            .foregroundColor(.mintAccent)
                     }
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(12)
                 }
-                .padding(.horizontal, 32)
-
-                Text("Paste an RSS feed URL to get started")
-                    .font(.caption)
-                    .foregroundColor(.gray)
             }
+            .padding(.horizontal, EchoSpacing.screenPadding)
 
-            Spacer()
+            // Horizontal carousel (10 podcasts, artwork only, no corner radius)
+            if isLoading {
+                HStack(spacing: 12) {
+                    ForEach(0..<5) { _ in
+                        Rectangle()
+                            .fill(Color.noteCardBackground.opacity(0.3))
+                            .frame(width: 120, height: 120)
+                    }
+                }
+                .padding(.horizontal, EchoSpacing.screenPadding)
+            } else if podcasts.isEmpty {
+                Text("No podcasts available")
+                    .font(.captionRounded())
+                    .foregroundColor(.echoTextTertiary)
+                    .padding(.horizontal, EchoSpacing.screenPadding)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(podcasts) { podcast in
+                            PodcastArtworkCard(podcast: podcast)
+                                .onTapGesture {
+                                    onPodcastTap(podcast)
+                                }
+                        }
+                    }
+                    .padding(.horizontal, EchoSpacing.screenPadding)
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.noteCardBackground.opacity(0.3))
+                )
+                .padding(.bottom, 16)  // 16-24px bottom spacing
+            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemGroupedBackground))
     }
 }
 
-// MARK: - Add RSS Feed View
+// MARK: - Podcast Artwork Card (No Corner Radius, Artwork Only)
+
+struct PodcastArtworkCard: View {
+    let podcast: iTunesSearchService.iTunesPodcast
+
+    var body: some View {
+        AsyncImage(url: URL(string: podcast.artworkUrl600 ?? "")) { phase in
+            switch phase {
+            case .empty:
+                Rectangle()
+                    .fill(Color.noteCardBackground)
+                    .frame(width: 120, height: 120)
+                    .overlay {
+                        ProgressView()
+                    }
+            case .success(let image):
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 120, height: 120)
+                    .clipped()
+            case .failure:
+                Rectangle()
+                    .fill(Color.noteCardBackground)
+                    .frame(width: 120, height: 120)
+                    .overlay {
+                        Image(systemName: "music.note")
+                            .font(.system(size: 32))
+                            .foregroundColor(.echoTextTertiary)
+                    }
+            @unknown default:
+                EmptyView()
+            }
+        }
+        .frame(width: 120, height: 120)
+        // NO corner radius as per Figma spec
+    }
+}
+
+// MARK: - Genre View All
+
+struct GenreViewAllView: View {
+    let genre: PodcastGenre
+    let podcasts: [iTunesSearchService.iTunesPodcast]
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 16) {
+                    ForEach(podcasts) { podcast in
+                        VStack(spacing: 8) {
+                            PodcastArtworkCard(podcast: podcast)
+
+                            Text(podcast.collectionName)
+                                .font(.captionRounded())
+                                .foregroundColor(.echoTextPrimary)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.center)
+                                .frame(width: 120)
+                        }
+                        .onTapGesture {
+                            print("🎧 [Browse] Podcast tapped in view all: \(podcast.collectionName)")
+                            // Open podcast detail
+                        }
+                    }
+                }
+                .padding(EchoSpacing.screenPadding)
+            }
+            .background(Color.echoBackground)
+            .navigationTitle(genre.displayName)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(.mintAccent)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Add RSS Feed View (existing, kept for compatibility)
 
 struct AddRSSFeedView: View {
     @Environment(\.dismiss) private var dismiss
@@ -527,6 +472,32 @@ struct AddRSSFeedView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Genre Chip Component (existing)
+
+struct GenreChip: View {
+    let genre: PodcastGenre
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: genre.iconName)
+                    .font(.system(size: 14))
+
+                Text(genre.displayName)
+                    .font(.subheadlineRounded())
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(isSelected ? Color.mintAccent : Color.noteCardBackground)
+            .foregroundColor(isSelected ? Color.mintButtonText : Color.echoTextPrimary)
+            .cornerRadius(20)
+        }
+        .buttonStyle(.plain)
     }
 }
 
