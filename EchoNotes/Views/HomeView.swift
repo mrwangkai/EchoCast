@@ -46,6 +46,27 @@ struct HomeView: View {
                 .padding(.top, EchoSpacing.headerTopPadding)
             }
             .background(Color.echoBackground)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack(spacing: 16) {
+                        Button(action: {
+                            // TODO: Implement Find/Search functionality
+                        }) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.body)
+                                .foregroundColor(.echoTextPrimary)
+                        }
+
+                        Button(action: {
+                            // TODO: Navigate to Settings
+                        }) {
+                            Image(systemName: "gearshape")
+                                .font(.body)
+                                .foregroundColor(.echoTextPrimary)
+                        }
+                    }
+                }
+            }
         }
     }
 

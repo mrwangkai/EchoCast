@@ -31,20 +31,22 @@
 
 ---
 
-## Phase 2: Deduplication & Cleanup ⏳ PENDING
+## Phase 2: Deduplication & Cleanup ✅ COMPLETED
 
-**Started:** TBD
-**Completed:** TBD
+**Started:** February 4, 2026
+**Completed:** February 4, 2026
 
-### Tasks:
-- [ ] Git safety checkpoint
-- [ ] Remove FullPlayerView from MiniPlayerView.swift
-- [ ] Delete AudioPlayerView.swift
-- [ ] Verify 2-tab navigation (Home + Library)
-- [ ] Add Find + Settings icon buttons
-- [ ] Test build
-- [ ] Git commit
-- [ ] Get approval to proceed
+### Tasks Completed:
+- [x] Git safety checkpoint
+- [x] Remove FullPlayerView from MiniPlayerView.swift (~300 lines removed)
+- [x] Delete AudioPlayerView.swift (840 lines removed)
+- [x] Fix all references to use EpisodePlayerView
+- [x] Fix note capture sheet references (NoteCaptureView)
+- [x] Reduce navigation to 2 tabs (Home + Library)
+- [x] Add Find + Settings icon buttons to HomeView toolbar
+- [x] Add Find + Settings icon buttons to LibraryView toolbar
+- [x] Test build
+- [x] Git commit
 
 ### Prerequisites:
 ✅ Phase 1 inventory complete

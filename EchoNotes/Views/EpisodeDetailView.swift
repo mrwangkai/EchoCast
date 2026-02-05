@@ -14,8 +14,6 @@ struct EpisodeDetailView: View {
     @ObservedObject var player = GlobalPlayerManager.shared
     @Environment(\.managedObjectContext) private var viewContext
     @State private var showNoteCaptureSheet = false
-    @State private var selectedNote: NoteEntity?
-    @State private var showNoteDetail = false
     @FetchRequest private var episodeNotes: FetchedResults<NoteEntity>
 
     init(episode: RSSEpisode, podcast: PodcastEntity) {
@@ -144,13 +142,7 @@ struct EpisodeDetailView: View {
                         } else {
                             LazyVStack(spacing: 12) {
                                 ForEach(episodeNotes) { note in
-                                    Button(action: {
-                                        selectedNote = note
-                                        showNoteDetail = true
-                                    }) {
-                                        NoteCardCompact(note: note)
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
+                                    NoteCardCompact(note: note)
                                 }
                             }
                         }
@@ -162,16 +154,7 @@ struct EpisodeDetailView: View {
         .navigationTitle("Episode")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showNoteCaptureSheet) {
-            QuickNoteCaptureView(
-                podcast: podcast,
-                episode: episode,
-                timestamp: ""
-            )
-        }
-        .sheet(isPresented: $showNoteDetail) {
-            if let note = selectedNote {
-                NoteDetailView(note: note, player: player)
-            }
+            NoteCaptureView()
         }
     }
 

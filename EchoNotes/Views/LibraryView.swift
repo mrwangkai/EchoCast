@@ -112,7 +112,29 @@ struct LibraryView: View {
                     .listStyle(.insetGrouped)
                 }
             }
-            .navigationTitle("Notes")
+            .navigationTitle("Library")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack(spacing: 16) {
+                        Button(action: {
+                            // Focus search bar
+                            viewModel.searchText = ""
+                        }) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.body)
+                                .foregroundColor(.primary)
+                        }
+
+                        Button(action: {
+                            // TODO: Navigate to Settings
+                        }) {
+                            Image(systemName: "gearshape")
+                                .font(.body)
+                                .foregroundColor(.primary)
+                        }
+                    }
+                }
+            }
             .confirmationDialog("Sort By", isPresented: $showingSortOptions) {
                 Button("Date (Newest First)") {
                     viewModel.sortOrder = .dateDescending

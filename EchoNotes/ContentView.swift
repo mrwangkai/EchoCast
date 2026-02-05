@@ -39,23 +39,11 @@ struct ContentView: View {
                     }
                     .tag(0)
 
-                PodcastsListView()
+                LibraryView()
                     .tabItem {
-                        Label("Podcasts", systemImage: "mic.fill")
+                        Label("Library", systemImage: "books.vertical.fill")
                     }
                     .tag(1)
-
-                NotesListView(selectedTab: $selectedTab)
-                    .tabItem {
-                        Label("Notes", systemImage: "note.text")
-                    }
-                    .tag(2)
-
-                SettingsView()
-                    .tabItem {
-                        Label("Settings", systemImage: "gearshape.fill")
-                    }
-                    .tag(3)
             }
             .tint(.blue)
             .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -112,13 +100,7 @@ struct ContentView: View {
         //     }
         // }
         .sheet(isPresented: $showSiriNoteCaptureSheet) {
-            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                QuickNoteCaptureView(
-                    podcast: podcast,
-                    episode: episode,
-                    timestamp: siriNoteTimestamp
-                )
-            }
+            NoteCaptureView()
         }
         // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
         // .alert("Deep Link Error", isPresented: $showDeepLinkAlert) {
@@ -2233,13 +2215,8 @@ struct PlayerSheetWrapper: View {
                     .padding(.bottom, 8)
 
                 NavigationStack {
-                    AudioPlayerView(
-                        episode: episode,
-                        podcast: podcast,
-                        autoPlay: autoPlay,
-                        seekToTime: seekToTime
-                    )
-                    .navigationBarTitleDisplayMode(.inline)
+                    EpisodePlayerView(episode: episode, podcast: podcast)
+                        .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
                             Menu {
