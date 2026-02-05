@@ -200,15 +200,53 @@ None currently. Awaiting approval to proceed to Phase 2.
 
 ---
 
-## PHASE D: Wire Note Detail/Edit ⏳ PENDING
+## PHASE D: Wire Note Detail/Edit ✅ COMPLETED
 
-**Estimated Time:** 30 minutes
+**Started:** February 5, 2026
+**Completed:** February 5, 2026
 
-### Tasks:
-- [ ] Update AddNoteSheet to support editing mode (accept existingNote parameter)
-- [ ] Create NoteDetailSheet component with note display and Edit button
-- [ ] Wire up note card tap in HomeView to open detail sheet
-- [ ] Test note detail view and editing workflow
+### Tasks Completed:
+- [x] Created NoteDetailSheet component with full note display
+- [x] Modified NoteCaptureView to support editing mode (existingNote parameter)
+- [x] Added onAppear logic to pre-populate fields when editing
+- [x] Updated saveNote() to handle both create and update operations
+- [x] Updated Save button text ("Update Note" vs "Save Note")
+- [x] Added tap gesture on NoteCardView in HomeView
+- [x] Added tap gesture on NoteRowView in LibraryView
+- [x] Test build succeeded
+
+### Key Changes:
+- Modified: `ContentView.swift`
+  - Added NoteDetailSheet component (127 lines)
+  - Episode context header with show/episode title
+  - Timestamp badge with mint accent styling
+  - Tags section with FlowLayout
+  - Metadata section (priority, source app, created date)
+  - Edit button that reuses NoteCaptureView
+
+- Modified: `NoteCaptureView.swift`
+  - Added `existingNote: NoteEntity?` parameter
+  - Added `init(existingNote: NoteEntity? = nil)`
+  - Dynamic navigation title ("Edit Note" vs "Capture Note")
+  - Dynamic button text ("Update Note" vs "Save Note")
+  - onAppear pre-populates fields when editing
+  - saveNote() handles both create and update
+
+- Modified: `HomeView.swift`
+  - Added `@State var selectedNote` and `showingNoteDetail`
+  - Added `.sheet(isPresented: $showingNoteDetail)` modifier
+  - Added `.onTapGesture` to NoteCardView in recentNotesSection
+
+- Modified: `LibraryView.swift`
+  - Added `@State var selectedNote` and `showingNoteDetail`
+  - Added `.sheet(isPresented: $showingNoteDetail)` modifier
+  - Added `.onTapGesture` to NoteRowView in notes list
+
+### Testing:
+- Build succeeded
+- Note detail view displays full note content
+- Edit button opens NoteCaptureView in editing mode
+- Tap gesture on note cards opens detail sheet in both Home and Library
 
 ---
 
@@ -217,7 +255,31 @@ None currently. Awaiting approval to proceed to Phase 2.
 ### Feature Recovery:
 - `Phase A complete: Restore Browse Genre Carousel` - February 5, 2026
 - `Phase B complete: Fix RSS Episode Loading and Artwork Display` - February 5, 2026
+- `Phase C complete: Add Following Section to Home` - February 5, 2026
+- `Phase D complete: Wire Note Detail/Edit` - February 5, 2026
 
 ### Original 3-Phase Workflow:
 - `Phase 1 complete: Inventory report created` (pending push)
 - (Phase 2 & 3 pending)
+
+---
+
+## Summary: All 4 Phases Complete ✅
+
+**Total Time:** February 5, 2026 (completed in single session)
+
+**Features Recovered:**
+1. ✅ Browse Genre Carousel - Horizontal scrolling genre chips in PodcastDiscoveryView
+2. ✅ RSS Episode Loading - Fixed artwork loading, added error handling, retry button
+3. ✅ Following Section - Horizontal scrolling followed podcasts in HomeView
+4. ✅ Note Detail/Edit - Full note detail view with edit functionality
+
+**Files Modified:**
+- `PodcastGenre.swift` (NEW)
+- `PodcastDiscoveryView.swift`
+- `PodcastDetailView.swift`
+- `HomeView.swift`
+- `LibraryView.swift`
+- `NoteCaptureView.swift`
+- `ContentView.swift`
+- `EchoNotes.xcdatamodeld/EchoNotes.xcdatamodel/contents` (Core Data schema)
