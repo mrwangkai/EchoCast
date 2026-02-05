@@ -12,6 +12,7 @@ struct PodcastDetailView: View {
     let podcast: PodcastEntity
     @State private var episodes: [RSSEpisode] = []
     @State private var isLoadingEpisodes = false
+    @State private var errorMessage: String?
     @State private var showPlayerSheet = false
     @State private var selectedEpisode: RSSEpisode?
     @State private var showDeleteConfirmation = false
@@ -31,6 +32,25 @@ struct PodcastDetailView: View {
             if isLoadingEpisodes {
                 ProgressView("Loading episodes...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let error = errorMessage {
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 48))
+                        .foregroundColor(.orange)
+                    Text("Failed to load episodes")
+                        .font(.headline)
+                        .foregroundColor(.orange)
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                    Button("Retry") {
+                        loadEpisodes()
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding()
             } else if episodes.isEmpty {
                 VStack(spacing: 16) {
                     Image(systemName: "mic.slash")
@@ -39,6 +59,12 @@ struct PodcastDetailView: View {
                     Text("No episodes found")
                         .font(.headline)
                         .foregroundColor(.gray)
+                    if let feedURL = podcast.feedURL {
+                        Text("Feed: \(feedURL)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -137,20 +163,26 @@ struct PodcastDetailView: View {
     }
 
     private func loadEpisodes() {
-        guard let feedURL = podcast.feedURL else { return }
+        guard let feedURL = podcast.feedURL else {
+            errorMessage = "No feed URL available for this podcast"
+            return
+        }
 
         isLoadingEpisodes = true
+        errorMessage = nil
         Task {
             do {
                 let rssPodcast = try await PodcastRSSService.shared.fetchPodcast(from: feedURL)
                 await MainActor.run {
                     episodes = rssPodcast.episodes
                     isLoadingEpisodes = false
+                    print("✅ Loaded \(rssPodcast.episodes.count) episodes from \(rssPodcast.title)")
                 }
             } catch {
                 await MainActor.run {
-                    print("Error loading episodes: \(error)")
+                    errorMessage = error.localizedDescription
                     isLoadingEpisodes = false
+                    print("❌ Error loading episodes: \(error)")
                 }
             }
         }
@@ -192,21 +224,36 @@ struct PodcastHeaderView: View {
     var body: some View {
         HStack(spacing: 16) {
             // Artwork
-            CachedAsyncImage(url: podcast.artworkURL) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 100, height: 100)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            } placeholder: {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.blue.opacity(0.2))
-                    .frame(width: 100, height: 100)
-                    .overlay(
-                        Image(systemName: "music.note")
-                            .font(.system(size: 40))
-                            .foregroundColor(.blue)
-                    )
+            AsyncImage(url: URL(string: podcast.artworkURL ?? "")) { phase in
+                switch phase {
+                case .empty:
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.blue.opacity(0.2))
+                        .frame(width: 100, height: 100)
+                        .overlay(
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        )
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 100, height: 100)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                case .failure:
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.blue.opacity(0.2))
+                        .frame(width: 100, height: 100)
+                        .overlay(
+                            Image(systemName: "music.note")
+                                .font(.system(size: 40))
+                                .foregroundColor(.blue)
+                        )
+                @unknown default:
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.blue.opacity(0.2))
+                        .frame(width: 100, height: 100)
+                }
             }
 
             VStack(alignment: .leading, spacing: 8) {
