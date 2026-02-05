@@ -13,17 +13,27 @@ class iTunesSearchService {
     private var searchCache: [String: [iTunesPodcast]] = [:]
 
     struct iTunesPodcast: Identifiable, Codable {
+        let collectionId: Int?
         let trackId: Int
+        let collectionName: String?
         let trackName: String
         let artistName: String
         let artworkUrl600: String?
+        let artworkUrl100: String?
         let feedUrl: String?
+        let trackViewUrl: String?
+        let collectionViewUrl: String?
+        let primaryGenreName: String?
+        let genreIds: [String]?
+        let genres: [String]?
 
-        var id: Int { trackId }
+        var id: String {
+            String(collectionId ?? trackId)
+        }
 
-        /// Collection name for display (alias for trackName)
-        var collectionName: String {
-            return trackName
+        /// Display name - prefer collectionName over trackName
+        var displayName: String {
+            collectionName ?? trackName
         }
     }
 

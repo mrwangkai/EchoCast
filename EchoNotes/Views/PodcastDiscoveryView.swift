@@ -145,7 +145,7 @@ struct PodcastDiscoveryView: View {
                         showingViewAll = true
                     },
                     onPodcastTap: { podcast in
-                        print("🎧 [Browse] Podcast tapped: \(podcast.collectionName)")
+                        print("🎧 [Browse] Podcast tapped: \(podcast.displayName)")
                         addAndOpenPodcast(podcast)
                     }
                 )
@@ -172,7 +172,7 @@ struct PodcastDiscoveryView: View {
                 ForEach(viewModel.searchResults) { podcast in
                     PodcastArtworkCard(podcast: podcast)
                         .onTapGesture {
-                            print("🎧 [Browse] Search result tapped: \(podcast.collectionName)")
+                            print("🎧 [Browse] Search result tapped: \(podcast.displayName)")
                             addAndOpenPodcast(podcast)
                         }
                 }
@@ -370,7 +370,7 @@ struct GenreViewAllView: View {
                         VStack(spacing: 8) {
                             PodcastArtworkCard(podcast: podcast)
 
-                            Text(podcast.collectionName)
+                            Text(podcast.displayName)
                                 .font(.captionRounded())
                                 .foregroundColor(.echoTextPrimary)
                                 .lineLimit(2)
@@ -378,7 +378,7 @@ struct GenreViewAllView: View {
                                 .frame(width: 120)
                         }
                         .onTapGesture {
-                            print("🎧 [Browse] Podcast tapped in view all: \(podcast.collectionName)")
+                            print("🎧 [Browse] Podcast tapped in view all: \(podcast.displayName)")
                             // Open podcast detail
                         }
                     }

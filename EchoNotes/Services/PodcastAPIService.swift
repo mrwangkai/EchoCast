@@ -21,7 +21,7 @@ class PodcastAPIService {
         let results: [iTunesSearchService.iTunesPodcast]
     }
 
-    /// Fetch top podcasts for a specific genre
+    /// Fetch top podcasts for a specific genre using Search API
     func getTopPodcasts(genreId: String, limit: Int = 10) async throws -> [iTunesSearchService.iTunesPodcast] {
         print("📡 [PodcastAPI] Fetching top \(limit) podcasts for genre ID: \(genreId)")
 
@@ -34,36 +34,56 @@ class PodcastAPIService {
             return cached
         }
 
-        // Build URL for iTunes API top podcasts by genre
-        // Using the RSS feed generator endpoint which supports genre filtering
-        let url_string = "https://itunes.apple.com/us/rss/toppodcasts/limit=\(limit)/genre=\(genreId)/json"
+        // FIXED: Use Search API instead of RSS feed generator
+        // RSS feed endpoint returns different JSON structure that doesn't match our model
+        var components = URLComponents(string: "https://itunes.apple.com/search")
+        components?.queryItems = [
+            URLQueryItem(name: "media", value: "podcast"),
+            URLQueryItem(name: "entity", value: "podcast"),
+            URLQueryItem(name: "genreId", value: genreId),
+            URLQueryItem(name: "limit", value: "\(limit)"),
+            URLQueryItem(name: "explicit", value: "Yes")
+        ]
 
-        guard let url = URL(string: url_string) else {
-            print("❌ [PodcastAPI] Invalid URL: \(url_string)")
+        guard let url = components?.url else {
+            print("❌ [PodcastAPI] Failed to construct URL")
             throw URLError(.badURL)
         }
 
-        print("📡 [PodcastAPI] Fetching from: \(url)")
+        print("📡 [PodcastAPI] Fetching from: \(url.absoluteString)")
+
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        // Log response info
+        if let httpResponse = response as? HTTPURLResponse {
+            print("📡 [PodcastAPI] Response status: \(httpResponse.statusCode)")
+        }
 
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let searchResponse = try JSONDecoder().decode(GenreResponse.self, from: data)
+            let podcasts = searchResponse.results
 
-            // Log response info
-            if let httpResponse = response as? HTTPURLResponse {
-                print("📡 [PodcastAPI] Response status: \(httpResponse.statusCode)")
+            // Log first podcast for debugging
+            if let first = podcasts.first {
+                print("📋 [PodcastAPI] First podcast: \(first.displayName)")
+                print("📋 [PodcastAPI] Artwork URL: \(first.artworkUrl600 ?? "nil")")
             }
-
-            let genreResponse = try JSONDecoder().decode(GenreResponse.self, from: data)
-            let podcasts = genreResponse.results
 
             // Cache results
             genreCache[cacheKey] = podcasts
             cacheTimestamps[cacheKey] = Date()
 
-            print("✅ [PodcastAPI] Fetched \(podcasts.count) podcasts for genre \(genreId)")
+            print("✅ [PodcastAPI] Successfully decoded \(podcasts.count) podcasts for genre \(genreId)")
             return podcasts
         } catch {
             print("❌ [PodcastAPI] Failed to fetch genre podcasts: \(error)")
+
+            // Print raw JSON for debugging
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("📄 [PodcastAPI] Raw JSON (first 500 chars):")
+                print(String(jsonString.prefix(500)))
+            }
+
             throw error
         }
     }
