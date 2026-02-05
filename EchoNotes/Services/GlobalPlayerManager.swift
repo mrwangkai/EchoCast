@@ -242,11 +242,18 @@ class GlobalPlayerManager: ObservableObject {
             }
         }
 
-        // Observe current time
+        // Setup time observer (CRITICAL for time updates)
+        // ⏱️ [Player] Setting up time observer - updates every 0.5 seconds
         let interval = CMTime(seconds: 0.5, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
         timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
             guard let self = self else { return }
-            self.currentTime = time.seconds
+            let currentSeconds = time.seconds
+
+            // Only update if changed significantly (avoid excessive UI updates)
+            if abs(self.currentTime - currentSeconds) > 0.1 {
+                self.currentTime = currentSeconds
+                print("⏱️ [Player] Current time: \(Int(currentSeconds))s / \(Int(self.duration))s")
+            }
 
             // Update Now Playing info
             self.updateNowPlayingInfo()
@@ -257,18 +264,21 @@ class GlobalPlayerManager: ObservableObject {
                 self.lastHistoryUpdate = self.currentTime
             }
         }
+        print("✅ [Player] Time observer setup complete")
 
-        // Get duration
+        // Setup duration observer
+        // ⏱️ [Player] Loading duration from asset
         if let asset = player?.currentItem?.asset {
             Task {
                 do {
                     let duration = try await asset.load(.duration)
                     await MainActor.run {
                         self.duration = duration.seconds
+                        print("✅ [Player] Duration set: \(Int(duration.seconds))s (\(formatTime(duration.seconds)))")
                         self.updateNowPlayingInfo()
                     }
                 } catch {
-                    print("⚠️ Error loading duration: \(error)")
+                    print("⚠️ [Player] Error loading duration: \(error)")
                 }
             }
         }
@@ -277,6 +287,7 @@ class GlobalPlayerManager: ObservableObject {
     }
 
     func togglePlayPause() {
+        print("🎮 [Player] Toggle play/pause called, current state: isPlaying=\(isPlaying)")
         if isPlaying {
             pause()
         } else {
@@ -285,14 +296,18 @@ class GlobalPlayerManager: ObservableObject {
     }
 
     func play() {
+        print("▶️ [Player] Play called")
         player?.play()
         isPlaying = true
+        print("✅ [Player] isPlaying: true")
         updateNowPlayingInfo()
     }
 
     func pause() {
+        print("⏸️ [Player] Pause called")
         player?.pause()
         isPlaying = false
+        print("✅ [Player] isPlaying: false")
         updateNowPlayingInfo()
     }
 
@@ -319,8 +334,28 @@ class GlobalPlayerManager: ObservableObject {
     }
 
     func seek(to time: TimeInterval) {
+        print("⏩ [Player] Seek to: \(formatTime(time))")
         let cmTime = CMTime(seconds: time, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
-        player?.seek(to: cmTime)
+        player?.seek(to: cmTime) { [weak self] completed in
+            if completed {
+                print("✅ [Player] Seek completed")
+                self?.currentTime = time
+            } else {
+                print("⚠️ [Player] Seek interrupted")
+            }
+        }
+    }
+
+    private func formatTime(_ time: TimeInterval) -> String {
+        let hours = Int(time) / 3600
+        let minutes = Int(time) / 60 % 60
+        let seconds = Int(time) % 60
+
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            return String(format: "%d:%02d", minutes, seconds)
+        }
     }
 
     // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
