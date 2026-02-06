@@ -20,7 +20,9 @@ struct PodcastDiscoveryView: View {
     @State private var isLoadingRSS = false
     @State private var rssError: String?
 
-    // Note: removed selectedPodcast/showingPodcastDetail - using different approach
+    // State for podcast detail navigation
+    @State private var selectedPodcast: PodcastEntity?
+    @State private var showingPodcastDetail = false
 
     var body: some View {
         NavigationStack {
@@ -75,6 +77,11 @@ struct PodcastDiscoveryView: View {
                     error: $rssError,
                     onAdd: loadRSSFeed
                 )
+            }
+            .sheet(isPresented: $showingPodcastDetail) {
+                if let podcast = selectedPodcast {
+                    PodcastDetailView(podcast: podcast)
+                }
             }
         }
     }
@@ -256,10 +263,22 @@ struct PodcastDiscoveryView: View {
 
                 try viewContext.save()
                 print("✅ [Browse] Saved new podcast to Core Data")
-                print("📚 [Browse] Podcast saved - find it in Library")
+
+                // Fetch the saved entity and navigate to detail
+                let saved = try viewContext.fetch(fetchRequest)
+                if let podcastEntity = saved.first {
+                    print("🎧 [Browse] Opening podcast detail")
+                    selectedPodcast = podcastEntity
+                    showingPodcastDetail = true
+                }
             } else {
                 print("ℹ️ [Browse] Podcast already exists in Core Data")
-                print("📚 [Browse] Podcast already in Library")
+                // Navigate to existing podcast
+                if let podcastEntity = existing.first {
+                    print("🎧 [Browse] Opening podcast detail")
+                    selectedPodcast = podcastEntity
+                    showingPodcastDetail = true
+                }
             }
         } catch {
             print("❌ [Browse] Failed to check/save podcast: \(error)")
