@@ -20,6 +20,8 @@ struct PodcastDiscoveryView: View {
     @State private var isLoadingRSS = false
     @State private var rssError: String?
 
+    // Note: removed selectedPodcast/showingPodcastDetail - using different approach
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -57,7 +59,13 @@ struct PodcastDiscoveryView: View {
             }
             .sheet(isPresented: $showingViewAll) {
                 if let genre = viewAllGenre {
-                    GenreViewAllView(genre: genre, podcasts: viewModel.genreResults[genre] ?? [])
+                    GenreViewAllView(
+                        genre: genre,
+                        podcasts: viewModel.genreResults[genre] ?? [],
+                        onPodcastTap: { podcast in
+                            addAndOpenPodcast(podcast)
+                        }
+                    )
                 }
             }
             .sheet(isPresented: $showAddRSSSheet) {
@@ -226,22 +234,35 @@ struct PodcastDiscoveryView: View {
     }
 
     private func addAndOpenPodcast(_ podcast: iTunesSearchService.iTunesPodcast) {
-        // Save to Core Data
-        let newPodcast = PodcastEntity(context: viewContext)
-        newPodcast.id = String(podcast.trackId)
-        newPodcast.title = podcast.trackName
-        newPodcast.author = podcast.artistName
-        newPodcast.artworkURL = podcast.artworkUrl600
-        newPodcast.feedURL = podcast.feedUrl
+        print("💾 [Browse] Adding podcast to Core Data: \(podcast.displayName)")
+
+        // Check if podcast already exists in Core Data
+        let fetchRequest: NSFetchRequest<PodcastEntity> = PodcastEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", podcast.id)
 
         do {
-            try viewContext.save()
-            print("✅ [Browse] Podcast saved: \(podcast.trackName)")
+            let existing = try viewContext.fetch(fetchRequest)
 
-            // Open podcast detail
-            // TODO: Navigate to podcast detail view
+            if existing.isEmpty {
+                // Create new podcast entity
+                let entity = PodcastEntity(context: viewContext)
+                entity.id = podcast.id
+                entity.title = podcast.displayName
+                entity.author = podcast.artistName
+                entity.artworkURL = podcast.artworkUrl600
+                entity.feedURL = podcast.feedUrl
+                entity.podcastDescription = nil
+                entity.isFollowing = false
+
+                try viewContext.save()
+                print("✅ [Browse] Saved new podcast to Core Data")
+                print("📚 [Browse] Podcast saved - find it in Library")
+            } else {
+                print("ℹ️ [Browse] Podcast already exists in Core Data")
+                print("📚 [Browse] Podcast already in Library")
+            }
         } catch {
-            print("❌ [Browse] Error saving podcast: \(error)")
+            print("❌ [Browse] Failed to check/save podcast: \(error)")
         }
     }
 }
@@ -356,6 +377,7 @@ struct PodcastArtworkCard: View {
 struct GenreViewAllView: View {
     let genre: PodcastGenre
     let podcasts: [iTunesSearchService.iTunesPodcast]
+    let onPodcastTap: (iTunesSearchService.iTunesPodcast) -> Void
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -379,7 +401,8 @@ struct GenreViewAllView: View {
                         }
                         .onTapGesture {
                             print("🎧 [Browse] Podcast tapped in view all: \(podcast.displayName)")
-                            // Open podcast detail
+                            onPodcastTap(podcast)
+                            dismiss()
                         }
                     }
                 }

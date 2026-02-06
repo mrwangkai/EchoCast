@@ -2979,7 +2979,6 @@ struct FlowLayout: Layout {
 
 struct NoteCardView: View {
     let note: NoteEntity
-    let onTap: () -> Void = {}
 
     // MARK: - Computed Properties
 
@@ -3121,10 +3120,6 @@ struct NoteCardView: View {
         .background(Color.noteCardBackground)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.3), radius: 3, x: 0, y: 1)
-        .onTapGesture {
-            print("📝 [NoteCard] Card tapped: \(note.id?.uuidString ?? "unknown")")
-            onTap()
-        }
     }
 }
 
