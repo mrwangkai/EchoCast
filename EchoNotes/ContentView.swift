@@ -2236,6 +2236,18 @@ struct PlayerSheetWrapper: View {
         } message: {
             Text("Are you sure you want to delete this downloaded episode?")
         }
+        .onAppear {
+            print("🎬 [PlayerSheet] Player sheet appeared")
+            print("🎬 [PlayerSheet] Episode: \(episode.title)")
+            print("🎬 [PlayerSheet] Podcast: \(podcast.title ?? "Unknown")")
+            print("🎬 [PlayerSheet] Auto-play: \(autoPlay)")
+
+            // Load the episode into the player
+            print("🎬 [PlayerSheet] Calling player.loadEpisode()")
+            player.loadEpisode(episode, podcast: podcast)
+
+            print("🎬 [PlayerSheet] loadEpisode completed")
+        }
     }
 }
 

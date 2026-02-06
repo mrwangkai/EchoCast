@@ -267,17 +267,29 @@ struct PodcastDiscoveryView: View {
                 // Fetch the saved entity and navigate to detail
                 let saved = try viewContext.fetch(fetchRequest)
                 if let podcastEntity = saved.first {
-                    print("🎧 [Browse] Opening podcast detail")
+                    print("🔓 [Browse] Setting selectedPodcast BEFORE opening sheet")
+                    print("🔓 [Browse] Podcast: \(podcastEntity.title ?? "Unknown")")
                     selectedPodcast = podcastEntity
-                    showingPodcastDetail = true
+
+                    // Small delay to ensure state is set before sheet opens
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        print("🔓 [Browse] Opening sheet for: \(podcastEntity.title ?? "Unknown")")
+                        self.showingPodcastDetail = true
+                    }
                 }
             } else {
                 print("ℹ️ [Browse] Podcast already exists in Core Data")
                 // Navigate to existing podcast
                 if let podcastEntity = existing.first {
-                    print("🎧 [Browse] Opening podcast detail")
+                    print("🔓 [Browse] Setting selectedPodcast BEFORE opening sheet (existing)")
+                    print("🔓 [Browse] Podcast: \(podcastEntity.title ?? "Unknown")")
                     selectedPodcast = podcastEntity
-                    showingPodcastDetail = true
+
+                    // Small delay to ensure state is set before sheet opens
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        print("🔓 [Browse] Opening sheet for: \(podcastEntity.title ?? "Unknown")")
+                        self.showingPodcastDetail = true
+                    }
                 }
             }
         } catch {

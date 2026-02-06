@@ -424,11 +424,23 @@ struct EpisodePlayerView: View {
             skipButton(systemName: "gobackward.15", action: { player.skipBackward(15) })
 
             Button {
+                print("🎮 [PlayerUI] Play button TAPPED")
+                print("🎮 [PlayerUI] Player exists: \(player != nil)")
+                print("🎮 [PlayerUI] Player isPlaying: \(player.isPlaying)")
+                print("🎮 [PlayerUI] Current episode: \(player.currentEpisode?.title ?? "nil")")
+                print("🎮 [PlayerUI] Episode parameter: \(episode.title)")
+
                 if player.isPlaying {
+                    print("⏸️ [PlayerUI] Calling player.pause()")
                     player.pause()
+                    print("🎮 [PlayerUI] pause() completed")
                 } else {
+                    print("▶️ [PlayerUI] Calling player.play()")
                     player.play()
+                    print("🎮 [PlayerUI] play() completed")
                 }
+
+                print("🎮 [PlayerUI] Action completed, isPlaying now: \(player.isPlaying)")
             } label: {
                 ZStack {
                     Circle()
