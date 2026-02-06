@@ -31,18 +31,26 @@ class GlobalPlayerManager: ObservableObject {
     private var lastHistoryUpdate: TimeInterval = 0
 
     private init() {
+        print("🎵 [Player] GlobalPlayerManager initializing")
         setupAudioSession()
         setupRemoteCommandCenter()
+        print("✅ [Player] GlobalPlayerManager initialized")
     }
 
     private func setupAudioSession() {
+        print("🔊 [Player] Setting up audio session")
+
+        let audioSession = AVAudioSession.sharedInstance()
+
         do {
-            let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playback, mode: .spokenAudio, options: [])
+            try audioSession.setCategory(.playback, mode: .default, options: [])
+            print("✅ [Player] Audio session category set to .playback")
+
             try audioSession.setActive(true)
-            print("✅ Audio session configured successfully")
+            print("✅ [Player] Audio session activated")
+
         } catch {
-            print("❌ Failed to set up audio session: \(error)")
+            print("❌ [Player] Audio session setup failed: \(error.localizedDescription)")
         }
     }
 
@@ -169,6 +177,10 @@ class GlobalPlayerManager: ObservableObject {
 
             audioURL = remoteURL
             print("🌐 Streaming from: \(audioURLString)")
+            print("✅ [Player] Valid audio URL: \(remoteURL.absoluteString)")
+            print("🔍 [Player] URL scheme: \(remoteURL.scheme ?? "none")")
+            print("🔍 [Player] URL is file: \(remoteURL.isFileURL)")
+            print("🔍 [Player] URL host: \(remoteURL.host ?? "none")")
             Task { @MainActor in
                 DevStatusManager.shared.addMessage("Streaming from URL")
                 DevStatusManager.shared.networkStatus = .loading
@@ -193,19 +205,51 @@ class GlobalPlayerManager: ObservableObject {
 
         // Create player
         let playerItem = AVPlayerItem(url: url)
+        print("🔍 [Player] Created AVPlayerItem")
+        print("🔍 [Player] Item status immediately: \(playerItem.status.rawValue)")
+        print("🔍 [Player] Item status string: \(statusString(playerItem.status))")
+
         player = AVPlayer(playerItem: playerItem)
+        print("🔍 [Player] Created AVPlayer")
+        print("🔍 [Player] Player rate: \(player?.rate ?? -1)")
 
         // Observe player item status for errors
         statusObserver = playerItem.observe(\.status, options: [.new, .initial]) { [weak self] item, _ in
+            guard let self = self else { return }
+
+            let statusName = self.statusString(item.status)
+            print("🔍 [Player] Status changed to: \(item.status.rawValue) (\(statusName))")
+
             DispatchQueue.main.async {
                 switch item.status {
+                case .unknown:
+                    print("⏳ [Player] Status: unknown - waiting for player item to load...")
+                    self.isBuffering = true
+                    Task { @MainActor in
+                        DevStatusManager.shared.playerStatus = .loading
+                        DevStatusManager.shared.addMessage("Player status unknown")
+                    }
+
                 case .readyToPlay:
-                    print("✅ Player ready to play")
-                    self?.playerError = nil
-                    self?.isBuffering = false
+                    print("✅ [Player] Status: readyToPlay - player is ready!")
+
+                    let durationSeconds = CMTimeGetSeconds(item.duration)
+                    print("🔍 [Player] Duration value: \(durationSeconds)")
+
+                    if durationSeconds.isFinite && durationSeconds > 0 {
+                        Task { @MainActor in
+                            self.duration = durationSeconds
+                            print("✅ [Player] Duration set: \(Int(durationSeconds))s (\(self.formatTime(durationSeconds)))")
+                        }
+                    } else {
+                        print("⚠️ [Player] Duration not available or invalid: \(durationSeconds)")
+                    }
+
+                    self.playerError = nil
+                    self.isBuffering = false
 
                     // Resume from saved position if available
-                    if let self = self, let episode = self.currentEpisode {
+                    if let episode = self.currentEpisode {
                         let episodeID = episode.id
                         if let savedPosition = PlaybackHistoryManager.shared.getPlaybackPosition(for: episodeID),
                            savedPosition > 0 {
@@ -219,25 +263,36 @@ class GlobalPlayerManager: ObservableObject {
                         DevStatusManager.shared.networkStatus = .success
                         DevStatusManager.shared.addMessage("Player ready to play")
                     }
+
                 case .failed:
+                    print("❌ [Player] Status: FAILED - player item failed to load")
+
+                    if let error = item.error {
+                        print("❌ [Player] Error: \(error.localizedDescription)")
+                        print("❌ [Player] Error code: \((error as NSError).code)")
+                        print("❌ [Player] Error domain: \((error as NSError).domain)")
+
+                        // Log user info for more details
+                        let userInfo = (error as NSError).userInfo
+                        for (key, value) in userInfo {
+                            print("❌ [Player] Error info - \(key): \(value)")
+                        }
+                    } else {
+                        print("❌ [Player] No error object available")
+                    }
+
                     let errorMessage = item.error?.localizedDescription ?? "Unknown playback error"
-                    print("❌ Player failed: \(errorMessage)")
-                    self?.playerError = "Playback failed: \(errorMessage)"
-                    self?.isBuffering = false
+                    self.playerError = "Playback failed: \(errorMessage)"
+                    self.isBuffering = false
+
                     Task { @MainActor in
                         DevStatusManager.shared.playerStatus = .error(errorMessage)
                         DevStatusManager.shared.networkStatus = .error("Failed")
                         DevStatusManager.shared.addMessage("Player failed: \(errorMessage)")
                     }
-                case .unknown:
-                    print("⏳ Player status unknown")
-                    self?.isBuffering = true
-                    Task { @MainActor in
-                        DevStatusManager.shared.playerStatus = .loading
-                        DevStatusManager.shared.addMessage("Player status unknown")
-                    }
+
                 @unknown default:
-                    break
+                    print("⚠️ [Player] Unknown status: \(item.status.rawValue)")
                 }
             }
         }
@@ -245,14 +300,22 @@ class GlobalPlayerManager: ObservableObject {
         // Setup time observer (CRITICAL for time updates)
         // ⏱️ [Player] Setting up time observer - updates every 0.5 seconds
         let interval = CMTime(seconds: 0.5, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
+
         timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
             guard let self = self else { return }
+
             let currentSeconds = time.seconds
+
+            // ALWAYS print first to see if callback fires
+            print("⏱️ [Player] Observer fired: \(Int(currentSeconds))s (stored: \(Int(self.currentTime))s, diff: \(abs(self.currentTime - currentSeconds)))")
 
             // Only update if changed significantly (avoid excessive UI updates)
             if abs(self.currentTime - currentSeconds) > 0.1 {
                 self.currentTime = currentSeconds
-                print("⏱️ [Player] Current time: \(Int(currentSeconds))s / \(Int(self.duration))s")
+                print("✅ [Player] Updated currentTime: \(Int(currentSeconds))s / \(Int(self.duration))s")
+            } else {
+                // Log why we're not updating
+                // print("⏸️ [Player] Skipped update - diff too small: \(abs(self.currentTime - currentSeconds))")
             }
 
             // Update Now Playing info
@@ -264,6 +327,7 @@ class GlobalPlayerManager: ObservableObject {
                 self.lastHistoryUpdate = self.currentTime
             }
         }
+
         print("✅ [Player] Time observer setup complete")
 
         // Setup duration observer
@@ -297,9 +361,59 @@ class GlobalPlayerManager: ObservableObject {
 
     func play() {
         print("▶️ [Player] Play called")
-        player?.play()
+
+        guard let player = player else {
+            print("❌ [Player] Cannot play - no player exists")
+            return
+        }
+
+        guard let item = player.currentItem else {
+            print("❌ [Player] Cannot play - no current item")
+            return
+        }
+
+        let statusName = statusString(item.status)
+        print("🔍 [Player] Current item status: \(item.status.rawValue) (\(statusName))")
+
+        if item.status != .readyToPlay {
+            print("⚠️ [Player] Item not ready to play! Status: \(statusName)")
+
+            if let error = item.error {
+                print("❌ [Player] Item has error: \(error.localizedDescription)")
+            } else {
+                print("⚠️ [Player] Item is still loading, will play when ready")
+            }
+        }
+
+        print("🔍 [Player] Player rate before play(): \(player.rate)")
+        print("🔍 [Player] Current time before play(): \(currentTime)")
+
+        player.play()
         isPlaying = true
-        print("✅ [Player] isPlaying: true")
+
+        print("✅ [Player] play() executed, isPlaying set to true")
+        print("🔍 [Player] Player rate immediately after play(): \(player.rate)")
+
+        // Check rate after short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self = self, let player = self.player else { return }
+            print("🔍 [Player] Player rate 0.5s after play(): \(player.rate)")
+
+            if player.rate == 0.0 {
+                print("⚠️ [Player] WARNING: Player rate is still 0.0 after 0.5s")
+                print("⚠️ [Player] This means audio is NOT playing")
+
+                if let item = player.currentItem {
+                    print("🔍 [Player] Item status: \(self.statusString(item.status))")
+                    if let error = item.error {
+                        print("❌ [Player] Item error: \(error.localizedDescription)")
+                    }
+                }
+            } else {
+                print("✅ [Player] Player is playing! Rate: \(player.rate)")
+            }
+        }
+
         updateNowPlayingInfo()
     }
 
@@ -355,6 +469,19 @@ class GlobalPlayerManager: ObservableObject {
             return String(format: "%d:%02d:%02d", hours, minutes, seconds)
         } else {
             return String(format: "%d:%02d", minutes, seconds)
+        }
+    }
+
+    private func statusString(_ status: AVPlayerItem.Status) -> String {
+        switch status {
+        case .unknown:
+            return "unknown"
+        case .readyToPlay:
+            return "readyToPlay"
+        case .failed:
+            return "FAILED"
+        @unknown default:
+            return "unknown_default"
         }
     }
 

@@ -45,7 +45,9 @@ struct PodcastDetailView: View {
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
                     Button("Retry") {
-                        loadEpisodes()
+                        Task {
+                            await loadEpisodes()
+                        }
                     }
                     .buttonStyle(.bordered)
                 }
@@ -71,16 +73,9 @@ struct PodcastDetailView: View {
                 List {
                     ForEach(episodes) { episode in
                         Button(action: {
-                            // Reset state first, then set in async to ensure proper timing
-                            selectedEpisode = nil
-                            showPlayerSheet = false
-
-                            DispatchQueue.main.async {
-                                selectedEpisode = episode
-                                DispatchQueue.main.async {
-                                    showPlayerSheet = true
-                                }
-                            }
+                            print("🎧 [PodcastDetail] Episode tapped: \(episode.title)")
+                            selectedEpisode = episode
+                            showPlayerSheet = true
                         }) {
                             EpisodeRowView(
                                 episode: episode,
@@ -125,8 +120,13 @@ struct PodcastDetailView: View {
         } message: {
             Text("Are you sure you want to delete this podcast and all its downloaded episodes? This action cannot be undone.")
         }
-        .onAppear {
-            loadEpisodes()
+        .task {
+            print("📊 [PodcastDetail] Task started for: \(podcast.title ?? "nil")")
+            print("📊 [PodcastDetail] Feed URL: \(podcast.feedURL ?? "nil")")
+
+            await loadEpisodes()
+
+            print("✅ [PodcastDetail] Task completed - \(episodes.count) episodes")
         }
         .sheet(isPresented: $showPlayerSheet) {
             if let episode = selectedEpisode {
@@ -162,28 +162,40 @@ struct PodcastDetailView: View {
         }
     }
 
-    private func loadEpisodes() {
+    private func loadEpisodes() async {
+        print("📡 [PodcastDetail] Loading episodes...")
+
         guard let feedURL = podcast.feedURL else {
-            errorMessage = "No feed URL available for this podcast"
+            print("❌ [PodcastDetail] No feed URL available")
+            await MainActor.run {
+                errorMessage = "No feed URL available"
+            }
             return
         }
 
-        isLoadingEpisodes = true
-        errorMessage = nil
-        Task {
-            do {
-                let rssPodcast = try await PodcastRSSService.shared.fetchPodcast(from: feedURL)
-                await MainActor.run {
-                    episodes = rssPodcast.episodes
-                    isLoadingEpisodes = false
-                    print("✅ Loaded \(rssPodcast.episodes.count) episodes from \(rssPodcast.title)")
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isLoadingEpisodes = false
-                    print("❌ Error loading episodes: \(error)")
-                }
+        print("📡 [PodcastDetail] Fetching from: \(feedURL)")
+
+        await MainActor.run {
+            isLoadingEpisodes = true
+        }
+
+        do {
+            let service = PodcastRSSService.shared
+            let rssPodcast = try await service.fetchPodcast(from: feedURL)
+            let fetchedEpisodes = rssPodcast.episodes
+
+            print("✅ [PodcastDetail] Fetched \(fetchedEpisodes.count) episodes")
+
+            await MainActor.run {
+                self.episodes = fetchedEpisodes
+                self.isLoadingEpisodes = false
+                print("✅ [PodcastDetail] UI updated with \(fetchedEpisodes.count) episodes")
+            }
+        } catch {
+            print("❌ [PodcastDetail] Failed to load episodes: \(error)")
+            await MainActor.run {
+                self.errorMessage = "Failed to load episodes: \(error.localizedDescription)"
+                self.isLoadingEpisodes = false
             }
         }
     }
