@@ -74,8 +74,14 @@ struct PodcastDetailView: View {
                     ForEach(episodes) { episode in
                         Button(action: {
                             print("🎧 [PodcastDetail] Episode tapped: \(episode.title)")
+                            print("🎧 [PodcastDetail] Setting selectedEpisode...")
                             selectedEpisode = episode
-                            showPlayerSheet = true
+
+                            // Dispatch to next run loop to ensure state is set before sheet opens
+                            DispatchQueue.main.async {
+                                print("🎧 [PodcastDetail] selectedEpisode set, opening player sheet")
+                                showPlayerSheet = true
+                            }
                         }) {
                             EpisodeRowView(
                                 episode: episode,

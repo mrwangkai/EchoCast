@@ -192,8 +192,14 @@ struct HomeView: View {
                         PodcastFollowingCard(podcast: podcast)
                             .onTapGesture {
                                 print("🎙️ [HomeView] Podcast tapped: \(podcast.title ?? "Unknown")")
+                                print("🔓 [HomeView] Setting selectedPodcast BEFORE opening sheet")
                                 selectedPodcast = podcast
-                                showingPodcastDetail = true
+
+                                // Dispatch to next run loop to ensure state is set
+                                DispatchQueue.main.async {
+                                    print("🔓 [HomeView] Opening sheet for: \(podcast.title ?? "Unknown")")
+                                    showingPodcastDetail = true
+                                }
                             }
                     }
                 }
