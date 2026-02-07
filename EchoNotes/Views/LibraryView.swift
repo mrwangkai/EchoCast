@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct LibraryView: View {
+    @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var viewModel = NoteViewModel()
+    
     @State private var showingSortOptions = false
     @State private var showingBrowse = false
     @State private var showingSettings = false
@@ -16,112 +19,27 @@ struct LibraryView: View {
     @State private var showingNoteDetail = false
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Search bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                    TextField("Search notes...", text: $viewModel.searchText)
-                        .textFieldStyle(.plain)
-                    if !viewModel.searchText.isEmpty {
-                        Button(action: {
-                            viewModel.searchText = ""
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.gray)
-                        }
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 32) {
+                    // Header
+                    headerSection
+                    
+                    // Search and Filter Section
+                    searchAndFilterSection
+                    
+                    // Notes Section
+                    if viewModel.notes.isEmpty {
+                        emptyStateView
+                    } else {
+                        notesSection
                     }
                 }
-                .padding(12)
-                .background(Color(.systemGray6))
-                .cornerRadius(10)
-                .padding(.horizontal)
-                .padding(.top, 8)
-
-                // Filter buttons
-                HStack(spacing: 12) {
-                    Button(action: {
-                        viewModel.filterPriority.toggle()
-                    }) {
-                        HStack {
-                            Image(systemName: viewModel.filterPriority ? "star.fill" : "star")
-                            Text("Priority")
-                        }
-                        .font(.subheadline)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(viewModel.filterPriority ? Color.yellow.opacity(0.2) : Color(.systemGray6))
-                        .cornerRadius(8)
-                    }
-                    .foregroundColor(viewModel.filterPriority ? .yellow : .primary)
-
-                    Button(action: {
-                        showingSortOptions = true
-                    }) {
-                        HStack {
-                            Image(systemName: "arrow.up.arrow.down")
-                            Text("Sort")
-                        }
-                        .font(.subheadline)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
-                    }
-                    .foregroundColor(.primary)
-
-                    Spacer()
-
-                    Text("\(viewModel.notes.count) notes")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-
-                // Notes list
-                if viewModel.notes.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "note.text")
-                            .font(.system(size: 64))
-                            .foregroundColor(.gray)
-                        Text("No notes yet")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                        Text("Tap the + button to create your first note")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    List {
-                        ForEach(viewModel.groupedNotes(), id: \.key) { show, notes in
-                            Section(header: Text(show)) {
-                                ForEach(notes) { note in
-                                    NoteRowView(note: note, onTogglePriority: {
-                                        viewModel.togglePriority(note)
-                                    })
-                                    .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        selectedNote = note
-                                        showingNoteDetail = true
-                                    }
-                                }
-                                .onDelete { indexSet in
-                                    indexSet.forEach { index in
-                                        viewModel.deleteNote(notes[index])
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .listStyle(.insetGrouped)
-                }
+                .padding(.horizontal, EchoSpacing.screenPadding)
+                .padding(.top, EchoSpacing.headerTopPadding)
             }
-            .navigationTitle("Library")
+            .background(Color.echoBackground)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
@@ -130,7 +48,7 @@ struct LibraryView: View {
                         }) {
                             Image(systemName: "magnifyingglass")
                                 .font(.body)
-                                .foregroundColor(.primary)
+                                .foregroundColor(.echoTextPrimary)
                         }
 
                         Button(action: {
@@ -138,7 +56,7 @@ struct LibraryView: View {
                         }) {
                             Image(systemName: "gearshape")
                                 .font(.body)
-                                .foregroundColor(.primary)
+                                .foregroundColor(.echoTextPrimary)
                         }
                     }
                 }
@@ -171,62 +89,159 @@ struct LibraryView: View {
             }
         }
     }
-}
-
-// MARK: - Note Row View
-
-struct NoteRowView: View {
-    let note: NoteEntity
-    let onTogglePriority: () -> Void
-
-    var body: some View {
+    
+    // MARK: - Header Section
+    
+    private var headerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
+            Text("Library")
+                .font(.largeTitleEcho())
+                .foregroundColor(.echoTextPrimary)
+            
+            Text("All your notes in one place")
+                .font(.bodyEcho())
+                .foregroundColor(.echoTextSecondary)
+        }
+    }
+    
+    // MARK: - Search and Filter Section
+    
+    private var searchAndFilterSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Search bar
             HStack {
-                if let episodeTitle = note.episodeTitle {
-                    Text(episodeTitle)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .lineLimit(1)
-                }
-                Spacer()
-                if note.isPriority {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(.yellow)
-                        .font(.caption)
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.echoTextSecondary)
+                TextField("Search notes...", text: $viewModel.searchText)
+                    .foregroundColor(.echoTextPrimary)
+                    .tint(.mintAccent)
+                if !viewModel.searchText.isEmpty {
+                    Button(action: {
+                        viewModel.searchText = ""
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.echoTextSecondary)
+                    }
                 }
             }
+            .padding(12)
+            .background(Color.searchFieldBackground)
+            .cornerRadius(10)
+            
+            // Filter and Sort buttons
+            HStack(spacing: 12) {
+                Button(action: {
+                    viewModel.filterPriority.toggle()
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: viewModel.filterPriority ? "star.fill" : "star")
+                            .font(.system(size: 12))
+                        Text("Priority")
+                            .font(.caption2Medium())
+                    }
+                    .foregroundColor(viewModel.filterPriority ? Color.mintAccent : .echoTextSecondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(viewModel.filterPriority ? Color.mintAccent.opacity(0.2) : Color.searchFieldBackground)
+                    .cornerRadius(8)
+                }
 
-            if let noteText = note.noteText, !noteText.isEmpty {
-                Text(noteText)
-                    .font(.body)
-                    .foregroundColor(.primary)
-                    .lineLimit(3)
-            }
-
-            HStack {
-                if let timestamp = note.timestamp {
-                    Label(timestamp, systemImage: "clock")
-                        .font(.caption)
-                        .foregroundColor(.gray)
+                Button(action: {
+                    showingSortOptions = true
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.up.arrow.down")
+                            .font(.system(size: 12))
+                        Text("Sort")
+                            .font(.caption2Medium())
+                    }
+                    .foregroundColor(.echoTextSecondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.searchFieldBackground)
+                    .cornerRadius(8)
                 }
 
                 Spacer()
 
-                if let createdAt = note.createdAt {
-                    Text(createdAt, style: .relative)
-                        .font(.caption)
-                        .foregroundColor(.gray)
+                Text("\(viewModel.notes.count) notes")
+                    .font(.caption2Medium())
+                    .foregroundColor(.echoTextTertiary)
+            }
+        }
+    }
+    
+    // MARK: - Notes Section
+    
+    private var notesSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("All Notes")
+                .font(.title2Echo())
+                .foregroundColor(.echoTextPrimary)
+            
+            ForEach(viewModel.groupedNotes(), id: \.key) { show, notes in
+                VStack(alignment: .leading, spacing: 12) {
+                    // Section header with show title
+                    Text(show)
+                        .font(.subheadlineRounded())
+                        .foregroundColor(.echoTextSecondary)
+                        .padding(.top, 8)
+                    
+                    // Notes in this show
+                    ForEach(notes) { note in
+                        NoteCardView(note: note)
+                            .onTapGesture {
+                                selectedNote = note
+                                showingNoteDetail = true
+                            }
+                            .contextMenu {
+                                Button(action: {
+                                    viewModel.togglePriority(note)
+                                }) {
+                                    Label(
+                                        note.isPriority ? "Remove Priority" : "Mark as Priority",
+                                        systemImage: note.isPriority ? "star.slash" : "star.fill"
+                                    )
+                                }
+                                
+                                Button(role: .destructive, action: {
+                                    viewModel.deleteNote(note)
+                                }) {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                    }
                 }
             }
         }
-        .padding(.vertical, 4)
-        .contentShape(Rectangle())
-        .swipeActions(edge: .leading) {
-            Button(action: onTogglePriority) {
-                Label("Priority", systemImage: note.isPriority ? "star.slash" : "star.fill")
+    }
+    
+    // MARK: - Empty State View
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+                .frame(height: 100)
+            
+            Image(systemName: "note.text")
+                .font(.system(size: 72))
+                .foregroundColor(.mintAccent)
+            
+            VStack(spacing: 8) {
+                Text("No notes yet")
+                    .font(.title2Echo())
+                    .foregroundColor(.echoTextPrimary)
+                
+                Text("Start listening to podcasts and take notes as you go")
+                    .font(.bodyEcho())
+                    .foregroundColor(.echoTextSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
             }
-            .tint(.yellow)
+            
+            Spacer()
         }
+        .frame(maxWidth: .infinity)
     }
 }
 

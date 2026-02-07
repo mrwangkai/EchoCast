@@ -23,7 +23,7 @@ struct ContentView: View {
     @StateObject private var devStatus = DevStatusManager.shared
     @State private var showSiriNoteCaptureSheet = false
     @State private var siriNoteTimestamp = ""
-    @State private var showFullPlayer = false  // NEW: Manage full player sheet at root level
+    @State private var showFullPlayer = false  // Manage full player sheet at root level
     @Environment(\.managedObjectContext) private var viewContext
     // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
     // @EnvironmentObject private var deepLinkManager: DeepLinkManager
@@ -32,6 +32,7 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
+            // Main tab view with bottom accessory for mini player
             TabView(selection: $selectedTab) {
                 HomeView()
                     .tabItem {
@@ -45,36 +46,56 @@ struct ContentView: View {
                     }
                     .tag(1)
             }
-            .tint(.blue)
+            .tint(.mintAccent)
+            .tabViewStyle(.tabBarOnly)
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                // Always render MiniPlayerView, control visibility via opacity
-                MiniPlayerView(showFullPlayer: $showFullPlayer)
-                    .opacity(player.showMiniPlayer ? 1 : 0)
-                    .frame(height: player.showMiniPlayer ? nil : 0)
-                    .clipped()
+                // Mini player bar above tab bar (iOS Music app style)
+                if player.showMiniPlayer {
+                    AppleMusicStyleMiniPlayer(showFullPlayer: $showFullPlayer)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
         }
-        // FULL PLAYER SHEET - Attached to root ZStack (always exists)
-        .sheet(isPresented: $showFullPlayer, onDismiss: {
-            print("🔴 [ContentView] Sheet onDismiss called")
-        }) {
+        // FULL PLAYER SHEET - Bottom sheet that slides up from mini player
+        .sheet(isPresented: $showFullPlayer) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                EpisodePlayerView(episode: episode, podcast: podcast)
-                    .onAppear {
-                        print("👁️ [ContentView Sheet] EpisodePlayerView appeared")
-                    }
-                    .onDisappear {
-                        print("👁️ [ContentView Sheet] EpisodePlayerView disappeared")
-                    }
+                NavigationStack {
+                    EpisodePlayerView(episode: episode, podcast: podcast)
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                        showFullPlayer = false
+                                    }
+                                }) {
+                                    Image(systemName: "chevron.down")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundColor(.mintAccent)
+                                }
+                            }
+                        }
+                        .onAppear {
+                            print("👁️ [ContentView Full Player] EpisodePlayerView appeared")
+                        }
+                        .onDisappear {
+                            print("👁️ [ContentView Full Player] EpisodePlayerView disappeared")
+                        }
+                }
+                .presentationDragIndicator(.visible)
+                .presentationDetents([.large])
+                .presentationCornerRadius(20)
+                .interactiveDismissDisabled(false)
             } else {
                 VStack(spacing: 16) {
                     ProgressView()
                     Text("Loading...")
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(.systemBackground))
+                .background(Color.echoBackground)
+                .presentationDetents([.large])
                 .onAppear {
-                    print("⚠️ [ContentView Sheet] Fallback view - episode/podcast is nil")
+                    print("⚠️ [ContentView Full Player] Fallback view - episode/podcast is nil")
                     DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                         if player.currentEpisode == nil || player.currentPodcast == nil {
                             showFullPlayer = false
@@ -2245,8 +2266,52 @@ struct PlayerSheetWrapper: View {
             // Load the episode into the player
             print("🎬 [PlayerSheet] Calling player.loadEpisode()")
             player.loadEpisode(episode, podcast: podcast)
-
             print("🎬 [PlayerSheet] loadEpisode completed")
+
+            // Handle seekToTime if provided
+            if let seekTime = seekToTime {
+                print("🎬 [PlayerSheet] Seek requested to: \(seekTime)s")
+                // Wait for player to be ready before seeking
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    print("⏩ [PlayerSheet] Executing seek to: \(seekTime)s")
+                    player.seek(to: seekTime)
+                }
+            }
+
+            // Handle autoPlay if enabled
+            if autoPlay {
+                print("🎬 [PlayerSheet] AutoPlay enabled - will play when ready")
+                // Wait for player to be ready before playing
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    // Check if episode is loaded by verifying published properties
+                    guard player.currentEpisode != nil, player.currentPodcast != nil else {
+                        print("❌ [PlayerSheet] Episode or podcast not available")
+                        return
+                    }
+                    
+                    // Check if not buffering (indicates player is ready)
+                    if !player.isBuffering && player.playerError == nil {
+                        print("✅ [PlayerSheet] Player ready - starting playback")
+                        player.play()
+                    } else {
+                        print("⚠️ [PlayerSheet] Player not ready yet (buffering: \(player.isBuffering), error: \(player.playerError ?? "none")), checking again...")
+                        // Check again after another delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            guard player.currentEpisode != nil, player.currentPodcast != nil else {
+                                print("❌ [PlayerSheet] Episode or podcast not available on retry")
+                                return
+                            }
+                            
+                            if !player.isBuffering && player.playerError == nil {
+                                print("✅ [PlayerSheet] Player ready (2nd check) - starting playback")
+                                player.play()
+                            } else {
+                                print("❌ [PlayerSheet] Player still not ready after 2.5s (buffering: \(player.isBuffering)) - skipping autoplay")
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -3816,6 +3881,179 @@ struct EpisodePlayerData: Identifiable {
         self.episode = episode
         self.podcast = podcast
         self.seekToTime = seekToTime
+    }
+}
+
+// MARK: - Apple Music Style Mini Player
+
+struct AppleMusicStyleMiniPlayer: View {
+    @Binding var showFullPlayer: Bool
+    @ObservedObject private var player = GlobalPlayerManager.shared
+    @State private var showingAddNote = false
+    @State private var dragOffset: CGFloat = 0
+    
+    private let miniPlayerHeight: CGFloat = 64
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Mini player bar
+            miniPlayerBar
+                .offset(y: dragOffset)
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            // Only allow upward drag
+                            if value.translation.height < 0 {
+                                dragOffset = value.translation.height
+                            }
+                        }
+                        .onEnded { value in
+                            if value.translation.height < -50 {
+                                // Expand to full player
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                    showFullPlayer = true
+                                }
+                            }
+                            // Reset drag offset
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                dragOffset = 0
+                            }
+                        }
+                )
+        }
+        .background(.clear)
+        .sheet(isPresented: $showingAddNote) {
+            NoteCaptureView()
+        }
+    }
+    
+    private var miniPlayerBar: some View {
+        HStack(spacing: 0) {
+            // Left: Album art + Info (tappable to expand)
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    showFullPlayer = true
+                }
+            }) {
+                HStack(spacing: 12) {
+                    // Album artwork
+                    albumArtwork
+                    
+                    // Episode info
+                    VStack(alignment: .leading, spacing: 2) {
+                        if let episode = player.currentEpisode {
+                            Text(episode.title)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.echoTextPrimary)
+                                .lineLimit(1)
+                        }
+                        
+                        if let podcast = player.currentPodcast {
+                            Text(podcast.title ?? "Unknown Podcast")
+                                .font(.system(size: 12))
+                                .foregroundColor(.echoTextSecondary)
+                                .lineLimit(1)
+                        }
+                    }
+                    
+                    Spacer(minLength: 8)
+                }
+                .padding(.leading, 8)
+            }
+            .buttonStyle(.plain)
+            
+            // Right: Controls
+            HStack(spacing: 8) {
+                // Add note button
+                Button(action: {
+                    showingAddNote = true
+                }) {
+                    Image(systemName: "note.text.badge.plus")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.mintAccent)
+                        .frame(width: 32, height: 32)
+                }
+                .buttonStyle(.plain)
+                
+                // Play/Pause button
+                Button(action: {
+                    if player.isPlaying {
+                        player.pause()
+                    } else {
+                        player.play()
+                    }
+                }) {
+                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.mintAccent)
+                        .frame(width: 40, height: 40)
+                }
+                .buttonStyle(.plain)
+                
+                // Forward button
+                Button(action: {
+                    player.skipForward(15)
+                }) {
+                    Image(systemName: "goforward.15")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.mintAccent)
+                        .frame(width: 32, height: 32)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.trailing, 12)
+        }
+        .frame(height: miniPlayerHeight)
+        .background(
+            // Blur effect background (Apple Music style)
+            .ultraThinMaterial
+        )
+        .overlay(
+            // Progress bar at the bottom
+            GeometryReader { geometry in
+                VStack {
+                    Spacer()
+                    Rectangle()
+                        .fill(Color.mintAccent)
+                        .frame(height: 2)
+                        .frame(width: geometry.size.width * CGFloat(player.duration > 0 ? player.currentTime / player.duration : 0))
+                        .animation(.linear(duration: 0.5), value: player.currentTime)
+                }
+            }
+        )
+        .cornerRadius(12, corners: [.topLeft, .topRight])
+        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: -2)
+        .padding(.bottom, 0) // Sits directly on tab bar
+    }
+    
+    private var albumArtwork: some View {
+        Group {
+            if let imageURL = player.currentEpisode?.imageURL ?? player.currentPodcast?.artworkURL,
+               let url = URL(string: imageURL) {
+                CachedAsyncImage(url: imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.noteCardBackground)
+                        .overlay(
+                            Image(systemName: "music.note")
+                                .foregroundColor(.echoTextTertiary)
+                        )
+                }
+            } else {
+                Rectangle()
+                    .fill(Color.noteCardBackground)
+                    .overlay(
+                        Image(systemName: "music.note")
+                            .foregroundColor(.echoTextTertiary)
+                    )
+            }
+        }
+        .frame(width: 48, height: 48)
+        .cornerRadius(8)
+        .padding(.vertical, 8)
     }
 }
 

@@ -13,7 +13,6 @@ struct PodcastDetailView: View {
     @State private var episodes: [RSSEpisode] = []
     @State private var isLoadingEpisodes = false
     @State private var errorMessage: String?
-    @State private var showPlayerSheet = false
     @State private var selectedEpisode: RSSEpisode?
     @State private var showDeleteConfirmation = false
     @Environment(\.managedObjectContext) private var viewContext
@@ -74,14 +73,7 @@ struct PodcastDetailView: View {
                     ForEach(episodes) { episode in
                         Button(action: {
                             print("🎧 [PodcastDetail] Episode tapped: \(episode.title)")
-                            print("🎧 [PodcastDetail] Setting selectedEpisode...")
-                            selectedEpisode = episode
-
-                            // Dispatch to next run loop to ensure state is set before sheet opens
-                            DispatchQueue.main.async {
-                                print("🎧 [PodcastDetail] selectedEpisode set, opening player sheet")
-                                showPlayerSheet = true
-                            }
+                            selectedEpisode = episode  // Sheet opens automatically
                         }) {
                             EpisodeRowView(
                                 episode: episode,
@@ -134,36 +126,16 @@ struct PodcastDetailView: View {
 
             print("✅ [PodcastDetail] Task completed - \(episodes.count) episodes")
         }
-        .sheet(isPresented: $showPlayerSheet) {
-            if let episode = selectedEpisode {
-                PlayerSheetWrapper(
-                    episode: episode,
-                    podcast: podcast,
-                    dismiss: { showPlayerSheet = false },
-                    autoPlay: true,
-                    seekToTime: nil
-                )
-            } else {
-                // Fallback if episode is missing
-                VStack(spacing: 16) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                    Text("Loading episode...")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .onAppear {
-                    print("⚠️ Episode sheet opened but selectedEpisode is nil")
-
-                    // Auto-dismiss after 5 seconds if still nil (DO NOT force re-render)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                        if selectedEpisode == nil {
-                            print("❌ Timeout: Episode data still nil after 5s - closing sheet")
-                            showPlayerSheet = false
-                        }
-                    }
-                }
+        .sheet(item: $selectedEpisode) { episode in
+            PlayerSheetWrapper(
+                episode: episode,
+                podcast: podcast,
+                dismiss: { selectedEpisode = nil },
+                autoPlay: true,
+                seekToTime: nil
+            )
+            .onAppear {
+                print("✅ [PodcastDetail] Player sheet opened with episode: \(episode.title)")
             }
         }
     }

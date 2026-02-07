@@ -18,6 +18,13 @@ struct HomeView: View {
     )
     private var recentNotes: FetchedResults<NoteEntity>
 
+    // Fetch all podcasts for Continue Listening cards
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \PodcastEntity.title, ascending: true)],
+        animation: .default
+    )
+    private var allPodcasts: FetchedResults<PodcastEntity>
+
     // Fetch followed podcasts
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \PodcastEntity.title, ascending: true)],
@@ -33,16 +40,55 @@ struct HomeView: View {
     @State private var showingBrowse = false
     @State private var showingSettings = false
     @State private var selectedPodcast: PodcastEntity?
-    @State private var showingPodcastDetail = false
     @State private var selectedNote: NoteEntity?
     @State private var showingNoteDetail = false
+
+    // Recently played episodes for Continue Listening section
+    @State private var continueListeningEpisodes: [(historyItem: PlaybackHistoryItem, podcast: PodcastEntity)] = []
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
-                    // Header
-                    headerSection
+                    // Header with inline buttons
+                    HStack(alignment: .center) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("EchoCast")
+                                .font(.largeTitleEcho())
+                                .foregroundColor(.echoTextPrimary)
+
+                            Text(greetingText)
+                                .font(.bodyEcho())
+                                .foregroundColor(.echoTextSecondary)
+                        }
+                        
+                        Spacer()
+                        
+                        // Buttons inline with header
+                        HStack(spacing: 16) {
+                            Button(action: {
+                                print("🔍 [HomeView] Browse button tapped")
+                                showingBrowse = true
+                            }) {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.body)
+                                    .foregroundColor(.echoTextPrimary)
+                                    .frame(width: 44, height: 44)
+                            }
+
+                            Button(action: {
+                                print("⚙️ [HomeView] Settings button tapped")
+                                showingSettings = true
+                            }) {
+                                Image(systemName: "gearshape")
+                                    .font(.body)
+                                    .foregroundColor(.echoTextPrimary)
+                                    .frame(width: 44, height: 44)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, EchoSpacing.screenPadding)
+                    .padding(.top, EchoSpacing.headerTopPadding)
 
                     // Continue Listening Section
                     if player.currentEpisode != nil || !recentNotes.isEmpty {
@@ -61,38 +107,15 @@ struct HomeView: View {
                         emptyStateView
                     }
                 }
-                .padding(.horizontal, EchoSpacing.screenPadding)
-                .padding(.top, EchoSpacing.headerTopPadding)
+                .padding(.bottom, 100)
             }
             .background(Color.echoBackground)
+            .navigationBarHidden(true)
             .onAppear {
                 print("🏠 [HomeView] View appeared")
                 print("🏠 [HomeView] Recent notes count: \(recentNotes.count)")
                 print("🏠 [HomeView] Followed podcasts count: \(followedPodcasts.count)")
                 print("🏠 [HomeView] Player episode loaded: \(player.currentEpisode != nil)")
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 16) {
-                        Button(action: {
-                            print("🔍 [HomeView] Browse button tapped")
-                            showingBrowse = true
-                        }) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.body)
-                                .foregroundColor(.echoTextPrimary)
-                        }
-
-                        Button(action: {
-                            print("⚙️ [HomeView] Settings button tapped")
-                            showingSettings = true
-                        }) {
-                            Image(systemName: "gearshape")
-                                .font(.body)
-                                .foregroundColor(.echoTextPrimary)
-                        }
-                    }
-                }
             }
         }
         .sheet(isPresented: $showingBrowse) {
@@ -101,14 +124,37 @@ struct HomeView: View {
         .sheet(isPresented: $showingSettings) {
             SettingsView()
         }
-        .sheet(isPresented: $showingPodcastDetail) {
-            if let podcast = selectedPodcast {
-                PodcastDetailView(podcast: podcast)
-            }
+        .sheet(item: $selectedPodcast) { podcast in
+            PodcastDetailView(podcast: podcast)
+                .onAppear {
+                    print("✅ [Home] Sheet opened successfully with podcast: \(podcast.title ?? "nil")")
+                }
         }
         .sheet(isPresented: $showingNoteDetail) {
             if let note = selectedNote {
                 NoteDetailSheet(note: note)
+            }
+        }
+        .sheet(isPresented: $showingPlayerSheet) {
+            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                NavigationStack {
+                    EpisodePlayerView(episode: episode, podcast: podcast)
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button(action: {
+                                    showingPlayerSheet = false
+                                }) {
+                                    Image(systemName: "chevron.down")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundColor(.mintAccent)
+                                }
+                            }
+                        }
+                }
+                .presentationDragIndicator(.visible)
+                .presentationDetents([.large])
+                .presentationCornerRadius(20)
             }
         }
     }
@@ -143,38 +189,42 @@ struct HomeView: View {
             Text("Continue Listening")
                 .font(.title2Echo())
                 .foregroundColor(.echoTextPrimary)
+                .padding(.horizontal, EchoSpacing.screenPadding)
 
-            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                ContinueListeningCard(
-                    episode: continueListeningEpisodeFromPlayer(episode: episode, podcast: podcast),
-                    onTap: {
-                        print("🎧 [HomeView] Continue Listening card tapped: \(episode.title)")
-                        showingPlayerSheet = true
-                    },
-                    onPlayTap: {
-                        print("🎮 [HomeView] Play button tapped, current state: \(player.isPlaying)")
-                        // Resume/toggle playback
-                        if player.isPlaying {
-                            player.pause()
-                        } else {
-                            player.play()
+            if !continueListeningEpisodes.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(continueListeningEpisodes, id: \.historyItem.id) { item in
+                            ContinueListeningCard(
+                                episode: continueListeningEpisodeFromHistory(historyItem: item.historyItem, podcast: item.podcast),
+                                onTap: {
+                                    print("🎧 [HomeView] Continue Listening card tapped: \(item.historyItem.episodeTitle)")
+                                    // Load and play this episode
+                                    loadEpisodeFromHistory(item: item.historyItem, podcast: item.podcast)
+                                },
+                                onPlayTap: {
+                                    print("🎮 [HomeView] Play button tapped")
+                                    // Load and play this episode
+                                    loadEpisodeFromHistory(item: item.historyItem, podcast: item.podcast)
+                                }
+                            )
+                            .frame(width: 327)
                         }
                     }
-                )
-                .frame(width: 327)
+                    .padding(.horizontal, EchoSpacing.screenPadding)
+                }
                 .onAppear {
-                    print("🎧 [HomeView] Showing Continue Listening section")
+                    print("🎧 [HomeView] Showing \(continueListeningEpisodes.count) Continue Listening cards")
                 }
             } else {
-                Text("No episodes playing")
+                Text("No episodes in progress")
                     .font(.bodyEcho())
                     .foregroundColor(.echoTextTertiary)
+                    .padding(.horizontal, EchoSpacing.screenPadding)
             }
         }
-        .sheet(isPresented: $showingPlayerSheet) {
-            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                EpisodePlayerView(episode: episode, podcast: podcast)
-            }
+        .onAppear {
+            loadContinueListeningEpisodes()
         }
     }
 
@@ -185,6 +235,7 @@ struct HomeView: View {
             Text("Following")
                 .font(.title2Echo())
                 .foregroundColor(.echoTextPrimary)
+                .padding(.horizontal, EchoSpacing.screenPadding)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
@@ -192,18 +243,12 @@ struct HomeView: View {
                         PodcastFollowingCard(podcast: podcast)
                             .onTapGesture {
                                 print("🎙️ [HomeView] Podcast tapped: \(podcast.title ?? "Unknown")")
-                                print("🔓 [HomeView] Setting selectedPodcast BEFORE opening sheet")
-                                selectedPodcast = podcast
-
-                                // Dispatch to next run loop to ensure state is set
-                                DispatchQueue.main.async {
-                                    print("🔓 [HomeView] Opening sheet for: \(podcast.title ?? "Unknown")")
-                                    showingPodcastDetail = true
-                                }
+                                print("🔓 [HomeView] Opening podcast detail sheet")
+                                selectedPodcast = podcast  // Sheet opens automatically
                             }
                     }
                 }
-                .padding(.trailing, EchoSpacing.screenPadding)
+                .padding(.horizontal, EchoSpacing.screenPadding)
             }
         }
         .onAppear {
@@ -238,6 +283,94 @@ struct HomeView: View {
         return String(format: "%d:%02d", mins, secs)
     }
 
+    /// Formats a duration TimeInterval as a string (e.g., "MM:SS" or "H:MM:SS")
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let hours = Int(seconds) / 3600
+        let mins = Int(seconds) / 60 % 60
+        let secs = Int(seconds) % 60
+
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, mins, secs)
+        } else {
+            return String(format: "%d:%02d", mins, secs)
+        }
+    }
+
+    // MARK: - Continue Listening from History
+
+    /// Loads recently played episodes from playback history and matches them with podcast entities
+    private func loadContinueListeningEpisodes() {
+        let historyItems = PlaybackHistoryManager.shared.getRecentlyPlayed(limit: 5)
+
+        var episodes: [(historyItem: PlaybackHistoryItem, podcast: PodcastEntity)] = []
+
+        for historyItem in historyItems {
+            // Find the podcast entity for this history item
+            // Try to match by podcastID first, then by podcast title as fallback
+            let podcast: PodcastEntity?
+
+            if let foundPodcast = allPodcasts.first(where: { $0.id == historyItem.podcastID }) {
+                podcast = foundPodcast
+            } else if let foundPodcast = allPodcasts.first(where: { $0.title == historyItem.podcastTitle }) {
+                podcast = foundPodcast
+            } else {
+                podcast = nil
+            }
+
+            if let p = podcast {
+                episodes.append((historyItem: historyItem, podcast: p))
+            }
+        }
+
+        continueListeningEpisodes = episodes
+
+        print("🎧 [HomeView] Loaded \(continueListeningEpisodes.count) continue listening episodes")
+    }
+
+    /// Converts a playback history item to a ContinueListeningEpisode
+    private func continueListeningEpisodeFromHistory(historyItem: PlaybackHistoryItem, podcast: PodcastEntity) -> ContinueListeningEpisode {
+        let notesCount = recentNotes.filter { $0.episodeTitle == historyItem.episodeTitle }.count
+        let remaining = max(0, historyItem.duration - historyItem.currentTime)
+        let timeRemaining = formatTimeRemaining(remaining)
+
+        return ContinueListeningEpisode(
+            id: historyItem.id,
+            title: historyItem.episodeTitle,
+            podcastName: historyItem.podcastTitle,
+            artworkURL: podcast.artworkURL,
+            progress: historyItem.progress,
+            notesCount: notesCount,
+            timeRemaining: timeRemaining,
+            audioURL: historyItem.audioURL,
+            duration: historyItem.duration,
+            currentTime: historyItem.currentTime
+        )
+    }
+
+    /// Loads an episode from playback history into the player
+    private func loadEpisodeFromHistory(item: PlaybackHistoryItem, podcast: PodcastEntity) {
+        // Create RSSEpisode from history item
+        let episode = RSSEpisode(
+            title: item.episodeTitle,
+            description: nil,
+            pubDate: nil,
+            duration: formatDuration(item.duration),  // Convert TimeInterval to String
+            audioURL: item.audioURL,
+            imageURL: podcast.artworkURL
+        )
+
+        // Load episode into player
+        GlobalPlayerManager.shared.loadEpisode(episode, podcast: podcast)
+
+        // Seek to saved position
+        if item.currentTime > 0 {
+            GlobalPlayerManager.shared.seek(to: item.currentTime)
+        }
+
+        // Show full player
+        showingPlayerSheet = true
+    }
+
     // MARK: - Recent Notes Section
 
     private var recentNotesSection: some View {
@@ -245,9 +378,11 @@ struct HomeView: View {
             Text("Recent Notes")
                 .font(.title2Echo())
                 .foregroundColor(.echoTextPrimary)
+                .padding(.horizontal, EchoSpacing.screenPadding)
 
             ForEach(recentNotes.prefix(5)) { note in
                 NoteCardView(note: note)
+                    .padding(.horizontal, EchoSpacing.screenPadding)
                     .onTapGesture {
                         print("📝 [HomeView] Note tapped: \(note.noteText?.prefix(50) ?? "No text")...")
                         selectedNote = note
@@ -298,7 +433,7 @@ struct PodcastFollowingCard: View {
     let podcast: PodcastEntity
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(alignment: .center, spacing: 8) {
             // Album artwork
             AsyncImage(url: URL(string: podcast.artworkURL ?? "")) { phase in
                 switch phase {
@@ -328,13 +463,14 @@ struct PodcastFollowingCard: View {
                 }
             }
 
-            // Podcast title
+            // Podcast title - fixed height to prevent misalignment
             Text(podcast.title ?? "Unknown Podcast")
                 .font(.captionRounded())
                 .foregroundColor(.echoTextPrimary)
-                .lineLimit(2)
+                .lineLimit(1)
+                .truncationMode(.tail)
                 .multilineTextAlignment(.center)
-                .frame(width: 120)
+                .frame(width: 120, height: 16, alignment: .top)
 
             // Follow indicator
             HStack(spacing: 4) {
@@ -345,7 +481,9 @@ struct PodcastFollowingCard: View {
                     .font(.caption2)
                     .foregroundColor(.echoTextSecondary)
             }
+            .frame(height: 16)
         }
+        .frame(height: 160)  // Fixed total height for consistent alignment
         .contentShape(Rectangle())
     }
 }

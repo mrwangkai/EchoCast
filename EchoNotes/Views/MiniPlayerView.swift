@@ -7,97 +7,78 @@
 
 import SwiftUI
 
-// MARK: - Sheet Identifier
-
-struct SheetIdentifier: Identifiable, Equatable {
-    let id = UUID()  // Use unique ID each time to force sheet refresh
-    let episode: RSSEpisode
-    let podcast: PodcastEntity
-
-    static func == (lhs: SheetIdentifier, rhs: SheetIdentifier) -> Bool {
-        lhs.id == rhs.id
-    }
-}
-
 struct MiniPlayerView: View {
     @Binding var showFullPlayer: Bool
-    @ObservedObject var player = GlobalPlayerManager.shared
-    @State private var showNoteCaptureSheet = false
-    @State private var currentTimestamp = ""
-    @Environment(\.colorScheme) private var colorScheme
+    @ObservedObject private var player = GlobalPlayerManager.shared
+    @State private var showingAddNote = false
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        Group {
-            if let episode = player.currentEpisode, let _ = player.currentPodcast {
-                // STATE B: Episode playing - single row layout
-                HStack(spacing: 12) {
-                    // Artwork
-                    artworkView(for: episode)
-
-                    // Episode info
-                    episodeInfoView(for: episode)
-
-                    Spacer()
-
-                    // Action buttons
-                    HStack(spacing: 8) {
-                        addNoteButton
-                        playPauseButton
-                    }
-                }
-                .padding(12)
-                .background(Color(red: 0.2, green: 0.2, blue: 0.2))
-                .cornerRadius(12)
-                .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: -2)
-                .padding(.horizontal, 12)
-                .padding(.bottom, 74)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    // Only open full player if not tapping buttons
-                    showFullPlayer = true
+        if let episode = player.currentEpisode {
+            // STATE: Episode playing
+            HStack(spacing: 12) {
+                artworkView(for: episode)
+                episodeInfoView(for: episode)
+                Spacer()
+                HStack(spacing: 8) {
+                    addNoteButton
+                    playPauseButton
                 }
             }
-        }
-        .sheet(isPresented: $showNoteCaptureSheet) {
-            NoteCaptureView()
+            .padding(12)
+            .background(Color(red: 0.2, green: 0.2, blue: 0.2))
+            .cornerRadius(12, corners: [.topLeft, .topRight])
+            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: -2)
+            .onTapGesture {
+                showFullPlayer = true
+            }
+            .sheet(isPresented: $showingAddNote) {
+                NoteCaptureView()
+            }
+        } else {
+            // STATE: No episode - hide mini player
+            EmptyView()
         }
     }
 
-    // MARK: - Component Views
+    // MARK: - Supporting Views
 
     private func artworkView(for episode: RSSEpisode) -> some View {
-        AsyncImage(url: URL(string: episode.imageURL ?? player.currentPodcast?.artworkURL ?? "")) { phase in
-            switch phase {
-            case .success(let image):
-                image
+        Group {
+            if let imageURL = episode.imageURL ?? player.currentPodcast?.artworkURL,
+               let url = URL(string: imageURL) {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Image(systemName: "podcast.fill")
+                        .resizable()
+                        .foregroundColor(.gray)
+                        .padding(8)
+                }
+            } else {
+                Image(systemName: "podcast.fill")
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
-            case .empty, .failure:
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
-                    .overlay(
-                        Image(systemName: "podcast.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.white.opacity(0.5))
-                    )
-            default:
-                EmptyView()
+                    .foregroundColor(.gray)
+                    .padding(8)
             }
         }
         .frame(width: 48, height: 48)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .cornerRadius(8)
+        .clipped()
     }
 
     private func episodeInfoView(for episode: RSSEpisode) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(episode.title)
-                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .font(.custom("SF Pro Rounded", size: 15).weight(.medium))
                 .foregroundColor(.white)
                 .lineLimit(1)
-
+            
             if let podcastTitle = player.currentPodcast?.title {
                 Text(podcastTitle)
-                    .font(.system(size: 13, weight: .regular))
+                    .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.7))
                     .lineLimit(1)
             }
@@ -106,13 +87,11 @@ struct MiniPlayerView: View {
 
     private var addNoteButton: some View {
         Button(action: {
-            currentTimestamp = formatTime(player.currentTime)
-            player.pause()
-            showNoteCaptureSheet = true
+            showingAddNote = true
         }) {
             Image(systemName: "note.text.badge.plus")
-                .font(.system(size: 20, weight: .medium))
-                .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702))
+                .font(.system(size: 20))
+                .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702)) // Mint #00c8b3
         }
         .frame(width: 40, height: 40)
         .buttonStyle(.plain)
@@ -127,16 +106,32 @@ struct MiniPlayerView: View {
             }
         }) {
             Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                .font(.system(size: 20, weight: .medium))
-                .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702))
+                .font(.system(size: 20))
+                .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702)) // Mint #00c8b3
         }
         .frame(width: 40, height: 40)
         .buttonStyle(.plain)
     }
+}
 
-    private func formatTime(_ time: TimeInterval) -> String {
-        let minutes = Int(time) / 60
-        let seconds = Int(time) % 60
-        return String(format: "%d:%02d", minutes, seconds)
+// MARK: - Custom Corner Radius Extension
+
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
     }
 }
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: corners,
+            cornerRadii: CGSize(width: radius, height: radius)
+        )
+        return Path(path.cgPath)
+    }
+}
+

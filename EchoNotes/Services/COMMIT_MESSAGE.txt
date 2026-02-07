@@ -1,0 +1,34 @@
+Implement Apple Music-style mini player with full-screen expansion
+
+FEATURES:
+- Apple Music-style persistent mini player overlay above tab bar
+- Blur material background with progress indicator
+- Album artwork, episode info, and playback controls
+- Drag-up gesture to expand to full screen
+- Full-screen player with chevron dismiss button
+- Smooth spring animations for all transitions
+- Mini player persists across tab navigation
+
+IMPLEMENTATION DETAILS:
+- New AppleMusicStyleMiniPlayer component in ContentView.swift
+- Uses ZStack to position above TabView (not in safe area)
+- .fullScreenCover for true modal full-screen player
+- Progress bar overlay shows playback position
+- Three control buttons: Add Note, Play/Pause, Skip Forward 15s
+- Mint accent color throughout for consistency
+
+TECHNICAL:
+- Mini player: 64pt height + rounded top corners
+- Ultra-thin material blur (iOS native)
+- Custom drag gesture recognizer with threshold
+- Proper state management via GlobalPlayerManager
+- RoundedCorner shape helper for custom corner radius
+
+UX:
+- Tap anywhere on mini player → expand to full screen
+- Drag up → expand to full screen  
+- Swipe down on full player → minimize
+- Tab bar remains visible (matches Apple Music pattern)
+
+This matches the iOS Human Interface Guidelines for persistent media players
+and provides a familiar, intuitive user experience.

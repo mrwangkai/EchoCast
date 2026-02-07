@@ -34,6 +34,8 @@
 		A715819144FB62C0B169C5D9 /* DeepLinkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0B9E736394AE5D3705E7F1 /* DeepLinkManager.swift */; };
 		AADBA7C1B9A35AE6C78C95D4 /* EchoNotesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A10B3EA8425F797B107908 /* EchoNotesApp.swift */; };
 		B019C4E07965C65CC57A335A /* PodcastRSSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5740F3ADA838A89AAE98902C /* PodcastRSSService.swift */; };
+		BA6EFC012F36A955003EC3C4 /* worklog-xcodeassistant-20260206.md in Resources */ = {isa = PBXBuildFile; fileRef = BA6EFC002F36A954003EC3C4 /* worklog-xcodeassistant-20260206.md */; };
+		BA6EFC042F36D644003EC3C4 /* COMMIT_MESSAGE.txt in Resources */ = {isa = PBXBuildFile; fileRef = BA6EFC032F36D644003EC3C4 /* COMMIT_MESSAGE.txt */; };
 		BE245BBE30074AACA289C192 /* EpisodeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29B3BD3927C3A99156079726 /* EpisodeDetailView.swift */; };
 		C8ADB94949E1542B64678C06 /* AddNoteIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAC0568ECC00DF51EF175765 /* AddNoteIntent.swift */; };
 		E4P1AYER78VIEW90BUILDFILE23456 /* Player/EpisodePlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4P1AYER78VIEW0FILEREFGHIJKL /* Player/EpisodePlayerView.swift */; };
@@ -78,6 +80,8 @@
 		A889EAE90DD5982B6BF699CC /* EchoCastDesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoCastDesignTokens.swift; sourceTree = "<group>"; };
 		AAC0568ECC00DF51EF175765 /* AddNoteIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddNoteIntent.swift; sourceTree = "<group>"; };
 		B01276756CBF1F6C45AB7677 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		BA6EFC002F36A954003EC3C4 /* worklog-xcodeassistant-20260206.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "worklog-xcodeassistant-20260206.md"; sourceTree = "<group>"; };
+		BA6EFC032F36D644003EC3C4 /* COMMIT_MESSAGE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = COMMIT_MESSAGE.txt; sourceTree = "<group>"; };
 		CA2011DE4F5DA850C5620FBC /* PodcastDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastDetailView.swift; sourceTree = "<group>"; };
 		D6FD48759719F0A48ACDFE95 /* GlobalPlayerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalPlayerManager.swift; sourceTree = "<group>"; };
 		DAB032ABF6B07EDBEB3E5FC7 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
@@ -214,6 +218,8 @@
 				92FA7184CFBE6C3A2C89D11C /* PersistenceController.swift */,
 				F4DE2007AA9B048CE314EB86 /* PlaybackHistoryManager.swift */,
 				543B86F71016EB6FBBDE162E /* SiriShortcutsManager.swift */,
+				BA6EFC002F36A954003EC3C4 /* worklog-xcodeassistant-20260206.md */,
+				BA6EFC032F36D644003EC3C4 /* COMMIT_MESSAGE.txt */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -284,6 +290,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BA6EFC012F36A955003EC3C4 /* worklog-xcodeassistant-20260206.md in Resources */,
+				BA6EFC042F36D644003EC3C4 /* COMMIT_MESSAGE.txt in Resources */,
 				A10000000000000000000003 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

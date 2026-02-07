@@ -97,20 +97,23 @@ class ExportService {
             applicationActivities: nil
         )
 
-        // For iPad - specify source view
-        if let popoverController = activityViewController.popoverPresentationController {
-            popoverController.sourceView = viewController?.view
-            popoverController.sourceRect = CGRect(x: UIScreen.main.bounds.width / 2,
-                                                   y: UIScreen.main.bounds.height / 2,
-                                                   width: 0,
-                                                   height: 0)
-            popoverController.permittedArrowDirections = []
-        }
-
         // Present from the key window's root view controller
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first,
            let rootViewController = window.rootViewController {
+            
+            // For iPad - specify source view using window bounds instead of deprecated UIScreen.main
+            if let popoverController = activityViewController.popoverPresentationController {
+                popoverController.sourceView = rootViewController.view
+                popoverController.sourceRect = CGRect(
+                    x: window.bounds.width / 2,
+                    y: window.bounds.height / 2,
+                    width: 0,
+                    height: 0
+                )
+                popoverController.permittedArrowDirections = []
+            }
+            
             var topController = rootViewController
             while let presentedViewController = topController.presentedViewController {
                 topController = presentedViewController

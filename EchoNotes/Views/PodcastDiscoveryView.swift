@@ -21,8 +21,7 @@ struct PodcastDiscoveryView: View {
     @State private var rssError: String?
 
     // State for podcast detail navigation
-    @State private var selectedPodcast: PodcastEntity?
-    @State private var showingPodcastDetail = false
+    @State private var selectedPodcast: PodcastEntity? = nil  // Single source of truth
 
     var body: some View {
         NavigationStack {
@@ -78,10 +77,12 @@ struct PodcastDiscoveryView: View {
                     onAdd: loadRSSFeed
                 )
             }
-            .sheet(isPresented: $showingPodcastDetail) {
-                if let podcast = selectedPodcast {
-                    PodcastDetailView(podcast: podcast)
-                }
+            .sheet(item: $selectedPodcast) { podcast in
+                PodcastDetailView(podcast: podcast)
+                    .onAppear {
+                        print("✅ [Browse] Sheet opened successfully with podcast: \(podcast.title ?? "nil")")
+                        print("✅ [Browse] This proves sheet received non-nil podcast")
+                    }
             }
         }
     }
@@ -250,6 +251,8 @@ struct PodcastDiscoveryView: View {
         do {
             let existing = try viewContext.fetch(fetchRequest)
 
+            let podcastEntity: PodcastEntity
+            
             if existing.isEmpty {
                 // Create new podcast entity
                 let entity = PodcastEntity(context: viewContext)
@@ -260,38 +263,32 @@ struct PodcastDiscoveryView: View {
                 entity.feedURL = podcast.feedUrl
                 entity.podcastDescription = nil
                 entity.isFollowing = false
-
+                
                 try viewContext.save()
                 print("✅ [Browse] Saved new podcast to Core Data")
-
-                // Fetch the saved entity and navigate to detail
+                
+                // Fetch the saved entity
                 let saved = try viewContext.fetch(fetchRequest)
-                if let podcastEntity = saved.first {
-                    print("🔓 [Browse] Setting selectedPodcast BEFORE opening sheet")
-                    print("🔓 [Browse] Podcast: \(podcastEntity.title ?? "Unknown")")
-                    selectedPodcast = podcastEntity
-
-                    // Small delay to ensure state is set before sheet opens
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        print("🔓 [Browse] Opening sheet for: \(podcastEntity.title ?? "Unknown")")
-                        self.showingPodcastDetail = true
-                    }
+                guard let savedEntity = saved.first else {
+                    print("❌ [Browse] Failed to fetch saved podcast")
+                    return
                 }
+                podcastEntity = savedEntity
+                
             } else {
+                // Use existing podcast
                 print("ℹ️ [Browse] Podcast already exists in Core Data")
-                // Navigate to existing podcast
-                if let podcastEntity = existing.first {
-                    print("🔓 [Browse] Setting selectedPodcast BEFORE opening sheet (existing)")
-                    print("🔓 [Browse] Podcast: \(podcastEntity.title ?? "Unknown")")
-                    selectedPodcast = podcastEntity
-
-                    // Small delay to ensure state is set before sheet opens
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        print("🔓 [Browse] Opening sheet for: \(podcastEntity.title ?? "Unknown")")
-                        self.showingPodcastDetail = true
-                    }
+                guard let existingEntity = existing.first else {
+                    print("❌ [Browse] Existing podcast not found")
+                    return
                 }
+                podcastEntity = existingEntity
             }
+            
+            // Open sheet - NO DELAY NEEDED
+            print("🔓 [Browse] Opening sheet for: \(podcastEntity.title ?? "Unknown")")
+            selectedPodcast = podcastEntity  // Sheet opens automatically
+            
         } catch {
             print("❌ [Browse] Failed to check/save podcast: \(error)")
         }
