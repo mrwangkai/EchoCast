@@ -48,10 +48,10 @@ struct ContentView: View {
             }
             .tint(.mintAccent)
             .tabViewStyle(.tabBarOnly)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                // Mini player bar above tab bar (iOS Music app style)
-                if player.showMiniPlayer {
-                    AppleMusicStyleMiniPlayer(showFullPlayer: $showFullPlayer)
+            .tabViewBottomAccessory {
+                // Mini player bar above tab bar (Liquid Glass style)
+                if player.showMiniPlayer, let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                    MiniPlayerBar(episode: episode, podcast: podcast, showFullPlayer: $showFullPlayer)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
@@ -3881,6 +3881,73 @@ struct EpisodePlayerData: Identifiable {
         self.episode = episode
         self.podcast = podcast
         self.seekToTime = seekToTime
+    }
+}
+
+// MARK: - Liquid Glass Mini Player Bar (tabViewBottomAccessory)
+
+struct MiniPlayerBar: View {
+    let episode: RSSEpisode
+    let podcast: PodcastEntity
+    @Binding var showFullPlayer: Bool
+    @ObservedObject private var player = GlobalPlayerManager.shared
+
+    var body: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                showFullPlayer = true
+            }
+        }) {
+            HStack(spacing: 12) {
+                // Artwork
+                CachedAsyncImage(
+                    url: episode.imageURL ?? podcast.artworkURL,
+                    content: { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 40, height: 40)
+                            .cornerRadius(6)
+                    },
+                    placeholder: {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: 40, height: 40)
+                            .cornerRadius(6)
+                    }
+                )
+
+                // Episode info
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(episode.title)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.echoTextPrimary)
+                        .lineLimit(1)
+
+                    Text(podcast.title ?? "Podcast")
+                        .font(.system(size: 12))
+                        .foregroundColor(.echoTextSecondary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                // Play/Pause button
+                Button(action: {
+                    player.togglePlayPause()
+                }) {
+                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.mintAccent)
+                        .frame(width: 32, height: 32)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(.ultraThinMaterial)
+        }
+        .buttonStyle(.plain)
     }
 }
 
