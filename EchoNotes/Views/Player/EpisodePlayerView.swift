@@ -40,6 +40,7 @@ struct EpisodePlayerView: View {
 
     let episode: RSSEpisode
     let podcast: PodcastEntity
+    var namespace: Namespace.ID
 
     @ObservedObject private var player = GlobalPlayerManager.shared
     @State private var selectedSegment = 0
@@ -52,9 +53,10 @@ struct EpisodePlayerView: View {
 
     // MARK: - Initialization
 
-    init(episode: RSSEpisode, podcast: PodcastEntity) {
+    init(episode: RSSEpisode, podcast: PodcastEntity, namespace: Namespace.ID) {
         self.episode = episode
         self.podcast = podcast
+        self.namespace = namespace
 
         let episodeTitle = episode.title
         let podcastTitle = podcast.title ?? ""
@@ -175,6 +177,7 @@ struct EpisodePlayerView: View {
                         ProgressView()
                             .tint(.white)
                     }
+                    .matchedGeometryEffect(id: "artwork", in: namespace)
 
                 case .success(let image):
                     image
@@ -182,6 +185,7 @@ struct EpisodePlayerView: View {
                         .aspectRatio(contentMode: .fill)
                         .frame(width: geometry.size.width, height: geometry.size.width)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .matchedGeometryEffect(id: "artwork", in: namespace)
 
                 case .failure:
                     ZStack {
@@ -192,6 +196,7 @@ struct EpisodePlayerView: View {
                             .font(.system(size: 48))
                             .foregroundColor(.white.opacity(0.3))
                     }
+                    .matchedGeometryEffect(id: "artwork", in: namespace)
 
                 default:
                     EmptyView()

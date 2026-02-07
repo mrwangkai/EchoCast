@@ -46,6 +46,9 @@ struct HomeView: View {
     // Recently played episodes for Continue Listening section
     @State private var continueListeningEpisodes: [(historyItem: PlaybackHistoryItem, podcast: PodcastEntity)] = []
 
+    // Namespace for matched geometry effect with mini player
+    @Namespace private var playerAnimation
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -138,7 +141,7 @@ struct HomeView: View {
         .sheet(isPresented: $showingPlayerSheet) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
                 NavigationStack {
-                    EpisodePlayerView(episode: episode, podcast: podcast)
+                    EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation)
                         .navigationBarTitleDisplayMode(.inline)
                         .toolbar {
                             ToolbarItem(placement: .topBarLeading) {

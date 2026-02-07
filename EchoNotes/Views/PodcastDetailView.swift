@@ -18,6 +18,7 @@ struct PodcastDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var downloadManager = EpisodeDownloadManager.shared
+    @Namespace private var namespace
 
     var body: some View {
         VStack(spacing: 0) {
@@ -132,7 +133,8 @@ struct PodcastDetailView: View {
                 podcast: podcast,
                 dismiss: { selectedEpisode = nil },
                 autoPlay: true,
-                seekToTime: nil
+                seekToTime: nil,
+                namespace: namespace
             )
             .onAppear {
                 print("✅ [PodcastDetail] Player sheet opened with episode: \(episode.title)")

@@ -25,6 +25,7 @@ struct ContentView: View {
     @State private var siriNoteTimestamp = ""
     @State private var showFullPlayer = false  // Manage full player sheet at root level
     @Environment(\.managedObjectContext) private var viewContext
+    @Namespace private var playerAnimation  // Namespace for matched geometry effect
     // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
     // @EnvironmentObject private var deepLinkManager: DeepLinkManager
     // @State private var showDeepLinkAlert = false
@@ -50,7 +51,7 @@ struct ContentView: View {
         .tabViewBottomAccessory(isEnabled: player.showMiniPlayer) {
             // Mini player bar above tab bar (Liquid Glass style)
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                MiniPlayerBar(episode: episode, podcast: podcast, showFullPlayer: $showFullPlayer)
+                MiniPlayerBar(episode: episode, podcast: podcast, showFullPlayer: $showFullPlayer, namespace: playerAnimation)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
@@ -59,7 +60,7 @@ struct ContentView: View {
         .sheet(isPresented: $showFullPlayer) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
                 NavigationStack {
-                    EpisodePlayerView(episode: episode, podcast: podcast)
+                    EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation)
                         .navigationBarTitleDisplayMode(.inline)
                         .toolbar {
                             ToolbarItem(placement: .topBarLeading) {
@@ -274,6 +275,7 @@ struct PodcastsListView: View {
     @State private var showOPMLImport = false
     @State private var selectedEpisode: RSSEpisode?
     @State private var selectedPodcast: PodcastEntity?
+    var namespace: Namespace.ID
     @State private var isLoadingEpisode = false
     @State private var podcastToDelete: PodcastEntity?
     @State private var showDeletePodcastConfirmation = false
@@ -503,7 +505,8 @@ struct PodcastsListView: View {
                             selectedEpisode = nil
                             selectedPodcast = nil
                         },
-                        autoPlay: true
+                        autoPlay: true,
+                        namespace: namespace
                     )
                 }
             }
@@ -1623,6 +1626,7 @@ struct PodcastPreviewView: View {
     @State private var selectedEpisode: RSSEpisode?
     @State private var showPlayer = false
     @State private var isAdded = false
+    @Namespace private var namespace // Private namespace for standalone use
 
     var body: some View {
         VStack(spacing: 0) {
@@ -1767,7 +1771,8 @@ struct PodcastPreviewView: View {
             PlayerSheetWrapper(
                 episode: data.episode,
                 podcast: tempPodcast,
-                dismiss: { showPlayer = false }
+                dismiss: { showPlayer = false },
+                namespace: namespace
             )
         }
     }
@@ -2178,6 +2183,7 @@ struct PlayerSheetWrapper: View {
     let dismiss: () -> Void
     var autoPlay: Bool = true
     var seekToTime: TimeInterval? = nil
+    var namespace: Namespace.ID
     @ObservedObject private var player = GlobalPlayerManager.shared
     @ObservedObject private var downloadManager = EpisodeDownloadManager.shared
     @State private var showDeleteConfirmation = false
@@ -2193,7 +2199,7 @@ struct PlayerSheetWrapper: View {
                     .padding(.bottom, 8)
 
                 NavigationStack {
-                    EpisodePlayerView(episode: episode, podcast: podcast)
+                    EpisodePlayerView(episode: episode, podcast: podcast, namespace: namespace)
                         .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
@@ -2343,6 +2349,7 @@ struct NoteDetailSheetView: View {
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \PodcastEntity.title, ascending: true)]
     ) private var podcasts: FetchedResults<PodcastEntity>
+    @Namespace private var namespace // Private namespace for standalone use
 
     var body: some View {
         ZStack {
@@ -2575,7 +2582,8 @@ struct NoteDetailSheetView: View {
                         loadedPodcast = nil
                     },
                     autoPlay: true,
-                    seekToTime: parseTimestamp(note.timestamp ?? "")
+                    seekToTime: parseTimestamp(note.timestamp ?? ""),
+                    namespace: namespace
                 )
             }
         }
@@ -3694,6 +3702,7 @@ struct DownloadedEpisodesView: View {
     private var podcasts: FetchedResults<PodcastEntity>
 
     @State private var episodePlayerData: EpisodePlayerData?
+    @Namespace private var namespace // Private namespace for standalone use
 
     // Group episodes by podcast title
     var groupedEpisodes: [(podcast: String, episodes: [DownloadedEpisodeInfo])] {
@@ -3796,7 +3805,8 @@ struct DownloadedEpisodesView: View {
                 podcast: playerData.podcast,
                 dismiss: { episodePlayerData = nil },
                 autoPlay: true,
-                seekToTime: playerData.seekToTime
+                seekToTime: playerData.seekToTime,
+                namespace: namespace
             )
         }
     }
@@ -3890,6 +3900,7 @@ struct MiniPlayerBar: View {
     let podcast: PodcastEntity
     @Binding var showFullPlayer: Bool
     @ObservedObject private var player = GlobalPlayerManager.shared
+    var namespace: Namespace.ID
 
     // Detects if the player is floating (.expanded) or docked with Tab Bar (.inline)
     @Environment(\.tabViewBottomAccessoryPlacement) private var placement
@@ -3910,12 +3921,14 @@ struct MiniPlayerBar: View {
                             .aspectRatio(contentMode: .fill)
                             .frame(width: 40, height: 40)
                             .cornerRadius(6)
+                            .matchedGeometryEffect(id: "artwork", in: namespace)
                     },
                     placeholder: {
                         Rectangle()
                             .fill(Color.gray.opacity(0.3))
                             .frame(width: 40, height: 40)
                             .cornerRadius(6)
+                            .matchedGeometryEffect(id: "artwork", in: namespace)
                     }
                 )
 
