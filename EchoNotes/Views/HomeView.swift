@@ -370,6 +370,9 @@ struct HomeView: View {
             GlobalPlayerManager.shared.seek(to: item.currentTime)
         }
 
+        // Auto-play the episode
+        GlobalPlayerManager.shared.play()
+
         // Show full player
         showingPlayerSheet = true
     }
