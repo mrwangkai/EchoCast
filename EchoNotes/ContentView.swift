@@ -31,31 +31,30 @@ struct ContentView: View {
     // @State private var deepLinkErrorMessage = ""
 
     var body: some View {
-        ZStack {
-            // Main tab view with bottom accessory for mini player
-            TabView(selection: $selectedTab) {
-                HomeView()
-                    .tabItem {
-                        Label("Home", systemImage: "house.fill")
-                    }
-                    .tag(0)
-
-                LibraryView()
-                    .tabItem {
-                        Label("Library", systemImage: "books.vertical.fill")
-                    }
-                    .tag(1)
-            }
-            .tint(.mintAccent)
-            .tabViewStyle(.tabBarOnly)
-            .tabViewBottomAccessory {
-                // Mini player bar above tab bar (Liquid Glass style)
-                if player.showMiniPlayer, let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                    MiniPlayerBar(episode: episode, podcast: podcast, showFullPlayer: $showFullPlayer)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+        // Root TabView - manages layout insets natively
+        TabView(selection: $selectedTab) {
+            HomeView()
+                .tabItem {
+                    Label("Home", systemImage: "house.fill")
                 }
+                .tag(0)
+
+            LibraryView()
+                .tabItem {
+                    Label("Library", systemImage: "books.vertical.fill")
+                }
+                .tag(1)
+        }
+        .tint(.mintAccent)
+        .tabViewStyle(.tabBarOnly)
+        .tabViewBottomAccessory(isEnabled: player.showMiniPlayer) {
+            // Mini player bar above tab bar (Liquid Glass style)
+            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                MiniPlayerBar(episode: episode, podcast: podcast, showFullPlayer: $showFullPlayer)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .tabBarMinimizeBehavior(.onScrollDown)
         // FULL PLAYER SHEET - Bottom sheet that slides up from mini player
         .sheet(isPresented: $showFullPlayer) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
@@ -3892,6 +3891,9 @@ struct MiniPlayerBar: View {
     @Binding var showFullPlayer: Bool
     @ObservedObject private var player = GlobalPlayerManager.shared
 
+    // Detects if the player is floating (.expanded) or docked with Tab Bar (.inline)
+    @Environment(\.tabViewBottomAccessoryPlacement) private var placement
+
     var body: some View {
         Button(action: {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -3944,10 +3946,24 @@ struct MiniPlayerBar: View {
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(.ultraThinMaterial)
+            .padding(.vertical, 10)
+            .background {
+                // Adaptive Background based on system placement
+                if placement == .expanded {
+                    // Floating capsule with frosted glass and shadow
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: .black.opacity(0.1), radius: 10, y: 5)
+                } else {
+                    // Blends into the Tab Bar when inline/docked
+                    Rectangle().fill(.clear)
+                }
+            }
         }
         .buttonStyle(.plain)
+        // Ensure the capsule doesn't touch the screen edges when expanded
+        .padding(.horizontal, placement == .expanded ? 8 : 0)
+        .padding(.bottom, placement == .expanded ? 4 : 0)
     }
 }
 
