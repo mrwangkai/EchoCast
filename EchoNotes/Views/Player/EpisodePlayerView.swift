@@ -38,13 +38,16 @@ extension String {
 struct LiquidGlassEdge: ViewModifier {
     func body(content: Content) -> some View {
         content
+            .padding(.bottom, 40) // Extra padding for home indicator
             .background(.ultraThinMaterial)
             .overlay(alignment: .top) {
-                // The iOS 26 "Liquid Glass" hairline edge
+                // Sharper hairline to define the top boundary
                 Rectangle()
-                    .fill(Color.primary.opacity(0.1))
-                    .frame(height: 0.33) // Standard Retina hairline
+                    .fill(Color.primary.opacity(0.12))
+                    .frame(height: 0.33)
             }
+            .clipped() // FIX: Prevents the "white blob" blur bleed
+            .contentShape(Rectangle())
             .glassEffect(.regular.interactive())
     }
 }
@@ -99,11 +102,8 @@ struct EpisodePlayerView: View {
         ZStack(alignment: .bottom) {
             // LAYER 1: Scrollable Content (Mid-Section)
             ScrollView {
-                VStack(spacing: 0) {
-                    // Space for fixed header
-                    Spacer(minLength: 70)
-
-                    // Segmented Control (in scroll area)
+                VStack(spacing: 24) {
+                    // Segmented Control
                     segmentedControlSection
 
                     // Tab content
@@ -129,9 +129,12 @@ struct EpisodePlayerView: View {
                         EmptyView()
                     }
                 }
-                // Reserve space so the list can clear the fixed footer
-                .padding(.bottom, 280)
             }
+            // Use native insets instead of manual padding
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 260) // Matches height of control deck
+            }
+            .scrollIndicators(.hidden)
             .background(Color.echoBackground)
 
             // LAYER 2: The Persistent Footer (Fixed at bottom)
@@ -156,11 +159,11 @@ struct EpisodePlayerView: View {
             }
             .padding(.horizontal, EchoSpacing.screenPadding)
             .padding(.top, 20)
-            .padding(.bottom, 24)
             .liquidGlassFooter()
             .ignoresSafeArea(edges: .bottom)
         }
         .background(Color.echoBackground)
+        .presentationDragIndicator(.visible) // Use native system grabber
         .sheet(isPresented: $showingNoteCaptureSheet) {
             NoteCaptureSheetWrapper(
                 episode: episode,
@@ -170,29 +173,18 @@ struct EpisodePlayerView: View {
         }
     }
 
-    // MARK: - Segmented Control (Fixed Header)
+    // MARK: - Segmented Control
 
     private var segmentedControlSection: some View {
-        VStack(spacing: 0) {
-            // Dismiss handle
-            RoundedRectangle(cornerRadius: 2.5)
-                .fill(Color.white.opacity(0.3))
-                .frame(width: 36, height: 5)
-                .padding(.top, 8)
-                .padding(.bottom, 16)
-
-            // Segmented control
-            Picker("", selection: $selectedSegment) {
-                Text("Listening").tag(0)
-                Text("Notes").tag(1)
-                Text("Episode Info").tag(2)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, EchoSpacing.screenPadding)
-            .padding(.bottom, 16)
-            .sensoryFeedback(.selection, trigger: selectedSegment)
+        Picker("", selection: $selectedSegment) {
+            Text("Listening").tag(0)
+            Text("Notes").tag(1)
+            Text("Episode Info").tag(2)
         }
-        .background(Color.echoBackground)
+        .pickerStyle(.segmented)
+        .padding(.horizontal, EchoSpacing.screenPadding)
+        .padding(.top, 24)
+        .sensoryFeedback(.selection, trigger: selectedSegment)
     }
 
     // MARK: - Episode Metadata (in Footer - 2 lines max)
