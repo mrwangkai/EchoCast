@@ -99,11 +99,14 @@ struct EpisodePlayerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // --- SECTION 1: HEADER (FIXED) ---
+            // --- SECTION 1: HEADER (FIXED HEIGHT: ~68px) ---
             segmentedControlSection
+                .frame(height: 36)
+                .frame(maxWidth: .infinity)
                 .padding(.top, 32)
+                .padding(.horizontal, 12)
 
-            // --- SECTION 2: MID-SECTION (FIXED HEIGHT) ---
+            // --- SECTION 2: MID-SECTION (FIXED HEIGHT: 377px) ---
             Group {
                 switch selectedSegment {
                 case 0:
@@ -114,7 +117,7 @@ struct EpisodePlayerView: View {
                         namespace: namespace,
                         addNoteAction: { showingNoteCaptureSheet = true }
                     )
-                    .frame(height: 377)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 case 1:
                     // Notes: Scrollable List
@@ -124,7 +127,7 @@ struct EpisodePlayerView: View {
                             addNoteAction: { showingNoteCaptureSheet = true }
                         )
                     }
-                    .frame(height: 377)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .scrollIndicators(.hidden)
 
                 case 2:
@@ -135,18 +138,18 @@ struct EpisodePlayerView: View {
                             podcast: podcast
                         )
                     }
-                    .frame(height: 377)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .scrollIndicators(.hidden)
 
                 default:
                     EmptyView()
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: 377, alignment: .top)
+            .frame(height: 377)
 
             Spacer(minLength: 0) // Pushes footer to bottom
 
-            // --- SECTION 3: FOOTER (FIXED - Same across all tabs) ---
+            // --- SECTION 3: FOOTER (FIXED HEIGHT: ~290px) ---
             VStack(spacing: 20) {
                 // Metadata (Always visible, 2 lines max)
                 episodeMetadataView
@@ -157,11 +160,9 @@ struct EpisodePlayerView: View {
                 // Playback controls
                 playbackControlButtons
 
-                // Contextual CTA: Only in "Listening" view (segment 0), after controls
-                if selectedSegment == 0 {
-                    addNoteButton
-                        .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
-                }
+                // Add Note CTA (Always visible with player controls)
+                addNoteButton
+                    .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
             }
             .padding(.horizontal, EchoSpacing.screenPadding)
             .padding(.top, 20)
