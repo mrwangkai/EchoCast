@@ -11,10 +11,8 @@ import CoreData
 struct LibraryView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var viewModel = NoteViewModel()
-    
+
     @State private var showingSortOptions = false
-    @State private var showingBrowse = false
-    @State private var showingSettings = false
     @State private var selectedNote: NoteEntity?
     @State private var showingNoteDetail = false
 
@@ -40,27 +38,6 @@ struct LibraryView: View {
             }
             .background(Color.echoBackground)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 16) {
-                        Button(action: {
-                            showingBrowse = true
-                        }) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.body)
-                                .foregroundColor(.echoTextPrimary)
-                        }
-
-                        Button(action: {
-                            showingSettings = true
-                        }) {
-                            Image(systemName: "gearshape")
-                                .font(.body)
-                                .foregroundColor(.echoTextPrimary)
-                        }
-                    }
-                }
-            }
             .confirmationDialog("Sort By", isPresented: $showingSortOptions) {
                 Button("Date (Newest First)") {
                     viewModel.sortOrder = .dateDescending
@@ -76,12 +53,6 @@ struct LibraryView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             }
-        }
-        .sheet(isPresented: $showingBrowse) {
-            PodcastDiscoveryView()
-        }
-        .sheet(isPresented: $showingSettings) {
-            SettingsView()
         }
         .sheet(isPresented: $showingNoteDetail) {
             if let note = selectedNote {
