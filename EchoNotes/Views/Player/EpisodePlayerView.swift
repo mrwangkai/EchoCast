@@ -102,9 +102,8 @@ struct EpisodePlayerView: View {
             // --- SECTION 1: HEADER (FIXED) ---
             segmentedControlSection
                 .padding(.top, 32)
-                .padding(.horizontal, EchoSpacing.screenPadding)
 
-            // --- SECTION 2: MID-SECTION (CONDITIONAL SCROLL) ---
+            // --- SECTION 2: MID-SECTION (FIXED HEIGHT) ---
             Group {
                 switch selectedSegment {
                 case 0:
@@ -143,10 +142,9 @@ struct EpisodePlayerView: View {
                     EmptyView()
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .padding(.top, 20)
+            .frame(maxWidth: .infinity, maxHeight: 377, alignment: .top)
 
-            Spacer() // Pushes footer to bottom
+            Spacer(minLength: 0) // Pushes footer to bottom
 
             // --- SECTION 3: FOOTER (FIXED) ---
             VStack(spacing: 20) {
@@ -193,8 +191,7 @@ struct EpisodePlayerView: View {
             Text("Episode Info").tag(2)
         }
         .pickerStyle(.segmented)
-        .padding(.horizontal, EchoSpacing.screenPadding)
-        .padding(.top, 24)
+        .padding(.horizontal, 12)
         .sensoryFeedback(.selection, trigger: selectedSegment)
     }
 
@@ -447,7 +444,7 @@ struct ListeningSegmentView: View {
                         ProgressView()
                             .tint(.white)
                     }
-                    .matchedGeometryEffect(id: "artwork", in: namespace)
+                    .matchedGeometryEffect(id: "artwork", in: namespace, isSource: true)
 
                 case .success(let image):
                     image
@@ -455,7 +452,7 @@ struct ListeningSegmentView: View {
                         .aspectRatio(contentMode: .fill)
                         .frame(width: geometry.size.width, height: geometry.size.width)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .matchedGeometryEffect(id: "artwork", in: namespace)
+                        .matchedGeometryEffect(id: "artwork", in: namespace, isSource: true)
 
                 case .failure:
                     ZStack {
@@ -466,7 +463,7 @@ struct ListeningSegmentView: View {
                             .font(.system(size: 48))
                             .foregroundColor(.white.opacity(0.3))
                     }
-                    .matchedGeometryEffect(id: "artwork", in: namespace)
+                    .matchedGeometryEffect(id: "artwork", in: namespace, isSource: true)
 
                 default:
                     EmptyView()

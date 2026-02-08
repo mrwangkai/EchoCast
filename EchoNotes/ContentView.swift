@@ -3908,14 +3908,14 @@ struct MiniPlayerBar: View {
                             .aspectRatio(contentMode: .fill)
                             .frame(width: 40, height: 40)
                             .cornerRadius(6)
-                            .matchedGeometryEffect(id: "artwork", in: namespace)
+                            .matchedGeometryEffect(id: "artwork", in: namespace, isSource: false)
                     },
                     placeholder: {
                         Rectangle()
                             .fill(Color.gray.opacity(0.3))
                             .frame(width: 40, height: 40)
                             .cornerRadius(6)
-                            .matchedGeometryEffect(id: "artwork", in: namespace)
+                            .matchedGeometryEffect(id: "artwork", in: namespace, isSource: false)
                     }
                 )
 
