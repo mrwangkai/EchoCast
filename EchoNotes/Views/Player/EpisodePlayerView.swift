@@ -38,7 +38,7 @@ extension String {
 struct LiquidGlassEdge: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .padding(.bottom, 40) // Extra padding for home indicator
+            .padding(.bottom, 34) // Safe area for home indicator
             .background(.ultraThinMaterial)
             .overlay(alignment: .top) {
                 // Sharper hairline to define the top boundary
@@ -48,7 +48,6 @@ struct LiquidGlassEdge: ViewModifier {
             }
             .clipped() // FIX: Prevents the "white blob" blur bleed
             .contentShape(Rectangle())
-            .glassEffect(.regular.interactive())
     }
 }
 
@@ -99,88 +98,82 @@ struct EpisodePlayerView: View {
     // MARK: - Body
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // LAYER 1: Scrollable Content (Mid-Section)
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Segmented Control
-                    segmentedControlSection
+        VStack(spacing: 0) {
+            // --- SECTION 1: HEADER (FIXED) ---
+            segmentedControlSection
+                .padding(.top, 24)
+                .padding(.horizontal, EchoSpacing.screenPadding)
 
-                    // Tab content
-                    switch selectedSegment {
-                    case 0:
-                        ListeningSegmentView(
-                            episode: episode,
-                            podcast: podcast,
-                            namespace: namespace,
-                            addNoteAction: { showingNoteCaptureSheet = true }
-                        )
-                    case 1:
+            // --- SECTION 2: MID-SECTION (CONDITIONAL SCROLL) ---
+            Group {
+                switch selectedSegment {
+                case 0:
+                    // Listening: Static Art (Not scrollable)
+                    ListeningSegmentView(
+                        episode: episode,
+                        podcast: podcast,
+                        namespace: namespace,
+                        addNoteAction: { showingNoteCaptureSheet = true }
+                    )
+                    .frame(height: 377)
+
+                case 1:
+                    // Notes: Scrollable List
+                    ScrollView {
                         NotesSegmentView(
                             notes: Array(notes),
                             addNoteAction: { showingNoteCaptureSheet = true }
                         )
-                    case 2:
+                    }
+                    .frame(height: 377)
+                    .scrollIndicators(.hidden)
+
+                case 2:
+                    // Info: Scrollable Text
+                    ScrollView {
                         InfoSegmentView(
                             episode: episode,
                             podcast: podcast
                         )
-                    default:
-                        EmptyView()
                     }
+                    .frame(height: 377)
+                    .scrollIndicators(.hidden)
+
+                default:
+                    EmptyView()
                 }
             }
-            // Use native insets instead of manual padding
-            .safeAreaInset(edge: .bottom) {
-                Color.clear.frame(height: 260) // Matches height of control deck
-            }
-            .scrollIndicators(.hidden)
-            .background(Color.echoBackground)
+            .padding(.top, 20)
 
-            // LAYER 2: The Persistent Footer (Fixed at bottom)
-            ZStack {
-                // 1. NAVIGATION LAYER: Only the Metadata area triggers actions
-                VStack {
-                    Spacer()
-                    // Invisible tap area for metadata
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .frame(height: 60)
-                        .onTapGesture {
-                            // Tap on metadata area - could trigger additional actions
-                        }
-                    Spacer()
+            Spacer() // Pushes footer to bottom
+
+            // --- SECTION 3: FOOTER (FIXED) ---
+            VStack(spacing: 20) {
+                // Metadata (Always visible, 2 lines max)
+                episodeMetadataView
+
+                // Contextual CTA: Only fixed in "Listening" view (segment 0)
+                if selectedSegment == 0 {
+                    addNoteButton
+                        .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
                 }
 
-                // 2. CONTROL LAYER: The actual interactive elements
-                VStack(spacing: 20) {
-                    // Metadata (Always visible, 2 lines max)
-                    episodeMetadataView
-                        .allowsHitTesting(false) // Let the tap gesture handle it
+                // Scrubber
+                timeProgressWithMarkers
 
-                    // Contextual CTA: Only fixed in "Listening" view (segment 0)
-                    if selectedSegment == 0 {
-                        addNoteButton
-                            .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
-                    }
+                // Playback controls
+                playbackControlButtons
 
-                    // Scrubber
-                    timeProgressWithMarkers
-
-                    // Playback controls
-                    playbackControlButtons
-
-                    // Utility toolbar
-                    secondaryActionsRow
-                }
-                .padding(.horizontal, EchoSpacing.screenPadding)
-                .padding(.top, 20)
+                // Utility toolbar
+                secondaryActionsRow
             }
+            .padding(.horizontal, EchoSpacing.screenPadding)
+            .padding(.top, 20)
             .liquidGlassFooter()
-            .ignoresSafeArea(edges: .bottom)
         }
         .background(Color.echoBackground)
-        .presentationDragIndicator(.visible) // Use native system grabber
+        .presentationDragIndicator(.visible) // Native drag bar
+        .ignoresSafeArea(edges: .bottom)
         .sheet(isPresented: $showingNoteCaptureSheet) {
             NoteCaptureSheetWrapper(
                 episode: episode,
@@ -437,13 +430,8 @@ struct ListeningSegmentView: View {
     let addNoteAction: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
-            albumArtworkView
-                .padding(.horizontal, EchoSpacing.screenPadding)
-
-            Spacer(minLength: 80)
-        }
-        .padding(.top, 8)
+        albumArtworkView
+            .padding(.horizontal, EchoSpacing.screenPadding)
     }
 
     private var albumArtworkView: some View {
@@ -523,8 +511,6 @@ struct NotesSegmentView: View {
             } else {
                 notesListView
             }
-
-            Spacer(minLength: 20)
         }
         .padding(.top, 8)
     }
@@ -610,8 +596,6 @@ struct InfoSegmentView: View {
             }
 
             episodeMetadataSection
-
-            Spacer(minLength: 20)
         }
         .padding(.horizontal, EchoSpacing.screenPadding)
         .padding(.top, 8)
