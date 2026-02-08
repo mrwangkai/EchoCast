@@ -33,6 +33,28 @@ extension String {
     }
 }
 
+// MARK: - Liquid Glass Edge ViewModifier
+
+struct LiquidGlassEdge: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(.ultraThinMaterial)
+            .overlay(alignment: .top) {
+                // The iOS 26 "Liquid Glass" hairline edge
+                Rectangle()
+                    .fill(Color.primary.opacity(0.1))
+                    .frame(height: 0.33) // Standard Retina hairline
+            }
+            .glassEffect(.regular.interactive())
+    }
+}
+
+extension View {
+    func liquidGlassFooter() -> some View {
+        self.modifier(LiquidGlassEdge())
+    }
+}
+
 // MARK: - Main Episode Player View
 
 struct EpisodePlayerView: View {
@@ -113,15 +135,29 @@ struct EpisodePlayerView: View {
             .background(Color.echoBackground)
 
             // LAYER 2: The Persistent Footer (Fixed at bottom)
-            VStack(spacing: 0) {
-                // Top divider
-                Divider()
-                    .background(Color.white.opacity(0.1))
+            VStack(spacing: 20) {
+                // Metadata (Always visible, 2 lines max)
+                episodeMetadataView
 
-                // Fixed footer with ultraThinMaterial
-                playerControlDeck
-                    .background(.ultraThinMaterial)
+                // Contextual CTA: Only fixed in "Listening" view (segment 0)
+                if selectedSegment == 0 {
+                    addNoteButton
+                        .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
+                }
+
+                // Scrubber
+                timeProgressWithMarkers
+
+                // Playback controls
+                playbackControlButtons
+
+                // Utility toolbar
+                secondaryActionsRow
             }
+            .padding(.horizontal, EchoSpacing.screenPadding)
+            .padding(.top, 20)
+            .padding(.bottom, 24)
+            .liquidGlassFooter()
             .ignoresSafeArea(edges: .bottom)
         }
         .background(Color.echoBackground)
@@ -154,44 +190,19 @@ struct EpisodePlayerView: View {
             .pickerStyle(.segmented)
             .padding(.horizontal, EchoSpacing.screenPadding)
             .padding(.bottom, 16)
+            .sensoryFeedback(.selection, trigger: selectedSegment)
         }
         .background(Color.echoBackground)
     }
 
-    // MARK: - Player Control Deck (Fixed Footer)
-
-    private var playerControlDeck: some View {
-        VStack(spacing: 16) {
-            // Episode Metadata (Always visible)
-            episodeMetadataView
-
-            // Contextual CTA: Only fixed in "Listening" view (segment 0)
-            if selectedSegment == 0 {
-                addNoteButton
-            }
-
-            // Scrubber
-            timeProgressWithMarkers
-
-            // Playback controls
-            playbackControlButtons
-
-            // Utility toolbar
-            secondaryActionsRow
-        }
-        .padding(.horizontal, EchoSpacing.screenPadding)
-        .padding(.top, 16)
-        .padding(.bottom, 24)
-    }
-
-    // MARK: - Episode Metadata (in Footer)
+    // MARK: - Episode Metadata (in Footer - 2 lines max)
 
     private var episodeMetadataView: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 2) {
             Text(episode.title)
                 .font(.bodyRoundedMedium())
                 .foregroundColor(.echoTextPrimary)
-                .lineLimit(1)
+                .lineLimit(2)
 
             Text(podcast.title ?? "Unknown Podcast")
                 .font(.caption2Medium())
@@ -550,7 +561,7 @@ struct NoteRow: View {
         HStack(alignment: .top, spacing: 16) {
             if let timestamp = note.timestamp {
                 Text(timestamp)
-                    .font(.caption.monospacedDigit())
+                    .font(.body.monospacedDigit())
                     .foregroundColor(.mintAccent)
                     .padding(.top, 4)
             }
