@@ -56,22 +56,22 @@ struct EpisodeDetailView: View {
 
                         Text(podcast.title ?? "Unknown Podcast")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.echoTextSecondary)
 
                         HStack(spacing: 8) {
                             if let pubDate = episode.pubDate {
                                 Text(formatDate(pubDate))
                                     .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.echoTextSecondary)
                             }
 
                             if let duration = episode.duration {
                                 Text("•")
                                     .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.echoTextSecondary)
                                 Text(duration)
                                     .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.echoTextSecondary)
                             }
                         }
                     }
@@ -99,7 +99,7 @@ struct EpisodeDetailView: View {
 
                             Text(description.trimmingCharacters(in: .whitespacesAndNewlines))
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.echoTextSecondary)
                         }
                     }
 
@@ -128,10 +128,10 @@ struct EpisodeDetailView: View {
                             VStack(spacing: 12) {
                                 Image(systemName: "note.text")
                                     .font(.system(size: 40))
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.echoTextSecondary)
                                 Text("No notes for this episode yet")
                                     .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.echoTextSecondary)
                                 Button("Add Your First Note") {
                                     showNoteCaptureSheet = true
                                 }
@@ -198,14 +198,14 @@ struct NoteCardCompact: View {
                 if let createdAt = note.createdAt {
                     Text(formatDate(createdAt))
                         .font(.caption2)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextSecondary)
                 }
             }
 
             if let noteText = note.noteText, !noteText.isEmpty {
                 Text(noteText)
                     .font(.body)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.echoTextPrimary)
                     .lineLimit(3)
             }
 
@@ -226,7 +226,7 @@ struct NoteCardCompact: View {
             }
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(Color.noteCardBackground)
         .cornerRadius(12)
     }
 

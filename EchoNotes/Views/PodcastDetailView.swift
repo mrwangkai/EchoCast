@@ -42,7 +42,7 @@ struct PodcastDetailView: View {
                         .foregroundColor(.orange)
                     Text(error)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextSecondary)
                         .multilineTextAlignment(.center)
                     Button("Retry") {
                         Task {
@@ -57,14 +57,14 @@ struct PodcastDetailView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "mic.slash")
                         .font(.system(size: 48))
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextSecondary)
                     Text("No episodes found")
                         .font(.headline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextSecondary)
                     if let feedURL = podcast.feedURL {
                         Text("Feed: \(feedURL)")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.echoTextSecondary)
                             .lineLimit(2)
                     }
                 }
@@ -270,12 +270,12 @@ struct PodcastHeaderView: View {
                 if let author = podcast.author {
                     Text(author)
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextSecondary)
                 }
                 if let description = podcast.podcastDescription {
                     Text(description)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextSecondary)
                         .lineLimit(2)
                 }
             }
@@ -335,7 +335,7 @@ struct EpisodeRowView: View {
             if let description = episode.description {
                 Text(description.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression))
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.echoTextSecondary)
                     .lineLimit(2)
             }
 
@@ -356,15 +356,15 @@ struct EpisodeRowView: View {
                 if let pubDate = episode.pubDate {
                     Text(pubDate, style: .date)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextSecondary)
                 }
 
                 if let duration = episode.duration {
                     Text("•")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextSecondary)
                     Text(duration)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextSecondary)
                 }
 
                 Spacer()
@@ -406,7 +406,7 @@ struct EpisodeRowView: View {
                         downloadManager.downloadEpisode(episode, podcastTitle: podcastTitle, podcastFeedURL: podcastFeedURL)
                     }) {
                         Image(systemName: "arrow.down.circle")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.echoTextSecondary)
                             .font(.title3)
                     }
                     .buttonStyle(PlainButtonStyle())

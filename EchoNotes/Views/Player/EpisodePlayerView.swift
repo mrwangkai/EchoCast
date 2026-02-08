@@ -628,18 +628,18 @@ struct NoteCaptureSheetWrapper: View {
             Form {
                 Section(header: Text("Podcast Info")) {
                     Text(podcast.title ?? "Unknown Podcast")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.echoTextSecondary)
                     Text(episode.title)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.echoTextSecondary)
                     Text(formatTime(currentTime))
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(.mintAccent)
                 }
 
                 Section(header: Text("Note")) {
                     ZStack(alignment: .topLeading) {
                         if noteText.isEmpty {
                             Text("Enter your note...")
-                                .foregroundColor(.gray)
+                                .foregroundColor(.echoTextSecondary)
                                 .padding(.top, 8)
                                 .padding(.leading, 4)
                         }

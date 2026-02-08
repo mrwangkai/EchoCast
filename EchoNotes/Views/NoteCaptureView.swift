@@ -56,7 +56,7 @@ struct NoteCaptureView: View {
                     ZStack(alignment: .topLeading) {
                         if noteText.isEmpty {
                             Text("Tap the microphone to record or type your note...")
-                                .foregroundColor(.gray)
+                                .foregroundColor(.echoTextSecondary)
                                 .padding(.top, 8)
                                 .padding(.leading, 4)
                         }
@@ -78,7 +78,7 @@ struct NoteCaptureView: View {
                             .padding()
                             .background(
                                 Circle()
-                                    .fill(Color(.systemGray6))
+                                    .fill(Color.searchFieldBackground)
                                     .frame(width: 80, height: 80)
                             )
                         }

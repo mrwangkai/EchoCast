@@ -32,9 +32,6 @@ struct PodcastDiscoveryView: View {
                         .padding(.horizontal, EchoSpacing.screenPadding)
                         .padding(.vertical, 12)
 
-                    // Genre chips carousel
-                    genreChipsScrollView
-
                     // Podcasts by category OR search results
                     if searchText.isEmpty {
                         categoryCarouselsView
@@ -478,7 +475,7 @@ struct AddRSSFeedView: View {
                 Section(header: Text("About RSS Feeds")) {
                     Text("Add podcasts by pasting their RSS feed URL. This allows EchoNotes to track episodes and create timestamped notes while you listen.")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextSecondary)
                 }
 
                 if let error = error {

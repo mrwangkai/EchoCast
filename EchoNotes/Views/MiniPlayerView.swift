@@ -54,7 +54,7 @@ struct MiniPlayerView: View {
                 } placeholder: {
                     Image(systemName: "podcast.fill")
                         .resizable()
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextSecondary)
                         .padding(8)
                 }
             } else {

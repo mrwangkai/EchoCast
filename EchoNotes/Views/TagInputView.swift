@@ -52,7 +52,7 @@ struct TagInputView: View {
             // Input field
             HStack(spacing: 8) {
                 Image(systemName: "tag")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.echoTextSecondary)
                     .font(.body)
 
                 TextField("Add tag", text: $inputText)
@@ -77,7 +77,7 @@ struct TagInputView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
-            .background(Color(.systemGray6))
+            .background(Color.searchFieldBackground)
             .cornerRadius(10)
 
             // Autocomplete suggestions
@@ -92,7 +92,7 @@ struct TagInputView: View {
                                 Image(systemName: "plus.circle")
                                     .foregroundColor(.blue)
                                 Text("Create tag \"\(inputText.trimmingCharacters(in: .whitespaces))\"")
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.echoTextPrimary)
                                 Spacer()
                             }
                             .padding(.horizontal, 12)
@@ -111,9 +111,9 @@ struct TagInputView: View {
                         }) {
                             HStack {
                                 Image(systemName: "tag")
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.echoTextSecondary)
                                 Text(tag)
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.echoTextPrimary)
                                 Spacer()
                             }
                             .padding(.horizontal, 12)
@@ -125,7 +125,7 @@ struct TagInputView: View {
                         }
                     }
                 }
-                .background(Color(.systemBackground))
+                .background(Color.noteCardBackground)
                 .cornerRadius(10)
                 .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                 .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .top)))

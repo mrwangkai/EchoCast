@@ -48,7 +48,7 @@ struct ContentView: View {
         }
         .tint(.mintAccent)
         .tabViewStyle(.tabBarOnly)
-        .tabViewBottomAccessory(isEnabled: player.showMiniPlayer) {
+        .tabViewBottomAccessory(isEnabled: player.currentEpisode != nil) {
             // Mini player bar above tab bar (Liquid Glass style)
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
                 MiniPlayerBar(episode: episode, podcast: podcast, showFullPlayer: $showFullPlayer, namespace: playerAnimation)
@@ -182,7 +182,7 @@ struct EmptyNotesHomeView: View {
                     Text("Discover podcasts and\nlisten to great content")
                         .font(.body)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.echoTextPrimary)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -206,7 +206,7 @@ struct EmptyNotesHomeView: View {
                     .frame(width: 80, height: 80)
             }
             .padding(24)
-            .background(Color(.systemGray6))
+            .background(Color.noteCardBackground)
             .cornerRadius(16)
 
             // Notes Card
@@ -222,18 +222,18 @@ struct EmptyNotesHomeView: View {
                     Text("Capture insights while\nlistening to episodes")
                         .font(.body)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.echoTextPrimary)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text("Take timestamped notes with tags")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.echoTextSecondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(24)
-            .background(Color(.systemGray6))
+            .background(Color.noteCardBackground)
             .cornerRadius(16)
         }
         .padding(.horizontal)
@@ -319,7 +319,7 @@ struct PodcastsListView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .padding()
-                        .background(Color(.systemGray6))
+                        .background(Color.noteCardBackground)
                         .cornerRadius(10)
                     }
                     .padding(.horizontal)
@@ -425,7 +425,7 @@ struct PodcastsListView: View {
                                                 Text(podcast.title ?? "Unknown")
                                                     .font(.headline)
                                                     .lineLimit(2)
-                                                    .foregroundColor(.primary)
+                                                    .foregroundColor(.echoTextPrimary)
 
                                                 if let author = podcast.author {
                                                     Text(author)
@@ -442,7 +442,7 @@ struct PodcastsListView: View {
                                                 .foregroundColor(.gray)
                                         }
                                         .padding()
-                                        .background(Color(.systemGray6))
+                                        .background(Color.noteCardBackground)
                                         .cornerRadius(12)
                                     }
                                     .buttonStyle(PlainButtonStyle())
@@ -1077,7 +1077,7 @@ struct ExplorePodcastDetailView: View {
                                     if let author = rssPodcast.author {
                                         Text(author)
                                             .font(.subheadline)
-                                            .foregroundColor(.secondary)
+                                            .foregroundColor(.echoTextSecondary)
                                     }
                                 }
                             }
@@ -1087,7 +1087,7 @@ struct ExplorePodcastDetailView: View {
                             if !rssPodcast.description.isEmpty {
                                 Text(rssPodcast.description)
                                     .font(.body)
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.echoTextPrimary)
                                     .padding(.horizontal)
                             }
 
@@ -1879,7 +1879,7 @@ struct PodcastSearchView: View {
                     }
                 }
                 .padding()
-                .background(Color(.systemGray6))
+                .background(Color.noteCardBackground)
                 .cornerRadius(10)
                 .padding()
 
@@ -2353,21 +2353,21 @@ struct NoteDetailSheetView: View {
                         Text(episodeTitle)
                             .font(.title3)
                             .fontWeight(.bold)
-                            .foregroundColor(.primary)
+                            .foregroundColor(.echoTextPrimary)
                     }
 
                     // Series name (caption/subheader)
                     if let showTitle = note.showTitle {
                         Text(showTitle)
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.echoTextSecondary)
                     }
 
                     // Date published
                     if let createdAt = note.createdAt {
                         Text(createdAt, style: .date)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.echoTextSecondary)
                     }
                 }
 
@@ -2402,7 +2402,7 @@ struct NoteDetailSheetView: View {
                         TextEditor(text: $editedNoteText)
                             .frame(height: 120)
                             .padding(8)
-                            .background(Color(.systemGray6))
+                            .background(Color.noteCardBackground)
                             .cornerRadius(8)
                     } else {
                         if let noteText = note.noteText {
@@ -2413,7 +2413,7 @@ struct NoteDetailSheetView: View {
                             }
                             .frame(height: 120)
                             .padding()
-                            .background(Color(.systemGray6))
+                            .background(Color.noteCardBackground)
                             .cornerRadius(12)
                         }
                     }
@@ -2485,7 +2485,7 @@ struct NoteDetailSheetView: View {
                     HStack {
                         Text("Created: \(createdAt, style: .date)")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.echoTextSecondary)
                         Spacer()
                     }
                     .padding(.top, 8)
@@ -3371,7 +3371,7 @@ struct SettingsView: View {
                             Image(systemName: "arrow.up.arrow.down.circle.fill")
                                 .foregroundColor(.green)
                             Text("Import/Export OPML")
-                                .foregroundColor(.primary)
+                                .foregroundColor(.echoTextPrimary)
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.caption)
@@ -3393,7 +3393,7 @@ struct SettingsView: View {
                             Image(systemName: "ant.circle.fill")
                                 .foregroundColor(.green)
                             Text("Debug Console")
-                                .foregroundColor(.primary)
+                                .foregroundColor(.echoTextPrimary)
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.caption)
@@ -3408,7 +3408,7 @@ struct SettingsView: View {
                             Image(systemName: "trash.fill")
                                 .foregroundColor(.red)
                             Text("Clear Cache")
-                                .foregroundColor(.primary)
+                                .foregroundColor(.echoTextPrimary)
                         }
                     }
 
@@ -3419,7 +3419,7 @@ struct SettingsView: View {
                             Image(systemName: "arrow.clockwise")
                                 .foregroundColor(.orange)
                             Text("Show Onboarding")
-                                .foregroundColor(.primary)
+                                .foregroundColor(.echoTextPrimary)
                         }
                     }
                 } header: {
@@ -3451,10 +3451,10 @@ struct SettingsView: View {
                 VStack(spacing: 4) {
                     Text("PID: \(currentPID)")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.echoTextSecondary)
                     Text(appVersion)
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.echoTextSecondary)
                 }
                 .padding(.bottom, 8)
             }
@@ -3518,10 +3518,10 @@ struct OPMLOptionsView: View {
                                 .foregroundColor(.blue)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Import OPML")
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.echoTextPrimary)
                                 Text("Import your podcast subscriptions from other apps")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.echoTextSecondary)
                             }
                         }
                     }
@@ -3534,10 +3534,10 @@ struct OPMLOptionsView: View {
                                 .foregroundColor(.green)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Export OPML")
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.echoTextPrimary)
                                 Text("Save your subscriptions (\(podcasts.count) podcasts)")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.echoTextSecondary)
                             }
                         }
                     }
@@ -3735,7 +3735,7 @@ struct DownloadedEpisodesView: View {
                         .foregroundColor(.gray)
                     Text("Episodes you download will appear here")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.echoTextSecondary)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
@@ -3753,7 +3753,7 @@ struct DownloadedEpisodesView: View {
                                         Text(info.episodeTitle)
                                             .font(.headline)
                                             .lineLimit(2)
-                                            .foregroundColor(.primary)
+                                            .foregroundColor(.echoTextPrimary)
 
                                         if info.downloadDate != Date.distantPast {
                                             Text("Downloaded \(info.downloadDate.formatted(date: .abbreviated, time: .omitted))")

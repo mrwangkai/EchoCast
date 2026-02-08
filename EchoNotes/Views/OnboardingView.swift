@@ -72,7 +72,7 @@ struct OnboardingView: View {
                         Button("Skip") {
                             completeOnboarding()
                         }
-                        .foregroundColor(.gray)
+                        .foregroundColor(.echoTextSecondary)
                         .padding(.horizontal)
                     }
                 }
@@ -96,7 +96,7 @@ struct OnboardingView: View {
 
                             Text(pages[index].description)
                                 .font(.system(size: 18))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.echoTextSecondary)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 40)
                         }

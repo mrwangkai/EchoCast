@@ -106,7 +106,10 @@ struct HomeView: View {
                     // Recent Notes Section
                     if !recentNotes.isEmpty {
                         recentNotesSection
-                    } else {
+                    }
+
+                    // Empty state - only show when there's no content at all
+                    if player.currentEpisode == nil && recentNotes.isEmpty && followedPodcasts.isEmpty {
                         emptyStateView
                     }
                 }
