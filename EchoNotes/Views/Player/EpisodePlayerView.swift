@@ -157,9 +157,6 @@ struct EpisodePlayerView: View {
                 // Playback controls
                 playbackControlButtons
 
-                // Utility toolbar
-                secondaryActionsRow
-
                 // Contextual CTA: Only in "Listening" view (segment 0), after controls
                 if selectedSegment == 0 {
                     addNoteButton
@@ -313,68 +310,6 @@ struct EpisodePlayerView: View {
             skipButton(systemName: "goforward.30", action: { player.skipForward(30) })
         }
         .frame(maxWidth: .infinity)
-    }
-
-    private var secondaryActionsRow: some View {
-        HStack {
-            downloadButton
-
-            Spacer()
-
-            playbackSpeedButton
-
-            Spacer()
-
-            shareButton
-
-            Spacer()
-
-            moreOptionsButton
-        }
-    }
-
-    private var downloadButton: some View {
-        Button {
-            print("Download button tapped")
-        } label: {
-            Image(systemName: "arrow.down.circle")
-                .font(.system(size: 20, weight: .medium))
-                .foregroundColor(.echoTextSecondary)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var playbackSpeedButton: some View {
-        Button {
-            print("Playback speed button tapped - TODO: Implement speed control")
-        } label: {
-            Text("1.0×")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.echoTextSecondary)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var shareButton: some View {
-        Button {
-            print("Share button tapped")
-        } label: {
-            Image(systemName: "square.and.arrow.up")
-                .font(.system(size: 20, weight: .medium))
-                .foregroundColor(.echoTextSecondary)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var moreOptionsButton: some View {
-        Button {
-            print("More options tapped")
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 20, weight: .medium))
-                .foregroundColor(.echoTextSecondary)
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Helper Methods
