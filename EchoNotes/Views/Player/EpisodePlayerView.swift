@@ -101,7 +101,7 @@ struct EpisodePlayerView: View {
         VStack(spacing: 0) {
             // --- SECTION 1: HEADER (FIXED) ---
             segmentedControlSection
-                .padding(.top, 24)
+                .padding(.top, 32)
                 .padding(.horizontal, EchoSpacing.screenPadding)
 
             // --- SECTION 2: MID-SECTION (CONDITIONAL SCROLL) ---
@@ -143,6 +143,7 @@ struct EpisodePlayerView: View {
                     EmptyView()
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.top, 20)
 
             Spacer() // Pushes footer to bottom
@@ -152,12 +153,6 @@ struct EpisodePlayerView: View {
                 // Metadata (Always visible, 2 lines max)
                 episodeMetadataView
 
-                // Contextual CTA: Only fixed in "Listening" view (segment 0)
-                if selectedSegment == 0 {
-                    addNoteButton
-                        .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
-                }
-
                 // Scrubber
                 timeProgressWithMarkers
 
@@ -166,6 +161,12 @@ struct EpisodePlayerView: View {
 
                 // Utility toolbar
                 secondaryActionsRow
+
+                // Contextual CTA: Only in "Listening" view (segment 0), after controls
+                if selectedSegment == 0 {
+                    addNoteButton
+                        .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
+                }
             }
             .padding(.horizontal, EchoSpacing.screenPadding)
             .padding(.top, 20)

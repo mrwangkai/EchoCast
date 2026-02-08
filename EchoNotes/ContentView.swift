@@ -62,19 +62,6 @@ struct ContentView: View {
                 NavigationStack {
                     EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation)
                         .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .topBarLeading) {
-                                Button(action: {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                        showFullPlayer = false
-                                    }
-                                }) {
-                                    Image(systemName: "chevron.down")
-                                        .font(.system(size: 20, weight: .semibold))
-                                        .foregroundColor(.mintAccent)
-                                }
-                            }
-                        }
                         .onAppear {
                             print("👁️ [ContentView Full Player] EpisodePlayerView appeared")
                         }
