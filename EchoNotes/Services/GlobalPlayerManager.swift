@@ -258,6 +258,9 @@ class GlobalPlayerManager: ObservableObject {
                         }
                     }
 
+                    // Add to playback history immediately when loaded so it shows in Continue Listening
+                    self.savePlaybackHistory()
+
                     Task { @MainActor in
                         DevStatusManager.shared.playerStatus = .success
                         DevStatusManager.shared.networkStatus = .success
@@ -393,6 +396,18 @@ class GlobalPlayerManager: ObservableObject {
 
         print("✅ [Player] play() executed, isPlaying set to true")
         print("🔍 [Player] Player rate immediately after play(): \(player.rate)")
+
+        // Auto-download episode if not already downloaded
+        if let episode = currentEpisode, let podcast = currentPodcast {
+            let downloadManager = EpisodeDownloadManager.shared
+            if !downloadManager.isDownloaded(episode.id) && !downloadManager.isDownloading(episode.id) {
+                print("📥 [Player] Auto-downloading episode: \(episode.title)")
+                downloadManager.downloadEpisode(episode, podcastTitle: podcast.title ?? "Unknown Podcast", podcastFeedURL: podcast.feedURL)
+            }
+        }
+
+        // Add to playback history immediately so it shows in Continue Listening
+        savePlaybackHistory()
 
         // Check rate after short delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
