@@ -3,7 +3,7 @@
 //  EchoNotes
 //
 //  Unified episode player with 3 tabs (Listening, Notes, Episode Info)
-//  Sticky player controls at bottom across all tabs
+//  iOS 26 Liquid Glass architecture with ZStack and fixed footer
 //
 
 import SwiftUI
@@ -74,23 +74,67 @@ struct EpisodePlayerView: View {
     // MARK: - Body
 
     var body: some View {
-        VStack(spacing: 0) {
-            // ZONE 1: SEGMENTED CONTROL (Fixed)
-            segmentedControlSection
-                .background(Color.echoBackground)
+        ZStack(alignment: .bottom) {
+            // LAYER 1: Scrollable Content (Mid-Section)
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Space for fixed header
+                    Spacer(minLength: 70)
 
-            // ZONE 2: CONTENT CONTAINER (Scrollable, changes by tab)
-            contentContainerSection
+                    // Segmented Control (in scroll area)
+                    segmentedControlSection
 
-            // ZONE 3: PLAYER CONTROLS (Sticky at bottom)
-            playerControlsSection
-                .background(Color.echoBackground)
+                    // Tab content
+                    switch selectedSegment {
+                    case 0:
+                        ListeningSegmentView(
+                            episode: episode,
+                            podcast: podcast,
+                            namespace: namespace,
+                            addNoteAction: { showingNoteCaptureSheet = true }
+                        )
+                    case 1:
+                        NotesSegmentView(
+                            notes: Array(notes),
+                            addNoteAction: { showingNoteCaptureSheet = true }
+                        )
+                    case 2:
+                        InfoSegmentView(
+                            episode: episode,
+                            podcast: podcast
+                        )
+                    default:
+                        EmptyView()
+                    }
+                }
+                // Reserve space so the list can clear the fixed footer
+                .padding(.bottom, 280)
+            }
+            .background(Color.echoBackground)
+
+            // LAYER 2: The Persistent Footer (Fixed at bottom)
+            VStack(spacing: 0) {
+                // Top divider
+                Divider()
+                    .background(Color.white.opacity(0.1))
+
+                // Fixed footer with ultraThinMaterial
+                playerControlDeck
+                    .background(.ultraThinMaterial)
+            }
+            .ignoresSafeArea(edges: .bottom)
         }
         .background(Color.echoBackground)
-        .ignoresSafeArea(edges: .bottom)
+        .sheet(isPresented: $showingNoteCaptureSheet) {
+            NoteCaptureSheetWrapper(
+                episode: episode,
+                podcast: podcast,
+                currentTime: player.currentTime
+            )
+        }
     }
 
-    // MARK: - Zone 1: Segmented Control
+    // MARK: - Segmented Control (Fixed Header)
 
     private var segmentedControlSection: some View {
         VStack(spacing: 0) {
@@ -111,118 +155,52 @@ struct EpisodePlayerView: View {
             .padding(.horizontal, EchoSpacing.screenPadding)
             .padding(.bottom, 16)
         }
-    }
-
-    // MARK: - Zone 2: Content Container
-
-    private var contentContainerSection: some View {
-        TabView(selection: $selectedSegment) {
-            listeningTabContent
-                .tag(0)
-
-            notesTabContent
-                .tag(1)
-
-            episodeInfoTabContent
-                .tag(2)
-        }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-    }
-
-    // MARK: - Zone 3: Player Controls (Sticky)
-
-    private var playerControlsSection: some View {
-        VStack(spacing: 16) {
-            Divider()
-                .background(Color.white.opacity(0.1))
-
-            VStack(spacing: 20) {
-                timeProgressWithMarkers
-                playbackControlButtons
-                secondaryActionsRow
-            }
-            .padding(.horizontal, EchoSpacing.screenPadding)
-            .padding(.bottom, 24)
-        }
         .background(Color.echoBackground)
     }
 
-    // MARK: - Tab 1: Listening Content
+    // MARK: - Player Control Deck (Fixed Footer)
 
-    private var listeningTabContent: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                albumArtworkView
-                    .padding(.top, 24)
+    private var playerControlDeck: some View {
+        VStack(spacing: 16) {
+            // Episode Metadata (Always visible)
+            episodeMetadataView
 
-                episodeMetadataView
-
+            // Contextual CTA: Only fixed in "Listening" view (segment 0)
+            if selectedSegment == 0 {
                 addNoteButton
-
-                Spacer(minLength: 100)
             }
-            .padding(.horizontal, EchoSpacing.screenPadding)
+
+            // Scrubber
+            timeProgressWithMarkers
+
+            // Playback controls
+            playbackControlButtons
+
+            // Utility toolbar
+            secondaryActionsRow
         }
+        .padding(.horizontal, EchoSpacing.screenPadding)
+        .padding(.top, 16)
+        .padding(.bottom, 24)
     }
 
-    private var albumArtworkView: some View {
-        GeometryReader { geometry in
-            AsyncImage(url: URL(string: podcast.artworkURL ?? episode.imageURL ?? "")) { phase in
-                switch phase {
-                case .empty:
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(red: 0.2, green: 0.2, blue: 0.2))
-
-                        ProgressView()
-                            .tint(.white)
-                    }
-                    .matchedGeometryEffect(id: "artwork", in: namespace)
-
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geometry.size.width, height: geometry.size.width)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .matchedGeometryEffect(id: "artwork", in: namespace)
-
-                case .failure:
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(red: 0.2, green: 0.2, blue: 0.2))
-
-                        Image(systemName: "music.note")
-                            .font(.system(size: 48))
-                            .foregroundColor(.white.opacity(0.3))
-                    }
-                    .matchedGeometryEffect(id: "artwork", in: namespace)
-
-                default:
-                    EmptyView()
-                }
-            }
-            .frame(width: geometry.size.width, height: geometry.size.width)
-            .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
-            .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
-        }
-        .aspectRatio(1, contentMode: .fit)
-    }
+    // MARK: - Episode Metadata (in Footer)
 
     private var episodeMetadataView: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 4) {
             Text(episode.title)
-                .font(.title2Echo())
+                .font(.bodyRoundedMedium())
                 .foregroundColor(.echoTextPrimary)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
+                .lineLimit(1)
 
             Text(podcast.title ?? "Unknown Podcast")
-                .font(.bodyEcho())
-                .foregroundColor(.white.opacity(0.7))
-                .multilineTextAlignment(.center)
+                .font(.caption2Medium())
+                .foregroundColor(.echoTextSecondary)
+                .lineLimit(1)
         }
     }
+
+    // MARK: - Add Note Button
 
     private var addNoteButton: some View {
         Button {
@@ -230,148 +208,20 @@ struct EpisodePlayerView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "note.text.badge.plus")
-                    .font(.system(size: 17, weight: .medium))
+                    .font(.system(size: 15, weight: .medium))
 
                 Text("Add note at current time")
                     .font(.bodyRoundedMedium())
             }
             .foregroundColor(.mintButtonText)
             .frame(maxWidth: .infinity)
-            .frame(height: 56)
+            .frame(height: 48)
             .background(Color.mintButtonBackground)
             .cornerRadius(12)
         }
-        .sheet(isPresented: $showingNoteCaptureSheet) {
-            NoteCaptureSheetWrapper(
-                episode: episode,
-                podcast: podcast,
-                currentTime: player.currentTime
-            )
-        }
     }
 
-    // MARK: - Tab 2: Notes Content
-
-    private var notesTabContent: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                if notes.isEmpty {
-                    emptyNotesState
-                } else {
-                    notesListView
-                }
-
-                Spacer(minLength: 100)
-            }
-            .padding(.horizontal, EchoSpacing.screenPadding)
-            .padding(.top, 24)
-        }
-    }
-
-    private var emptyNotesState: some View {
-        VStack(spacing: 16) {
-            Spacer()
-
-            Image(systemName: "note.text")
-                .font(.system(size: 48))
-                .foregroundColor(.white.opacity(0.3))
-
-            Text("No notes yet")
-                .font(.title2Echo())
-                .foregroundColor(.echoTextPrimary)
-
-            Text("Tap 'Add note at current time' while listening to capture your thoughts")
-                .font(.bodyEcho())
-                .foregroundColor(.echoTextSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var notesListView: some View {
-        ForEach(notes) { note in
-            PlayerNoteCardView(note: note) {
-                if let timestamp = note.timestamp,
-                   let timeInSeconds = parseTimestamp(timestamp) {
-                    player.seek(to: timeInSeconds)
-                    withAnimation {
-                        selectedSegment = 0
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - Tab 3: Episode Info Content
-
-    private var episodeInfoTabContent: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 32) {
-                if let description = episode.description, !description.isEmpty {
-                    episodeDescriptionSection(description)
-                }
-
-                if let podcastDesc = podcast.podcastDescription, !podcastDesc.isEmpty {
-                    podcastDescriptionSection(podcastDesc)
-                }
-
-                episodeMetadataSection
-
-                Spacer(minLength: 100)
-            }
-            .padding(.horizontal, EchoSpacing.screenPadding)
-            .padding(.top, 24)
-        }
-    }
-
-    private func episodeDescriptionSection(_ description: String) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Episode Description")
-                .font(.title2Echo())
-                .foregroundColor(.echoTextPrimary)
-
-            Text(description.htmlStripped)
-                .font(.bodyEcho())
-                .foregroundColor(.echoTextSecondary)
-                .lineSpacing(6)
-        }
-    }
-
-    private func podcastDescriptionSection(_ description: String) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("About the Podcast")
-                .font(.title2Echo())
-                .foregroundColor(.echoTextPrimary)
-
-            Text(description.htmlStripped)
-                .font(.bodyEcho())
-                .foregroundColor(.echoTextSecondary)
-                .lineSpacing(6)
-        }
-    }
-
-    private var episodeMetadataSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Details")
-                .font(.title2Echo())
-                .foregroundColor(.echoTextPrimary)
-
-            VStack(alignment: .leading, spacing: 12) {
-                if let pubDate = episode.pubDate {
-                    MetadataRow(label: "Published", value: formatPublishDate(pubDate))
-                }
-
-                if let duration = episode.duration {
-                    MetadataRow(label: "Duration", value: duration)
-                }
-            }
-        }
-    }
-
-    // MARK: - Player Controls Components
+    // MARK: - Player Controls
 
     private var timeProgressWithMarkers: some View {
         VStack(spacing: 8) {
@@ -429,23 +279,11 @@ struct EpisodePlayerView: View {
             skipButton(systemName: "gobackward.15", action: { player.skipBackward(15) })
 
             Button {
-                print("🎮 [PlayerUI] Play button TAPPED")
-                print("🎮 [PlayerUI] Player exists: \(player != nil)")
-                print("🎮 [PlayerUI] Player isPlaying: \(player.isPlaying)")
-                print("🎮 [PlayerUI] Current episode: \(player.currentEpisode?.title ?? "nil")")
-                print("🎮 [PlayerUI] Episode parameter: \(episode.title)")
-
                 if player.isPlaying {
-                    print("⏸️ [PlayerUI] Calling player.pause()")
                     player.pause()
-                    print("🎮 [PlayerUI] pause() completed")
                 } else {
-                    print("▶️ [PlayerUI] Calling player.play()")
                     player.play()
-                    print("🎮 [PlayerUI] play() completed")
                 }
-
-                print("🎮 [PlayerUI] Action completed, isPlaying now: \(player.isPlaying)")
             } label: {
                 ZStack {
                     Circle()
@@ -565,6 +403,241 @@ struct EpisodePlayerView: View {
         guard components.count == 3 else { return nil }
         return TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
     }
+}
+
+// MARK: - Segment Views
+
+// MARK: - Listening Segment View (Segment 0)
+
+struct ListeningSegmentView: View {
+    let episode: RSSEpisode
+    let podcast: PodcastEntity
+    var namespace: Namespace.ID
+    let addNoteAction: () -> Void
+
+    var body: some View {
+        VStack(spacing: 24) {
+            albumArtworkView
+                .padding(.horizontal, EchoSpacing.screenPadding)
+
+            Spacer(minLength: 80)
+        }
+        .padding(.top, 8)
+    }
+
+    private var albumArtworkView: some View {
+        GeometryReader { geometry in
+            AsyncImage(url: URL(string: podcast.artworkURL ?? episode.imageURL ?? "")) { phase in
+                switch phase {
+                case .empty:
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(red: 0.2, green: 0.2, blue: 0.2))
+
+                        ProgressView()
+                            .tint(.white)
+                    }
+                    .matchedGeometryEffect(id: "artwork", in: namespace)
+
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geometry.size.width, height: geometry.size.width)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .matchedGeometryEffect(id: "artwork", in: namespace)
+
+                case .failure:
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(red: 0.2, green: 0.2, blue: 0.2))
+
+                        Image(systemName: "music.note")
+                            .font(.system(size: 48))
+                            .foregroundColor(.white.opacity(0.3))
+                    }
+                    .matchedGeometryEffect(id: "artwork", in: namespace)
+
+                default:
+                    EmptyView()
+                }
+            }
+            .frame(width: geometry.size.width, height: geometry.size.width)
+            .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+            .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
+        }
+        .aspectRatio(1, contentMode: .fit)
+    }
+}
+
+// MARK: - Notes Segment View (Segment 1)
+
+struct NotesSegmentView: View {
+    let notes: [NoteEntity]
+    let addNoteAction: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Add Note button (scrollable in Notes tab)
+            Button(action: addNoteAction) {
+                HStack(spacing: 8) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 16, weight: .medium))
+
+                    Text("Add note at current time")
+                        .font(.bodyRoundedMedium())
+                }
+                .foregroundColor(.mintButtonText)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color.mintButtonBackground.opacity(0.8))
+                .cornerRadius(12)
+            }
+            .padding(.horizontal, EchoSpacing.screenPadding)
+
+            if notes.isEmpty {
+                emptyNotesState
+            } else {
+                notesListView
+            }
+
+            Spacer(minLength: 20)
+        }
+        .padding(.top, 8)
+    }
+
+    private var emptyNotesState: some View {
+        VStack(spacing: 16) {
+            Spacer()
+                .frame(height: 60)
+
+            Image(systemName: "note.text")
+                .font(.system(size: 48))
+                .foregroundColor(.white.opacity(0.3))
+
+            Text("No notes yet")
+                .font(.title2Echo())
+                .foregroundColor(.echoTextPrimary)
+
+            Text("Tap 'Add note at current time' while listening to capture your thoughts")
+                .font(.bodyEcho())
+                .foregroundColor(.echoTextSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var notesListView: some View {
+        VStack(spacing: 0) {
+            ForEach(notes, id: \.id) { note in
+                NoteRow(note: note)
+            }
+        }
+        .padding(.horizontal, EchoSpacing.screenPadding)
+    }
+}
+
+// MARK: - Note Row (Timeline style)
+
+struct NoteRow: View {
+    let note: NoteEntity
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            if let timestamp = note.timestamp {
+                Text(timestamp)
+                    .font(.caption.monospacedDigit())
+                    .foregroundColor(.mintAccent)
+                    .padding(.top, 4)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                if let noteText = note.noteText, !noteText.isEmpty {
+                    Text(noteText)
+                        .font(.subheadline)
+                        .foregroundColor(.echoTextPrimary)
+                        .lineLimit(3)
+                }
+
+                Divider()
+                    .padding(.top, 8)
+            }
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+// MARK: - Info Segment View (Segment 2)
+
+struct InfoSegmentView: View {
+    let episode: RSSEpisode
+    let podcast: PodcastEntity
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 32) {
+            if let description = episode.description, !description.isEmpty {
+                episodeDescriptionSection(description)
+            }
+
+            if let podcastDesc = podcast.podcastDescription, !podcastDesc.isEmpty {
+                podcastDescriptionSection(podcastDesc)
+            }
+
+            episodeMetadataSection
+
+            Spacer(minLength: 20)
+        }
+        .padding(.horizontal, EchoSpacing.screenPadding)
+        .padding(.top, 8)
+    }
+
+    private func episodeDescriptionSection(_ description: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Episode Description")
+                .font(.title2Echo())
+                .foregroundColor(.echoTextPrimary)
+
+            Text(description.htmlStripped)
+                .font(.bodyEcho())
+                .foregroundColor(.echoTextSecondary)
+                .lineSpacing(6)
+        }
+    }
+
+    private func podcastDescriptionSection(_ description: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("About the Podcast")
+                .font(.title2Echo())
+                .foregroundColor(.echoTextPrimary)
+
+            Text(description.htmlStripped)
+                .font(.bodyEcho())
+                .foregroundColor(.echoTextSecondary)
+                .lineSpacing(6)
+        }
+    }
+
+    private var episodeMetadataSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Details")
+                .font(.title2Echo())
+                .foregroundColor(.echoTextPrimary)
+
+            VStack(alignment: .leading, spacing: 12) {
+                if let pubDate = episode.pubDate {
+                    MetadataRow(label: "Published", value: formatPublishDate(pubDate))
+                }
+
+                if let duration = episode.duration {
+                    MetadataRow(label: "Duration", value: duration)
+                }
+            }
+        }
+    }
 
     private func formatPublishDate(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -592,47 +665,6 @@ struct MetadataRow: View {
                 .foregroundColor(.echoTextPrimary)
                 .multilineTextAlignment(.trailing)
         }
-    }
-}
-
-struct PlayerNoteCardView: View {
-    let note: NoteEntity
-    let onTap: () -> Void
-
-    var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    if let timestamp = note.timestamp {
-                        Text(timestamp)
-                            .font(.caption2Medium())
-                            .foregroundColor(.mintAccent)
-                    }
-
-                    Spacer()
-
-                    if note.isPriority {
-                        Image(systemName: "flag.fill")
-                            .font(.system(size: 12))
-                            .foregroundColor(.mintAccent)
-                    }
-                }
-
-                if let noteText = note.noteText, !noteText.isEmpty {
-                    Text(noteText)
-                        .font(.bodyEcho())
-                        .foregroundColor(.echoTextPrimary)
-                        .lineSpacing(4)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-            .padding(EchoSpacing.noteCardPadding)
-            .background(Color.noteCardBackground)
-            .cornerRadius(EchoSpacing.noteCardCornerRadius)
-            .shadow(color: Color.black.opacity(0.3), radius: 3, x: 0, y: 1)
-            .shadow(color: Color.black.opacity(0.15), radius: 2, x: 0, y: 1)
-        }
-        .buttonStyle(.plain)
     }
 }
 
