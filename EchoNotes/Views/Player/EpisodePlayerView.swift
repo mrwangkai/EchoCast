@@ -138,27 +138,44 @@ struct EpisodePlayerView: View {
             .background(Color.echoBackground)
 
             // LAYER 2: The Persistent Footer (Fixed at bottom)
-            VStack(spacing: 20) {
-                // Metadata (Always visible, 2 lines max)
-                episodeMetadataView
-
-                // Contextual CTA: Only fixed in "Listening" view (segment 0)
-                if selectedSegment == 0 {
-                    addNoteButton
-                        .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
+            ZStack {
+                // 1. NAVIGATION LAYER: Only the Metadata area triggers actions
+                VStack {
+                    Spacer()
+                    // Invisible tap area for metadata
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .frame(height: 60)
+                        .onTapGesture {
+                            // Tap on metadata area - could trigger additional actions
+                        }
+                    Spacer()
                 }
 
-                // Scrubber
-                timeProgressWithMarkers
+                // 2. CONTROL LAYER: The actual interactive elements
+                VStack(spacing: 20) {
+                    // Metadata (Always visible, 2 lines max)
+                    episodeMetadataView
+                        .allowsHitTesting(false) // Let the tap gesture handle it
 
-                // Playback controls
-                playbackControlButtons
+                    // Contextual CTA: Only fixed in "Listening" view (segment 0)
+                    if selectedSegment == 0 {
+                        addNoteButton
+                            .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
+                    }
 
-                // Utility toolbar
-                secondaryActionsRow
+                    // Scrubber
+                    timeProgressWithMarkers
+
+                    // Playback controls
+                    playbackControlButtons
+
+                    // Utility toolbar
+                    secondaryActionsRow
+                }
+                .padding(.horizontal, EchoSpacing.screenPadding)
+                .padding(.top, 20)
             }
-            .padding(.horizontal, EchoSpacing.screenPadding)
-            .padding(.top, 20)
             .liquidGlassFooter()
             .ignoresSafeArea(edges: .bottom)
         }
@@ -222,6 +239,7 @@ struct EpisodePlayerView: View {
             .background(Color.mintButtonBackground)
             .cornerRadius(12)
         }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Player Controls
@@ -497,6 +515,7 @@ struct NotesSegmentView: View {
                 .background(Color.mintButtonBackground.opacity(0.8))
                 .cornerRadius(12)
             }
+            .buttonStyle(.plain)
             .padding(.horizontal, EchoSpacing.screenPadding)
 
             if notes.isEmpty {
