@@ -146,7 +146,7 @@ struct EpisodePlayerView: View {
 
             Spacer(minLength: 0) // Pushes footer to bottom
 
-            // --- SECTION 3: FOOTER (FIXED) ---
+            // --- SECTION 3: FOOTER (FIXED - Same across all tabs) ---
             VStack(spacing: 20) {
                 // Metadata (Always visible, 2 lines max)
                 episodeMetadataView
@@ -167,6 +167,7 @@ struct EpisodePlayerView: View {
             .padding(.top, 20)
             .liquidGlassFooter()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.echoBackground)
         .presentationDragIndicator(.visible) // Native drag bar
         .ignoresSafeArea(edges: .bottom)
