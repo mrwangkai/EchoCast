@@ -45,6 +45,7 @@ struct PodcastDiscoveryView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .tint(.mintAccent)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add URL") {
@@ -440,12 +441,12 @@ struct GenreViewAllView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .tint(.mintAccent)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(.mintAccent)
                 }
             }
         }
@@ -494,6 +495,7 @@ struct AddRSSFeedView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .tint(.mintAccent)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {

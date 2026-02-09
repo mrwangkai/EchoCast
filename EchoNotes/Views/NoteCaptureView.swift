@@ -112,6 +112,7 @@ struct NoteCaptureView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .tint(.mintAccent)
             .onAppear {
                 // Pre-populate fields when editing
                 if let note = existingNote {

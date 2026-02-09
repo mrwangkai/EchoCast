@@ -99,6 +99,7 @@ struct PodcastDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color.echoBackground, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .tint(.mintAccent)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {

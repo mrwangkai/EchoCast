@@ -2829,6 +2829,7 @@ struct OPMLImportView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .tint(.mintAccent)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if !isProcessingImport && successCount == 0 {
@@ -3433,6 +3434,7 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .tint(.mintAccent)
             .alert("Clear Cache", isPresented: $showClearCacheAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Clear", role: .destructive) {
@@ -3552,6 +3554,7 @@ struct OPMLOptionsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .tint(.mintAccent)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Close") {
@@ -3794,6 +3797,7 @@ struct DownloadedEpisodesView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color.echoBackground, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .tint(.mintAccent)
         .sheet(item: $episodePlayerData) { playerData in
             PlayerSheetWrapper(
                 episode: playerData.episode,

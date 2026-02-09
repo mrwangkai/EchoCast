@@ -155,6 +155,7 @@ struct EpisodeDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color.echoBackground, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .tint(.mintAccent)
         .sheet(isPresented: $showNoteCaptureSheet) {
             NoteCaptureView()
         }
