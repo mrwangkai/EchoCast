@@ -9,13 +9,13 @@ import SwiftUI
 import CoreData
 
 struct LibraryView: View {
+    @Binding var selectedTab: Int
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var viewModel = NoteViewModel()
 
     @State private var showingSortOptions = false
     @State private var selectedNote: NoteEntity?
     @State private var showingNoteDetail = false
-    @State private var showingBrowse = false
 
     var body: some View {
         NavigationStack {
@@ -59,9 +59,6 @@ struct LibraryView: View {
             if let note = selectedNote {
                 NoteDetailSheet(note: note)
             }
-        }
-        .sheet(isPresented: $showingBrowse) {
-            PodcastDiscoveryView()
         }
     }
     
@@ -216,7 +213,7 @@ struct LibraryView: View {
 
             // Find a podcast CTA
             Button(action: {
-                showingBrowse = true
+                selectedTab = 1  // Switch to Browse tab
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
@@ -242,6 +239,6 @@ struct LibraryView: View {
 }
 
 #Preview {
-    LibraryView()
+    LibraryView(selectedTab: .constant(0))
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 }

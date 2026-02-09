@@ -9,6 +9,7 @@ import SwiftUI
 import CoreData
 
 struct HomeView: View {
+    @Binding var selectedTab: Int
     @Environment(\.managedObjectContext) private var viewContext
 
     // Fetch recent notes
@@ -37,7 +38,6 @@ struct HomeView: View {
     @ObservedObject private var player = GlobalPlayerManager.shared
 
     @State private var showingPlayerSheet = false
-    @State private var showingBrowse = false
     @State private var showingSettings = false
     @State private var selectedPodcast: PodcastEntity?
     @State private var selectedNote: NoteEntity?
@@ -71,7 +71,7 @@ struct HomeView: View {
                         HStack(spacing: 16) {
                             Button(action: {
                                 print("🔍 [HomeView] Browse button tapped")
-                                showingBrowse = true
+                                selectedTab = 1  // Switch to Browse tab
                             }) {
                                 Image(systemName: "magnifyingglass")
                                     .font(.body)
@@ -123,9 +123,6 @@ struct HomeView: View {
                 print("🏠 [HomeView] Followed podcasts count: \(followedPodcasts.count)")
                 print("🏠 [HomeView] Player episode loaded: \(player.currentEpisode != nil)")
             }
-        }
-        .sheet(isPresented: $showingBrowse) {
-            PodcastDiscoveryView()
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
@@ -429,7 +426,7 @@ struct HomeView: View {
 
             // Find a podcast CTA
             Button(action: {
-                showingBrowse = true
+                selectedTab = 1  // Switch to Browse tab
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
