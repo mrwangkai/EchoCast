@@ -153,6 +153,8 @@ struct EpisodeDetailView: View {
         }
         .navigationTitle("Episode")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color.echoBackground, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .sheet(isPresented: $showNoteCaptureSheet) {
             NoteCaptureView()
         }

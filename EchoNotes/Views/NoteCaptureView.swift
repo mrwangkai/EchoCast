@@ -110,6 +110,8 @@ struct NoteCaptureView: View {
             }
             .navigationTitle(existingNote == nil ? "Capture Note" : "Edit Note")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color.echoBackground, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .onAppear {
                 // Pre-populate fields when editing
                 if let note = existingNote {

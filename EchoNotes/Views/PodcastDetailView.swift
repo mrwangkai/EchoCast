@@ -97,6 +97,8 @@ struct PodcastDetailView: View {
         }
         .navigationTitle(podcast.title ?? "Podcast")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color.echoBackground, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
