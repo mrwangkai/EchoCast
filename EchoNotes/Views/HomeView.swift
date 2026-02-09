@@ -427,7 +427,28 @@ struct HomeView: View {
                     .padding(.horizontal, 32)
             }
 
+            // Find a podcast CTA
+            Button(action: {
+                showingBrowse = true
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 15, weight: .medium))
+                    Text("Find a podcast")
+                        .font(.bodyRoundedMedium())
+                }
+                .foregroundColor(.mintButtonText)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, EchoSpacing.screenPadding)
+                .padding(.vertical, 16)
+                .background(Color.mintButtonBackground)
+                .cornerRadius(12)
+            }
+            .padding(.horizontal, EchoSpacing.screenPadding)
+            .buttonStyle(.plain)
+
             Spacer()
+                .frame(height: 32)
         }
         .frame(maxWidth: .infinity)
         .onAppear {

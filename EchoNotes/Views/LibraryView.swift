@@ -15,6 +15,7 @@ struct LibraryView: View {
     @State private var showingSortOptions = false
     @State private var selectedNote: NoteEntity?
     @State private var showingNoteDetail = false
+    @State private var showingBrowse = false
 
     var body: some View {
         NavigationStack {
@@ -58,6 +59,9 @@ struct LibraryView: View {
             if let note = selectedNote {
                 NoteDetailSheet(note: note)
             }
+        }
+        .sheet(isPresented: $showingBrowse) {
+            PodcastDiscoveryView()
         }
     }
     
@@ -193,24 +197,45 @@ struct LibraryView: View {
         VStack(spacing: 24) {
             Spacer()
                 .frame(height: 100)
-            
+
             Image(systemName: "note.text")
                 .font(.system(size: 72))
                 .foregroundColor(.mintAccent)
-            
+
             VStack(spacing: 8) {
                 Text("No notes yet")
                     .font(.title2Echo())
                     .foregroundColor(.echoTextPrimary)
-                
+
                 Text("Start listening to podcasts and take notes as you go")
                     .font(.bodyEcho())
                     .foregroundColor(.echoTextSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
             }
-            
+
+            // Find a podcast CTA
+            Button(action: {
+                showingBrowse = true
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 15, weight: .medium))
+                    Text("Find a podcast")
+                        .font(.bodyRoundedMedium())
+                }
+                .foregroundColor(.mintButtonText)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, EchoSpacing.screenPadding)
+                .padding(.vertical, 16)
+                .background(Color.mintButtonBackground)
+                .cornerRadius(12)
+            }
+            .padding(.horizontal, EchoSpacing.screenPadding)
+            .buttonStyle(.plain)
+
             Spacer()
+                .frame(height: 32)
         }
         .frame(maxWidth: .infinity)
     }
