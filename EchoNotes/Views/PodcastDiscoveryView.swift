@@ -44,8 +44,8 @@ struct PodcastDiscoveryView: View {
             .navigationTitle("Browse")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .tint(.mintAccent)
+            .preferredColorScheme(.dark)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Add URL") {
@@ -425,8 +425,10 @@ struct GenreViewAllView: View {
                                 .foregroundColor(.echoTextPrimary)
                                 .lineLimit(2)
                                 .multilineTextAlignment(.center)
-                                .frame(width: 120)
+                                .frame(width: 120, height: 32, alignment: .top)
                         }
+                        .frame(height: 160)  // Fixed height for consistent alignment
+                        .contentShape(Rectangle())
                         .onTapGesture {
                             print("🎧 [Browse] Podcast tapped in view all: \(podcast.displayName)")
                             onPodcastTap(podcast)
