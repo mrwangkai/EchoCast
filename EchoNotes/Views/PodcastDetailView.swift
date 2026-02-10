@@ -127,9 +127,9 @@ struct PodcastDetailView: View {
         } message: {
             Text("Are you sure you want to delete this podcast and all its downloaded episodes? This action cannot be undone.")
         }
-        .task(id: podcast.id) {
+        .task(id: podcast.objectID) {
             print("📊 [PodcastDetail] Task triggered for: \(podcast.title ?? "nil")")
-            print("📊 [PodcastDetail] Task ID: \(podcast.id ?? "nil")")
+            print("📊 [PodcastDetail] Task ID: \(podcast.objectID)")
 
             await loadEpisodes()
 
