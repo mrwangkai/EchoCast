@@ -46,13 +46,6 @@ struct PodcastDiscoveryView: View {
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
             .tint(.mintAccent)
             .preferredColorScheme(.dark)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Add URL") {
-                        showAddRSSSheet = true
-                    }
-                }
-            }
             .task {
                 print("📡 [Browse] Loading all genres...")
                 await viewModel.loadAllGenres()
