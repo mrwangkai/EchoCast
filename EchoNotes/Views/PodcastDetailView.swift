@@ -230,14 +230,14 @@ struct PodcastHeaderView: View {
     let onToggleFollow: () -> Void
 
     var body: some View {
-        HStack(spacing: 16) {
-            // Artwork
+        VStack(spacing: 16) {
+            // Artwork - centered
             AsyncImage(url: URL(string: podcast.artworkURL ?? "")) { phase in
                 switch phase {
                 case .empty:
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.blue.opacity(0.2))
-                        .frame(width: 100, height: 100)
+                        .frame(width: 180, height: 180)
                         .overlay(
                             ProgressView()
                                 .scaleEffect(0.8)
@@ -246,29 +246,31 @@ struct PodcastHeaderView: View {
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(width: 100, height: 100)
+                        .frame(width: 180, height: 180)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 case .failure:
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.blue.opacity(0.2))
-                        .frame(width: 100, height: 100)
+                        .frame(width: 180, height: 180)
                         .overlay(
                             Image(systemName: "music.note")
-                                .font(.system(size: 40))
+                                .font(.system(size: 60))
                                 .foregroundColor(.blue)
                         )
                 @unknown default:
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.blue.opacity(0.2))
-                        .frame(width: 100, height: 100)
+                        .frame(width: 180, height: 180)
                 }
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            // Title and publisher - centered
+            VStack(spacing: 4) {
                 if let title = podcast.title {
                     Text(title)
                         .font(.title2)
                         .fontWeight(.bold)
+                        .multilineTextAlignment(.center)
                         .lineLimit(2)
                 }
                 if let author = podcast.author {
@@ -276,34 +278,27 @@ struct PodcastHeaderView: View {
                         .font(.subheadline)
                         .foregroundColor(.echoTextSecondary)
                 }
-                if let description = podcast.podcastDescription {
-                    Text(description)
-                        .font(.caption)
-                        .foregroundColor(.echoTextSecondary)
-                        .lineLimit(2)
-                }
             }
 
-            Spacer()
-
-            // Follow/Unfollow button
+            // Follow/Unfollow button - centered
             Button(action: onToggleFollow) {
                 HStack(spacing: 6) {
                     Image(systemName: podcast.isFollowing ? "checkmark" : "plus")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                    Text(podcast.isFollowing ? "Following" : "Follow")
+                    Text(podcast.isFollowing ? "Followed" : "Follow")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                 }
-                .foregroundColor(podcast.isFollowing ? .echoTextPrimary : .white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .foregroundColor(podcast.isFollowing ? .echoTextPrimary : .mintButtonText)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 10)
                 .background(podcast.isFollowing ? Color.noteCardBackground : Color.mintAccent)
                 .cornerRadius(20)
             }
             .buttonStyle(.plain)
         }
+        .frame(maxWidth: .infinity)
     }
 }
 
