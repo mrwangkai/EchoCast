@@ -24,8 +24,20 @@ class iTunesSearchService {
         let trackViewUrl: String?
         let collectionViewUrl: String?
         let primaryGenreName: String?
-        let genreIds: [String]?
-        let genres: [String]?
+
+        // These fields can be either strings or arrays from iTunes API
+        // Using private storage with custom decoding
+        private let genreIdsRaw: GenreIdsRaw?
+        private let genresRaw: GenresRaw?
+
+        // Computed properties to always return arrays
+        var genreIds: [String]? {
+            genreIdsRaw?.arrayValue
+        }
+
+        var genres: [String]? {
+            genresRaw?.arrayValue
+        }
 
         var id: String {
             String(collectionId ?? trackId)
@@ -34,6 +46,69 @@ class iTunesSearchService {
         /// Display name - prefer collectionName over trackName
         var displayName: String {
             collectionName ?? trackName
+        }
+
+        // Helper enums for handling mixed types from iTunes API
+        enum GenreIdsRaw: Codable {
+            case string(String)
+            case array([String])
+
+            var arrayValue: [String]? {
+                switch self {
+                case .string(let s): return [s]
+                case .array(let a): return a
+                }
+            }
+
+            init(from decoder: Decoder) throws {
+                let container = try decoder.singleValueContainer()
+                if let stringValue = try? container.decode(String.self) {
+                    self = .string(stringValue)
+                } else if let arrayValue = try? container.decode([String].self) {
+                    self = .array(arrayValue)
+                } else {
+                    self = .array([])
+                }
+            }
+
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.singleValueContainer()
+                switch self {
+                case .string(let s): try container.encode(s)
+                case .array(let a): try container.encode(a)
+                }
+            }
+        }
+
+        enum GenresRaw: Codable {
+            case string(String)
+            case array([String])
+
+            var arrayValue: [String]? {
+                switch self {
+                case .string(let s): return [s]
+                case .array(let a): return a
+                }
+            }
+
+            init(from decoder: Decoder) throws {
+                let container = try decoder.singleValueContainer()
+                if let stringValue = try? container.decode(String.self) {
+                    self = .string(stringValue)
+                } else if let arrayValue = try? container.decode([String].self) {
+                    self = .array(arrayValue)
+                } else {
+                    self = .array([])
+                }
+            }
+
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.singleValueContainer()
+                switch self {
+                case .string(let s): try container.encode(s)
+                case .array(let a): try container.encode(a)
+                }
+            }
         }
     }
 
