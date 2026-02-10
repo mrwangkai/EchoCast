@@ -48,6 +48,53 @@ class iTunesSearchService {
             collectionName ?? trackName
         }
 
+        // Custom init to handle decoding errors gracefully
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+
+            // Decode standard fields
+            self.collectionId = try container.decodeIfPresent(Int.self, forKey: .collectionId)
+            self.trackId = try container.decode(Int.self, forKey: .trackId)
+            self.collectionName = try container.decodeIfPresent(String.self, forKey: .collectionName)
+            self.trackName = try container.decode(String.self, forKey: .trackName)
+            self.artistName = try container.decode(String.self, forKey: .artistName)
+            self.artworkUrl600 = try container.decodeIfPresent(String.self, forKey: .artworkUrl600)
+            self.artworkUrl100 = try container.decodeIfPresent(String.self, forKey: .artworkUrl100)
+            self.feedUrl = try container.decodeIfPresent(String.self, forKey: .feedUrl)
+            self.trackViewUrl = try container.decodeIfPresent(String.self, forKey: .trackViewUrl)
+            self.collectionViewUrl = try container.decodeIfPresent(String.self, forKey: .collectionViewUrl)
+            self.primaryGenreName = try container.decodeIfPresent(String.self, forKey: .primaryGenreName)
+
+            // Decode mixed-type fields
+            self.genreIdsRaw = try container.decodeIfPresent(GenreIdsRaw.self, forKey: .genreIds)
+            self.genresRaw = try container.decodeIfPresent(GenresRaw.self, forKey: .genres)
+        }
+
+        // CodingKeys for custom init
+        enum CodingKeys: String, CodingKey {
+            case collectionId, trackId, collectionName, trackName, artistName
+            case artworkUrl600, artworkUrl100, feedUrl, trackViewUrl, collectionViewUrl
+            case primaryGenreName, genreIds, genres
+        }
+
+        // Standard encode
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encodeIfPresent(collectionId, forKey: .collectionId)
+            try container.encode(trackId, forKey: .trackId)
+            try container.encodeIfPresent(collectionName, forKey: .collectionName)
+            try container.encode(trackName, forKey: .trackName)
+            try container.encode(artistName, forKey: .artistName)
+            try container.encodeIfPresent(artworkUrl600, forKey: .artworkUrl600)
+            try container.encodeIfPresent(artworkUrl100, forKey: .artworkUrl100)
+            try container.encodeIfPresent(feedUrl, forKey: .feedUrl)
+            try container.encodeIfPresent(trackViewUrl, forKey: .trackViewUrl)
+            try container.encodeIfPresent(collectionViewUrl, forKey: .collectionViewUrl)
+            try container.encodeIfPresent(primaryGenreName, forKey: .primaryGenreName)
+            try container.encodeIfPresent(genreIdsRaw, forKey: .genreIds)
+            try container.encodeIfPresent(genresRaw, forKey: .genres)
+        }
+
         // Helper enums for handling mixed types from iTunes API
         enum GenreIdsRaw: Codable {
             case string(String)
