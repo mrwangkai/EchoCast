@@ -64,6 +64,21 @@ enum PodcastGenre: String, Identifiable, CaseIterable {
     }
 
     static var mainGenres: [PodcastGenre] {
-        [.all, .comedy, .news, .trueCrime, .sports, .business, .education, .technology]
+        [
+            .all,
+            .comedy,
+            .news,
+            .trueCrime,
+            .sports,
+            .business,
+            .education,
+            .technology,
+            .arts,
+            .health,
+            .tvFilm,
+            .music,
+            .science,
+            .society
+        ]
     }
 }

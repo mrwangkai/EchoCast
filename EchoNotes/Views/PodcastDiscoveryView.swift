@@ -62,7 +62,7 @@ struct PodcastDiscoveryView: View {
                 if let genre = viewAllGenre {
                     GenreViewAllView(
                         genre: genre,
-                        podcasts: viewModel.genreResults[genre] ?? [],
+                        viewModel: viewModel,
                         onPodcastTap: { podcast in
                             addAndOpenPodcast(podcast)
                         }
@@ -117,6 +117,7 @@ struct PodcastDiscoveryView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(Color.searchFieldBackground)
@@ -404,39 +405,52 @@ struct PodcastArtworkCard: View {
 
 struct GenreViewAllView: View {
     let genre: PodcastGenre
-    let podcasts: [iTunesSearchService.iTunesPodcast]
+    @ObservedObject var viewModel: PodcastBrowseViewModel
     let onPodcastTap: (iTunesSearchService.iTunesPodcast) -> Void
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: 16) {
-                    ForEach(podcasts) { podcast in
-                        VStack(spacing: 8) {
-                            PodcastArtworkCard(podcast: podcast)
+            Group {
+                if viewModel.isLoadingMore(for: genre) && viewModel.getAllPodcasts(for: genre).isEmpty {
+                    // Loading state
+                    VStack(spacing: 16) {
+                        ProgressView()
+                        Text("Loading podcasts...")
+                            .font(.subheadline)
+                            .foregroundColor(.echoTextSecondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 16) {
+                            ForEach(viewModel.getAllPodcasts(for: genre)) { podcast in
+                                VStack(spacing: 8) {
+                                    PodcastArtworkCard(podcast: podcast)
 
-                            Text(podcast.displayName)
-                                .font(.captionRounded())
-                                .foregroundColor(.echoTextPrimary)
-                                .lineLimit(2)
-                                .multilineTextAlignment(.center)
-                                .frame(width: 120, height: 32, alignment: .top)
+                                    Text(podcast.displayName)
+                                        .font(.captionRounded())
+                                        .foregroundColor(.echoTextPrimary)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.center)
+                                        .frame(width: 120, height: 32, alignment: .top)
+                                }
+                                .frame(height: 160)  // Fixed height for consistent alignment
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    print("🎧 [Browse] Podcast tapped in view all: \(podcast.displayName)")
+                                    onPodcastTap(podcast)
+                                    dismiss()
+                                }
+                            }
                         }
-                        .frame(height: 160)  // Fixed height for consistent alignment
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            print("🎧 [Browse] Podcast tapped in view all: \(podcast.displayName)")
-                            onPodcastTap(podcast)
-                            dismiss()
-                        }
+                        .padding(EchoSpacing.screenPadding)
                     }
                 }
-                .padding(EchoSpacing.screenPadding)
             }
             .background(Color.echoBackground)
             .navigationTitle(genre.displayName)
@@ -450,6 +464,11 @@ struct GenreViewAllView: View {
                         dismiss()
                     }
                 }
+            }
+            .task {
+                // Load more podcasts (50) when sheet appears
+                print("📡 [GenreViewAll] Loading more podcasts for \(genre.displayName)...")
+                await viewModel.loadMoreForGenre(genre, limit: 50)
             }
         }
     }

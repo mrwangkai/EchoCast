@@ -15,19 +15,43 @@ class PodcastBrowseViewModel: ObservableObject {
     @Published var searchResults: [iTunesSearchService.iTunesPodcast] = []
     @Published var isSearching: Bool = false
     @Published var selectedGenre: PodcastGenre? = nil
+    @Published var isLoadingMoreForGenre: Set<PodcastGenre> = []
 
     private let apiService = PodcastAPIService.shared
 
     // MARK: - Load All Genres
 
-    /// Load podcasts for all main genres on app launch
+    /// Load podcasts for all main genres on app launch using parallel loading
     func loadAllGenres() async {
-        print("📡 [BrowseViewModel] Loading all genres...")
+        print("📡 [BrowseViewModel] Loading all genres in parallel...")
 
         let genresToLoad = PodcastGenre.mainGenres.filter { $0 != .all }
 
+        // Mark all as loading initially for skeleton placeholders
         for genre in genresToLoad {
-            await loadPodcasts(for: genre)
+            isLoadingGenres.insert(genre)
+        }
+
+        // Load all genres in parallel using TaskGroup
+        await withTaskGroup(of: (PodcastGenre, [iTunesSearchService.iTunesPodcast]).self) { group in
+            for genre in genresToLoad {
+                group.addTask {
+                    do {
+                        let podcasts = try await self.apiService.getTopPodcasts(genreId: genre.rawValue, limit: 10)
+                        return (genre, podcasts)
+                    } catch {
+                        print("❌ [BrowseViewModel] Failed to load \(genre.displayName): \(error)")
+                        return (genre, [])
+                    }
+                }
+            }
+
+            // Collect results as they complete
+            for await (genre, podcasts) in group {
+                genreResults[genre] = podcasts
+                isLoadingGenres.remove(genre)
+                print("✅ [BrowseViewModel] Loaded \(podcasts.count) podcasts for \(genre.displayName)")
+            }
         }
 
         print("✅ [BrowseViewModel] All genres loaded")
@@ -55,6 +79,35 @@ class PodcastBrowseViewModel: ObservableObject {
         }
 
         isLoadingGenres.remove(genre)
+    }
+
+    // MARK: - Load More for Genre (for "View All")
+
+    /// Load more podcasts for a specific genre (used by "View All" sheet)
+    func loadMoreForGenre(_ genre: PodcastGenre, limit: Int = 50) async {
+        // Skip if already loading more
+        if isLoadingMoreForGenre.contains(genre) {
+            print("⏭️ [BrowseViewModel] Already loading more for \(genre.displayName)")
+            return
+        }
+
+        isLoadingMoreForGenre.insert(genre)
+        print("📡 [BrowseViewModel] Loading \(limit) podcasts for \(genre.displayName)...")
+
+        do {
+            let podcasts = try await apiService.getTopPodcasts(genreId: genre.rawValue, limit: limit)
+            genreResults[genre] = podcasts
+            print("✅ [BrowseViewModel] Loaded \(podcasts.count) podcasts for \(genre.displayName)")
+        } catch {
+            print("❌ [BrowseViewModel] Failed to load more for \(genre.displayName): \(error)")
+        }
+
+        isLoadingMoreForGenre.remove(genre)
+    }
+
+    /// Check if currently loading more for a genre
+    func isLoadingMore(for genre: PodcastGenre) -> Bool {
+        return isLoadingMoreForGenre.contains(genre)
     }
 
     // MARK: - Search
@@ -87,6 +140,11 @@ class PodcastBrowseViewModel: ObservableObject {
             return Array(podcasts.prefix(10))
         }
         return []
+    }
+
+    /// Get all cached podcasts for a genre (for View All)
+    func getAllPodcasts(for genre: PodcastGenre) -> [iTunesSearchService.iTunesPodcast] {
+        return genreResults[genre] ?? []
     }
 
     /// Check if genre is currently loading
