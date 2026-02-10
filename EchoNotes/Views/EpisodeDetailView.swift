@@ -14,16 +14,24 @@ struct EpisodeDetailView: View {
     @ObservedObject var player = GlobalPlayerManager.shared
     @Environment(\.managedObjectContext) private var viewContext
     @State private var showNoteCaptureSheet = false
-    @FetchRequest private var episodeNotes: FetchedResults<NoteEntity>
 
     init(episode: RSSEpisode, podcast: PodcastEntity) {
         self.episode = episode
         self.podcast = podcast
+    }
 
-        _episodeNotes = FetchRequest(
-            sortDescriptors: [NSSortDescriptor(keyPath: \NoteEntity.createdAt, ascending: false)],
-            predicate: NSPredicate(format: "episodeTitle == %@", episode.title)
-        )
+    // Dynamically fetch notes for this episode
+    private var episodeNotes: [NoteEntity] {
+        let request: NSFetchRequest<NoteEntity> = NoteEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "episodeTitle == %@", episode.title)
+        request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+
+        do {
+            return try viewContext.fetch(request)
+        } catch {
+            print("Error fetching episode notes: \(error)")
+            return []
+        }
     }
 
     var body: some View {

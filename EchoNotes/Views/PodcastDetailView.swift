@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AVFoundation
+import CoreData
 
 struct PodcastDetailView: View {
     let podcast: PodcastEntity
@@ -314,19 +315,27 @@ struct EpisodeRowView: View {
     var podcastFeedURL: String? = nil
     var onPlay: () -> Void = {}
     @ObservedObject private var downloadManager = EpisodeDownloadManager.shared
-    @FetchRequest private var episodeNotes: FetchedResults<NoteEntity>
+    @Environment(\.managedObjectContext) private var viewContext
 
     init(episode: RSSEpisode, podcastTitle: String = "Unknown Podcast", podcastFeedURL: String? = nil, onPlay: @escaping () -> Void = {}) {
         self.episode = episode
         self.podcastTitle = podcastTitle
         self.podcastFeedURL = podcastFeedURL
         self.onPlay = onPlay
+    }
 
-        // Fetch notes for this episode
-        _episodeNotes = FetchRequest(
-            sortDescriptors: [NSSortDescriptor(keyPath: \NoteEntity.createdAt, ascending: false)],
-            predicate: NSPredicate(format: "episodeTitle == %@", episode.title)
-        )
+    // Dynamically fetch notes for this episode
+    private var episodeNotes: [NoteEntity] {
+        let request: NSFetchRequest<NoteEntity> = NoteEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "episodeTitle == %@", episode.title)
+        request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: false)]
+
+        do {
+            return try viewContext.fetch(request)
+        } catch {
+            print("Error fetching episode notes: \(error)")
+            return []
+        }
     }
 
     var body: some View {
