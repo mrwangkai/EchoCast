@@ -278,11 +278,17 @@ struct PodcastDiscoveryView: View {
                 }
                 podcastEntity = existingEntity
             }
-            
+
             // Open sheet - NO DELAY NEEDED
-            print("🔓 [Browse] Opening sheet for: \(podcastEntity.title ?? "Unknown")")
+            print("🔓 [Browse] About to set selectedPodcast")
+            print("🔓 [Browse] Podcast title: \(podcastEntity.title ?? "nil")")
+            print("🔓 [Browse] Podcast feedURL: \(podcastEntity.feedURL ?? "nil")")
+            print("🔓 [Browse] Podcast id: \(podcastEntity.id ?? "nil")")
+
             selectedPodcast = podcastEntity  // Sheet opens automatically
-            
+
+            print("🔓 [Browse] selectedPodcast SET - sheet should trigger")
+
         } catch {
             print("❌ [Browse] Failed to check/save podcast: \(error)")
         }

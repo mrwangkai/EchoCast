@@ -22,6 +22,10 @@ struct PodcastDetailView: View {
     @Namespace private var namespace
 
     var body: some View {
+        let _ = print("🎬 [PodcastDetail] BODY EVALUATED")
+        let _ = print("🎬 [PodcastDetail] Podcast: \(podcast.title ?? "nil")")
+        let _ = print("🎬 [PodcastDetail] Episodes count: \(episodes.count)")
+
         VStack(spacing: 0) {
             // Podcast Header
             PodcastHeaderView(podcast: podcast, onToggleFollow: toggleFollow)
@@ -123,13 +127,13 @@ struct PodcastDetailView: View {
         } message: {
             Text("Are you sure you want to delete this podcast and all its downloaded episodes? This action cannot be undone.")
         }
-        .task {
-            print("📊 [PodcastDetail] Task started for: \(podcast.title ?? "nil")")
-            print("📊 [PodcastDetail] Feed URL: \(podcast.feedURL ?? "nil")")
+        .task(id: podcast.id) {
+            print("📊 [PodcastDetail] Task triggered for: \(podcast.title ?? "nil")")
+            print("📊 [PodcastDetail] Task ID: \(podcast.id ?? "nil")")
 
             await loadEpisodes()
 
-            print("✅ [PodcastDetail] Task completed - \(episodes.count) episodes")
+            print("✅ [PodcastDetail] Task completed")
         }
         .sheet(item: $selectedEpisode) { episode in
             PlayerSheetWrapper(
@@ -147,7 +151,8 @@ struct PodcastDetailView: View {
     }
 
     private func loadEpisodes() async {
-        print("📡 [PodcastDetail] Loading episodes...")
+        print("📡 [PodcastDetail] loadEpisodes() called")
+        print("📡 [PodcastDetail] Thread: \(Thread.isMainThread ? "MAIN" : "BACKGROUND")")
 
         guard let feedURL = podcast.feedURL else {
             print("❌ [PodcastDetail] No feed URL available")
