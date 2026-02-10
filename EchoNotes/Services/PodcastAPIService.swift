@@ -17,6 +17,7 @@ class PodcastAPIService {
     private init() {}
 
     /// Map genre ID to genre name for search
+    /// Must match IDs in PodcastGenre.swift enum
     private func getGenreName(from genreId: String) -> String {
         switch genreId {
         case "1303": return "comedy"
@@ -25,13 +26,14 @@ class PodcastAPIService {
         case "1545": return "sports"
         case "1321": return "business"
         case "1304": return "education"
-        case "1318": return "technology"
-        case "26": return "arts"
-        case "1510": return "health"
-        case "1507": return "tv film"
+        case "1301": return "arts"
+        case "1512": return "health"
+        case "1309": return "tv film"
         case "1310": return "music"
-        case "1270": return "society"
-        case "1323": return "science fiction"
+        case "1318": return "technology"
+        case "1478": return "science"
+        case "1485": return "society"
+        case "0": return "podcast"
         default: return "podcast"
         }
     }

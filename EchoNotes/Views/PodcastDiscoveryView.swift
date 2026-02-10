@@ -407,28 +407,38 @@ struct GenreViewAllView: View {
     let genre: PodcastGenre
     @ObservedObject var viewModel: PodcastBrowseViewModel
     let onPodcastTap: (iTunesSearchService.iTunesPodcast) -> Void
+
+    @State private var isLoading = false
     @Environment(\.dismiss) private var dismiss
+
+    // Computed property - always reflects current viewModel state
+    var podcasts: [iTunesSearchService.iTunesPodcast] {
+        viewModel.genreResults[genre] ?? []
+    }
 
     var body: some View {
         NavigationStack {
             Group {
-                if viewModel.isLoadingMore(for: genre) && viewModel.getAllPodcasts(for: genre).isEmpty {
-                    // Loading state
+                if isLoading && podcasts.count <= 10 {
+                    // Show loading state while fetching
                     VStack(spacing: 16) {
                         ProgressView()
-                        Text("Loading podcasts...")
-                            .font(.subheadline)
+                            .tint(.mintAccent)
+                        Text("Loading more podcasts...")
+                            .font(.bodyEcho())
                             .foregroundColor(.echoTextSecondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.echoBackground)
                 } else {
+                    // Show grid
                     ScrollView {
                         LazyVGrid(columns: [
                             GridItem(.flexible()),
                             GridItem(.flexible()),
                             GridItem(.flexible())
                         ], spacing: 16) {
-                            ForEach(viewModel.getAllPodcasts(for: genre)) { podcast in
+                            ForEach(podcasts) { podcast in
                                 VStack(spacing: 8) {
                                     PodcastArtworkCard(podcast: podcast)
 
@@ -439,10 +449,10 @@ struct GenreViewAllView: View {
                                         .multilineTextAlignment(.center)
                                         .frame(width: 120, height: 32, alignment: .top)
                                 }
-                                .frame(height: 160)  // Fixed height for consistent alignment
+                                .frame(height: 160)
                                 .contentShape(Rectangle())
                                 .onTapGesture {
-                                    print("🎧 [Browse] Podcast tapped in view all: \(podcast.displayName)")
+                                    print("🎧 [ViewAll] Podcast tapped: \(podcast.displayName)")
                                     onPodcastTap(podcast)
                                     dismiss()
                                 }
@@ -450,9 +460,9 @@ struct GenreViewAllView: View {
                         }
                         .padding(EchoSpacing.screenPadding)
                     }
+                    .background(Color.echoBackground)
                 }
             }
-            .background(Color.echoBackground)
             .navigationTitle(genre.displayName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
@@ -463,12 +473,26 @@ struct GenreViewAllView: View {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundColor(.mintAccent)
                 }
             }
-            .task {
-                // Load more podcasts (50) when sheet appears
-                print("📡 [GenreViewAll] Loading more podcasts for \(genre.displayName)...")
+        }
+        .task {
+            // Load more podcasts when sheet appears
+            print("📊 [ViewAll] Sheet appeared for: \(genre.displayName)")
+            print("📊 [ViewAll] Current podcast count: \(podcasts.count)")
+
+            // Only load if we have carousel count or less
+            if podcasts.count <= 10 {
+                isLoading = true
+                print("📡 [ViewAll] Need to load more (have \(podcasts.count), want 50)")
+
                 await viewModel.loadMoreForGenre(genre, limit: 50)
+
+                isLoading = false
+                print("✅ [ViewAll] Loading complete - now have \(podcasts.count) podcasts")
+            } else {
+                print("✅ [ViewAll] Already have enough podcasts (\(podcasts.count))")
             }
         }
     }

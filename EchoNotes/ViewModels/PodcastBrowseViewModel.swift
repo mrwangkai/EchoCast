@@ -15,7 +15,6 @@ class PodcastBrowseViewModel: ObservableObject {
     @Published var searchResults: [iTunesSearchService.iTunesPodcast] = []
     @Published var isSearching: Bool = false
     @Published var selectedGenre: PodcastGenre? = nil
-    @Published var isLoadingMoreForGenre: Set<PodcastGenre> = []
 
     private let apiService = PodcastAPIService.shared
 
@@ -83,31 +82,28 @@ class PodcastBrowseViewModel: ObservableObject {
 
     // MARK: - Load More for Genre (for "View All")
 
-    /// Load more podcasts for a specific genre (used by "View All" sheet)
-    func loadMoreForGenre(_ genre: PodcastGenre, limit: Int = 50) async {
-        // Skip if already loading more
-        if isLoadingMoreForGenre.contains(genre) {
-            print("⏭️ [BrowseViewModel] Already loading more for \(genre.displayName)")
-            return
-        }
-
-        isLoadingMoreForGenre.insert(genre)
-        print("📡 [BrowseViewModel] Loading \(limit) podcasts for \(genre.displayName)...")
+    /// Load more podcasts for a specific genre (used by "View all" sheet)
+    func loadMoreForGenre(_ genre: PodcastGenre, limit: Int) async {
+        print("📡 [ViewModel] loadMoreForGenre called")
+        print("📡 [ViewModel] Genre: \(genre.displayName)")
+        print("📡 [ViewModel] Limit: \(limit)")
 
         do {
-            let podcasts = try await apiService.getTopPodcasts(genreId: genre.rawValue, limit: limit)
+            print("📡 [ViewModel] Fetching from API...")
+            let podcasts = try await apiService.getTopPodcasts(
+                genreId: genre.rawValue,
+                limit: limit
+            )
+
+            print("📡 [ViewModel] Fetched \(podcasts.count) podcasts from API")
+
+            // Update on main thread to ensure UI updates
             genreResults[genre] = podcasts
-            print("✅ [BrowseViewModel] Loaded \(podcasts.count) podcasts for \(genre.displayName)")
+            print("✅ [ViewModel] genreResults updated - now have \(podcasts.count) podcasts")
         } catch {
-            print("❌ [BrowseViewModel] Failed to load more for \(genre.displayName): \(error)")
+            print("❌ [ViewModel] Failed to load more podcasts: \(error)")
+            print("❌ [ViewModel] Error details: \(error.localizedDescription)")
         }
-
-        isLoadingMoreForGenre.remove(genre)
-    }
-
-    /// Check if currently loading more for a genre
-    func isLoadingMore(for genre: PodcastGenre) -> Bool {
-        return isLoadingMoreForGenre.contains(genre)
     }
 
     // MARK: - Search

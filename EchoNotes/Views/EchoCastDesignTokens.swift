@@ -89,7 +89,7 @@ extension Font {
 // MARK: - Spacing Tokens
 
 struct EchoSpacing {
-    static let screenPadding: CGFloat = 24
+    static let screenPadding: CGFloat = 16
     static let headerTopPadding: CGFloat = 16
     static let noteCardPadding: CGFloat = 16
     static let noteCardCornerRadius: CGFloat = 12
