@@ -371,42 +371,19 @@ struct ListeningSegmentView: View {
 
     private var albumArtworkView: some View {
         GeometryReader { geometry in
-            AsyncImage(url: URL(string: podcast.artworkURL ?? episode.imageURL ?? "")) { phase in
-                switch phase {
-                case .empty:
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(red: 0.2, green: 0.2, blue: 0.2))
+            CachedAsyncImage(url: URL(string: podcast.artworkURL ?? episode.imageURL ?? "")) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(red: 0.2, green: 0.2, blue: 0.2))
 
-                        ProgressView()
-                            .tint(.white)
-                    }
-                    .matchedGeometryEffect(id: "artwork", in: namespace, isSource: true)
-
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geometry.size.width, height: geometry.size.width)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .matchedGeometryEffect(id: "artwork", in: namespace, isSource: true)
-
-                case .failure:
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(red: 0.2, green: 0.2, blue: 0.2))
-
-                        Image(systemName: "music.note")
-                            .font(.system(size: 48))
-                            .foregroundColor(.white.opacity(0.3))
-                    }
-                    .matchedGeometryEffect(id: "artwork", in: namespace, isSource: true)
-
-                default:
-                    EmptyView()
+                    Image(systemName: "music.note")
+                        .font(.system(size: 48))
+                        .foregroundColor(.white.opacity(0.3))
                 }
             }
             .frame(width: geometry.size.width, height: geometry.size.width)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .matchedGeometryEffect(id: "artwork", in: namespace, isSource: true)
             .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
             .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
         }

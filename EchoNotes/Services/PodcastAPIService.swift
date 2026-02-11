@@ -10,10 +10,6 @@ import Foundation
 class PodcastAPIService {
     static let shared = PodcastAPIService()
 
-    private var genreCache: [String: [iTunesSearchService.iTunesPodcast]] = [:]
-    private var cacheTimestamps: [String: Date] = [:]
-    private let cacheValidityInterval: TimeInterval = 3600  // 1 hour
-
     private init() {}
 
     /// Map genre ID to genre name for search
@@ -47,19 +43,17 @@ class PodcastAPIService {
     func getTopPodcasts(genreId: String, limit: Int = 10) async throws -> [iTunesSearchService.iTunesPodcast] {
         // Map genre ID to genre name for search
         let genreName = getGenreName(from: genreId)
-        print("📡 [PodcastAPI] Fetching top \(limit) podcasts for genre: \(genreName) (ID: \(genreId))")
+        let cacheKey = "genre_\(genreId)_\(limit)"
 
-        // Check cache first
-        let cacheKey = "\(genreId)-\(limit)"
-        if let cached = genreCache[cacheKey],
-           let timestamp = cacheTimestamps[cacheKey],
-           Date().timeIntervalSince(timestamp) < cacheValidityInterval {
+        // Check DataCacheManager first
+        if let cached: [iTunesSearchService.iTunesPodcast] = await DataCacheManager.shared.get(key: cacheKey, as: [iTunesSearchService.iTunesPodcast].self) {
             print("✅ [PodcastAPI] Using cached data for genre \(genreName)")
             return cached
         }
 
-        // FIXED: Use "term" parameter with genre name instead of "genreId"
-        // iTunes Search API doesn't filter by genreId, but searching by genre name works
+        print("📡 [PodcastAPI] Fetching top \(limit) podcasts for genre: \(genreName) (ID: \(genreId))")
+
+        // Build URL for iTunes Search API
         var components = URLComponents(string: "https://itunes.apple.com/search")
         components?.queryItems = [
             URLQueryItem(name: "term", value: genreName),
@@ -93,12 +87,10 @@ class PodcastAPIService {
             // Log first podcast for debugging
             if let first = podcasts.first {
                 print("📋 [PodcastAPI] First podcast: \(first.displayName)")
-                print("📋 [PodcastAPI] Artwork URL: \(first.artworkUrl600 ?? "nil")")
             }
 
-            // Cache results
-            genreCache[cacheKey] = podcasts
-            cacheTimestamps[cacheKey] = Date()
+            // Cache results using DataCacheManager (2 hours for genre results)
+            await DataCacheManager.shared.set(key: cacheKey, value: podcasts, duration: .long)
 
             print("✅ [PodcastAPI] Successfully decoded \(podcasts.count) podcasts for genre \(genreName)")
             return podcasts
@@ -117,13 +109,27 @@ class PodcastAPIService {
 
     /// Search podcasts by query (delegates to iTunesSearchService)
     func search(query: String, limit: Int = 20) async throws -> [iTunesSearchService.iTunesPodcast] {
-        return try await iTunesSearchService.shared.search(query: query)
+        // Check cache first
+        let cacheKey = "search_\(query)_\(limit)"
+        if let cached: [iTunesSearchService.iTunesPodcast] = await DataCacheManager.shared.get(key: cacheKey, as: [iTunesSearchService.iTunesPodcast].self) {
+            print("✅ [PodcastAPI] Using cached search results for: \(query)")
+            return cached
+        }
+
+        // Fetch from iTunesSearchService
+        let podcasts = try await iTunesSearchService.shared.search(query: query)
+
+        // Cache results (30 minutes for search results)
+        await DataCacheManager.shared.set(key: cacheKey, value: podcasts, duration: .medium)
+
+        return podcasts
     }
 
     /// Clear all caches
     func clearCache() {
-        genreCache.removeAll()
-        cacheTimestamps.removeAll()
+        Task {
+            await DataCacheManager.shared.clearAll()
+        }
         print("🗑️ [PodcastAPI] Cache cleared")
     }
 }

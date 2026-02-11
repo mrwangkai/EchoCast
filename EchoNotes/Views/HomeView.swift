@@ -462,33 +462,18 @@ struct PodcastFollowingCard: View {
     var body: some View {
         VStack(alignment: .center, spacing: 8) {
             // Album artwork
-            AsyncImage(url: URL(string: podcast.artworkURL ?? "")) { phase in
-                switch phase {
-                case .empty:
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.noteCardBackground)
-                        .frame(width: 120, height: 120)
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 120, height: 120)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                case .failure:
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.noteCardBackground)
-                        .frame(width: 120, height: 120)
-                        .overlay(
-                            Image(systemName: "music.note")
-                                .font(.system(size: 32))
-                                .foregroundColor(.echoTextTertiary)
-                        )
-                @unknown default:
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.noteCardBackground)
-                        .frame(width: 120, height: 120)
-                }
+            CachedAsyncImage(url: URL(string: podcast.artworkURL ?? "")) {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.noteCardBackground)
+                    .frame(width: 120, height: 120)
+                    .overlay(
+                        Image(systemName: "music.note")
+                            .font(.system(size: 32))
+                            .foregroundColor(.echoTextTertiary)
+                    )
             }
+            .frame(width: 120, height: 120)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
 
             // Podcast title - fixed height to prevent misalignment
             Text(podcast.title ?? "Unknown Podcast")

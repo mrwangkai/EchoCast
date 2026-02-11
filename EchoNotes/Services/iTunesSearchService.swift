@@ -10,8 +10,6 @@ import Foundation
 class iTunesSearchService {
     static let shared = iTunesSearchService()
 
-    private var searchCache: [String: [iTunesPodcast]] = [:]
-
     struct iTunesPodcast: Identifiable, Codable {
         let collectionId: Int?
         let trackId: Int
@@ -169,8 +167,9 @@ class iTunesSearchService {
     func search(query: String) async throws -> [iTunesPodcast] {
         print("🔍 [iTunesSearch] Searching for: \(query)")
 
-        // Check cache first
-        if let cached = searchCache[query.lowercased()] {
+        // Check DataCacheManager first
+        let cacheKey = "search_\(query.lowercased())"
+        if let cached: [iTunesPodcast] = await DataCacheManager.shared.get(key: cacheKey, as: [iTunesPodcast].self) {
             print("✅ [iTunesSearch] Using cached results")
             return cached
         }
@@ -192,8 +191,8 @@ class iTunesSearchService {
 
             let decoded = try JSONDecoder().decode(SearchResponse.self, from: data)
 
-            // Cache results
-            searchCache[query.lowercased()] = decoded.results
+            // Cache results using DataCacheManager (30 minutes for search)
+            await DataCacheManager.shared.set(key: cacheKey, value: decoded.results, duration: .medium)
 
             print("✅ [iTunesSearch] Found \(decoded.resultCount) results")
             return decoded.results
@@ -205,7 +204,9 @@ class iTunesSearchService {
 
     /// Clear search cache
     func clearCache() {
-        searchCache.removeAll()
+        Task {
+            await DataCacheManager.shared.clearAll()
+        }
         print("🗑️ [iTunesSearch] Cache cleared")
     }
 }

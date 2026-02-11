@@ -237,37 +237,18 @@ struct PodcastHeaderView: View {
     var body: some View {
         VStack(spacing: 16) {
             // Artwork - centered
-            AsyncImage(url: URL(string: podcast.artworkURL ?? "")) { phase in
-                switch phase {
-                case .empty:
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.blue.opacity(0.2))
-                        .frame(width: 180, height: 180)
-                        .overlay(
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        )
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 180, height: 180)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                case .failure:
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.blue.opacity(0.2))
-                        .frame(width: 180, height: 180)
-                        .overlay(
-                            Image(systemName: "music.note")
-                                .font(.system(size: 60))
-                                .foregroundColor(.blue)
-                        )
-                @unknown default:
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.blue.opacity(0.2))
-                        .frame(width: 180, height: 180)
-                }
+            CachedAsyncImage(url: URL(string: podcast.artworkURL ?? "")) {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.blue.opacity(0.2))
+                    .frame(width: 180, height: 180)
+                    .overlay(
+                        Image(systemName: "music.note")
+                            .font(.system(size: 60))
+                            .foregroundColor(.blue)
+                    )
             }
+            .frame(width: 180, height: 180)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
 
             // Title and publisher - centered
             VStack(spacing: 4) {

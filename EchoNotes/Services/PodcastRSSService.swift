@@ -18,7 +18,7 @@ struct RSSPodcast: Identifiable {
     let episodes: [RSSEpisode]
 }
 
-struct RSSEpisode: Identifiable {
+struct RSSEpisode: Identifiable, Codable {
     var id: String {
         // Use audio URL as stable identifier, fallback to title hash
         if let audioURL = audioURL, !audioURL.isEmpty {
@@ -34,6 +34,11 @@ struct RSSEpisode: Identifiable {
     let duration: String?
     let audioURL: String?
     let imageURL: String?
+
+    // CodingKeys for Codable conformance
+    enum CodingKeys: String, CodingKey {
+        case title, description, pubDate, duration, audioURL, imageURL
+    }
 }
 
 class PodcastRSSService {
@@ -58,6 +63,42 @@ class PodcastRSSService {
             throw RSSError.invalidURL
         }
 
+        // Check cache for episodes
+        let cacheKey = "episodes_\(urlString)"
+        if let cachedEpisodes: [RSSEpisode] = await DataCacheManager.shared.get(key: cacheKey, as: [RSSEpisode].self) {
+            await MainActor.run {
+                DevStatusManager.shared.rssLoadingStatus = .success
+                DevStatusManager.shared.networkStatus = .success
+                DevStatusManager.shared.addMessage("RSS loaded from cache: \(cachedEpisodes.count) episodes")
+            }
+            // Return podcast with cached episodes
+            // Note: We still need podcast metadata, so we'll parse just the metadata
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                let parser = RSSParser(data: data, feedURL: urlString)
+                let podcast = try parser.parse()
+                return RSSPodcast(
+                    title: podcast.title,
+                    description: podcast.description,
+                    author: podcast.author,
+                    imageURL: podcast.imageURL,
+                    feedURL: podcast.feedURL,
+                    episodes: cachedEpisodes
+                )
+            } catch {
+                // If metadata fetch fails, return with cached episodes anyway
+                print("⚠️ [RSS] Using cached episodes, metadata fetch failed: \(error)")
+                return RSSPodcast(
+                    title: "Cached Podcast",
+                    description: "",
+                    author: nil,
+                    imageURL: nil,
+                    feedURL: urlString,
+                    episodes: cachedEpisodes
+                )
+            }
+        }
+
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             await MainActor.run {
@@ -65,6 +106,10 @@ class PodcastRSSService {
             }
             let parser = RSSParser(data: data, feedURL: urlString)
             let podcast = try parser.parse()
+
+            // Cache episodes for 24 hours
+            await DataCacheManager.shared.set(key: cacheKey, value: podcast.episodes, duration: .persistent)
+
             await MainActor.run {
                 DevStatusManager.shared.rssLoadingStatus = .success
                 DevStatusManager.shared.networkStatus = .success

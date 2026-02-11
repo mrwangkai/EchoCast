@@ -367,35 +367,18 @@ struct PodcastArtworkCard: View {
     let podcast: iTunesSearchService.iTunesPodcast
 
     var body: some View {
-        AsyncImage(url: URL(string: podcast.artworkUrl600 ?? "")) { phase in
-            switch phase {
-            case .empty:
-                Rectangle()
-                    .fill(Color.noteCardBackground)
-                    .frame(width: 120, height: 120)
-                    .overlay {
-                        ProgressView()
-                    }
-            case .success(let image):
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 120, height: 120)
-                    .clipped()
-            case .failure:
-                Rectangle()
-                    .fill(Color.noteCardBackground)
-                    .frame(width: 120, height: 120)
-                    .overlay {
-                        Image(systemName: "music.note")
-                            .font(.system(size: 32))
-                            .foregroundColor(.echoTextTertiary)
-                    }
-            @unknown default:
-                EmptyView()
-            }
+        CachedAsyncImage(url: URL(string: podcast.artworkUrl600 ?? "")) {
+            Rectangle()
+                .fill(Color.noteCardBackground)
+                .frame(width: 120, height: 120)
+                .overlay {
+                    Image(systemName: "music.note")
+                        .font(.system(size: 32))
+                        .foregroundColor(.echoTextTertiary)
+                }
         }
         .frame(width: 120, height: 120)
+        .clipped()
         // NO corner radius as per Figma spec
     }
 }

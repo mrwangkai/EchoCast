@@ -47,16 +47,13 @@ struct MiniPlayerView: View {
         Group {
             if let imageURL = episode.imageURL ?? player.currentPodcast?.artworkURL,
                let url = URL(string: imageURL) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
+                CachedAsyncImage(url: url) {
                     Image(systemName: "podcast.fill")
                         .resizable()
                         .foregroundColor(.echoTextSecondary)
                         .padding(8)
                 }
+                .aspectRatio(contentMode: .fill)
             } else {
                 Image(systemName: "podcast.fill")
                     .resizable()

@@ -39,36 +39,18 @@ struct ContinueListeningCard: View {
                 HStack(spacing: 12) {
                     // Album artwork with play button overlay
                     ZStack(alignment: .center) {
-                        AsyncImage(url: URL(string: episode.artworkURL ?? "")) { phase in
-                            switch phase {
-                            case .empty:
-                                Rectangle()
-                                    .fill(Color.noteCardBackground)
-                                    .frame(width: 88, height: 88)
-                                    .overlay {
-                                        ProgressView()
-                                    }
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 88, height: 88)
-                                    .clipped()
-                            case .failure:
-                                Rectangle()
-                                    .fill(Color.noteCardBackground)
-                                    .frame(width: 88, height: 88)
-                                    .overlay {
-                                        Image(systemName: "music.note")
-                                            .font(.system(size: 32))
-                                            .foregroundColor(.echoTextTertiary)
-                                    }
-                            @unknown default:
-                                Rectangle()
-                                    .fill(Color.noteCardBackground)
-                                    .frame(width: 88, height: 88)
-                            }
+                        CachedAsyncImage(url: URL(string: episode.artworkURL ?? "")) {
+                            Rectangle()
+                                .fill(Color.noteCardBackground)
+                                .frame(width: 88, height: 88)
+                                .overlay {
+                                    Image(systemName: "music.note")
+                                        .font(.system(size: 32))
+                                        .foregroundColor(.echoTextTertiary)
+                                }
                         }
+                        .frame(width: 88, height: 88)
+                        .clipped()
                         .cornerRadius(8)
 
                         // Play button overlay
