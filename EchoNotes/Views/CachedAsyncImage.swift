@@ -32,6 +32,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     let url: String?
     let content: (Image) -> Content
     let placeholder: () -> Placeholder
+    let isSimpleMode: Bool
 
     @State private var loadedImage: UIImage?
     @State private var isLoading = false
@@ -44,6 +45,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
         self.url = url
         self.content = content
         self.placeholder = placeholder
+        self.isSimpleMode = false
     }
 
     /// Convenience initializer accepting URL?
@@ -55,12 +57,19 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
         self.url = url?.absoluteString
         self.content = content
         self.placeholder = placeholder
+        self.isSimpleMode = false
     }
 
     var body: some View {
         Group {
             if let image = loadedImage {
-                content(Image(uiImage: image))
+                if isSimpleMode {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    content(Image(uiImage: image))
+                }
             } else {
                 placeholder()
                     .onAppear {
@@ -120,7 +129,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
 // MARK: - Convenience initializer for just placeholder (no content transformation)
 
 extension CachedAsyncImage where Content == Image {
-    /// Initialize with just a URL and placeholder - returns the image directly with proper sizing
+    /// Initialize with just a URL and placeholder - returns the image with proper sizing
     init(
         url: URL?,
         @ViewBuilder placeholder: @escaping () -> Placeholder
@@ -128,6 +137,7 @@ extension CachedAsyncImage where Content == Image {
         self.url = url?.absoluteString
         self.content = { $0 }
         self.placeholder = placeholder
+        self.isSimpleMode = true
     }
 
     /// Initialize with just a String URL and placeholder
@@ -138,94 +148,7 @@ extension CachedAsyncImage where Content == Image {
         self.url = url
         self.content = { $0 }
         self.placeholder = placeholder
-    }
-}
-
-// MARK: - SimpleCachedAsyncImage for placeholder-only usage with built-in sizing
-
-/// Simple cached image view that applies .resizable() and .aspectRatio(contentMode: .fill) automatically
-struct SimpleCachedAsyncImage<Placeholder: View>: View {
-    let url: String?
-    let placeholder: () -> Placeholder
-
-    @State private var loadedImage: UIImage?
-    @State private var isLoading = false
-
-    init(
-        url: URL?,
-        @ViewBuilder placeholder: @escaping () -> Placeholder
-    ) {
-        self.url = url?.absoluteString
-        self.placeholder = placeholder
-    }
-
-    init(
-        url: String?,
-        @ViewBuilder placeholder: @escaping () -> Placeholder
-    ) {
-        self.url = url
-        self.placeholder = placeholder
-    }
-
-    var body: some View {
-        Group {
-            if let image = loadedImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } else {
-                placeholder()
-                    .onAppear {
-                        loadImage()
-                    }
-            }
-        }
-    }
-
-    private func loadImage() {
-        guard let urlString = url, !urlString.isEmpty, !isLoading else {
-            return
-        }
-
-        // Check cache first
-        if let cachedImage = ImageCache.shared.get(urlString) {
-            loadedImage = cachedImage
-            return
-        }
-
-        // Download image
-        isLoading = true
-        Task {
-            guard let url = URL(string: urlString) else {
-                await MainActor.run {
-                    isLoading = false
-                }
-                return
-            }
-
-            do {
-                let (data, _) = try await URLSession.shared.data(from: url)
-                guard let image = UIImage(data: data) else {
-                    await MainActor.run {
-                        isLoading = false
-                    }
-                    return
-                }
-
-                // Cache the image
-                ImageCache.shared.set(image, forKey: urlString)
-
-                await MainActor.run {
-                    loadedImage = image
-                    isLoading = false
-                }
-            } catch {
-                print("Error loading image: \(error)")
-                await MainActor.run {
-                    isLoading = false
-                }
-            }
-        }
+        self.isSimpleMode = true
     }
 }
 
