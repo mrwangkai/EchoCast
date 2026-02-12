@@ -678,6 +678,7 @@ struct NoteCaptureSheetWrapper: View {
         newNote.noteText = noteText
         newNote.isPriority = isPriority
         newNote.createdAt = Date()
+        newNote.podcast = podcast
 
         // Save tags
         let tagList = tags.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }

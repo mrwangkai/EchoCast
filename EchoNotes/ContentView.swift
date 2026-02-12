@@ -3140,36 +3140,21 @@ struct NoteCardView: View {
             // BOTTOM: Podcast metadata
             HStack(spacing: 8) {
                 // Mini album art (88x88)
-                AsyncImage(url: URL(string: note.podcast?.artworkURL ?? "")) { phase in
-                    switch phase {
-                    case .empty:
-                        Rectangle()
-                            .fill(Color.echoTextTertiary.opacity(0.2))
-                            .frame(width: 88, height: 88)
-                            .overlay {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                            }
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 88, height: 88)
-                            .clipped()
-                    case .failure:
-                        Rectangle()
-                            .fill(Color.echoTextTertiary.opacity(0.2))
-                            .frame(width: 88, height: 88)
-                            .overlay {
-                                Image(systemName: "music.note")
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.echoTextTertiary)
-                            }
-                    @unknown default:
-                        Rectangle()
-                            .fill(Color.echoTextTertiary.opacity(0.2))
-                            .frame(width: 88, height: 88)
-                    }
+                CachedAsyncImage(url: URL(string: note.podcast?.artworkURL ?? "")) {
+                    $0
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 88, height: 88)
+                        .clipped()
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.echoTextTertiary.opacity(0.2))
+                        .frame(width: 88, height: 88)
+                        .overlay {
+                            Image(systemName: "music.note")
+                                .font(.system(size: 24))
+                                .foregroundColor(.echoTextTertiary)
+                        }
                 }
                 .frame(width: 88, height: 88)
                 .cornerRadius(8)
