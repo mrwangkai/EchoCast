@@ -33,27 +33,18 @@ extension String {
     }
 }
 
-// MARK: - Liquid Glass Edge ViewModifier
+// MARK: - Footer Padding Modifier
 
-struct LiquidGlassEdge: ViewModifier {
+struct FooterPadding: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(.bottom, 34) // Safe area for home indicator
-            .background(.ultraThinMaterial)
-            .overlay(alignment: .top) {
-                // Sharper hairline to define the top boundary
-                Rectangle()
-                    .fill(Color.primary.opacity(0.12))
-                    .frame(height: 0.33)
-            }
-            .clipped() // FIX: Prevents the "white blob" blur bleed
-            .contentShape(Rectangle())
     }
 }
 
 extension View {
-    func liquidGlassFooter() -> some View {
-        self.modifier(LiquidGlassEdge())
+    func footerPadding() -> some View {
+        self.modifier(FooterPadding())
     }
 }
 
@@ -150,7 +141,7 @@ struct EpisodePlayerView: View {
             Spacer(minLength: 0) // Pushes footer to bottom
 
             // --- SECTION 3: FOOTER (FIXED HEIGHT: ~290px) ---
-            VStack(spacing: 20) {
+            VStack(spacing: 16) {
                 // Metadata (Always visible, 2 lines max)
                 episodeMetadataView
 
@@ -166,7 +157,8 @@ struct EpisodePlayerView: View {
             }
             .padding(.horizontal, EchoSpacing.screenPadding)
             .padding(.top, 20)
-            .liquidGlassFooter()
+            .background(Color.echoBackground)
+            .footerPadding()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.echoBackground)
@@ -236,16 +228,28 @@ struct EpisodePlayerView: View {
 
     private var timeProgressWithMarkers: some View {
         VStack(spacing: 8) {
-            GeometryReader { geometry in
+            GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 2)
+                    // Inactive track
+                    Capsule()
                         .fill(Color.white.opacity(0.2))
                         .frame(height: 4)
+                        .frame(maxHeight: .infinity, alignment: .center)
 
-                    RoundedRectangle(cornerRadius: 2)
+                    // Active track
+                    Capsule()
                         .fill(Color.mintAccent)
-                        .frame(width: progressWidth(geometry.size.width), height: 4)
+                        .frame(
+                            width: geo.size.width * CGFloat(
+                                player.duration > 0
+                                    ? min(player.currentTime / player.duration, 1.0)
+                                    : 0
+                            ),
+                            height: 4
+                        )
+                        .frame(maxHeight: .infinity, alignment: .center)
 
+                    // Note markers
                     ForEach(notes.filter { $0.timestamp != nil }) { note in
                         if let timestamp = note.timestamp,
                            let timeInSeconds = parseTimestamp(timestamp),
@@ -253,22 +257,22 @@ struct EpisodePlayerView: View {
                             Circle()
                                 .fill(Color.mintAccent)
                                 .frame(width: 8, height: 8)
-                                .offset(x: markerPosition(timeInSeconds, width: geometry.size.width))
+                                .offset(x: markerPosition(timeInSeconds, width: geo.size.width))
                                 .offset(y: -2)
                         }
                     }
                 }
-                .frame(height: 20)
                 .contentShape(Rectangle())
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
-                            let newTime = (value.location.x / geometry.size.width) * player.duration
-                            player.seek(to: max(0, min(newTime, player.duration)))
+                            let pct = min(max(0, value.location.x / geo.size.width), 1.0)
+                            player.seek(to: pct * player.duration)
                         }
                 )
             }
-            .frame(height: 20)
+            .frame(height: 24)
+            .padding(.horizontal, EchoSpacing.screenPadding)
 
             HStack {
                 Text(formatTime(player.currentTime))
@@ -318,15 +322,9 @@ struct EpisodePlayerView: View {
 
     private func skipButton(systemName: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            ZStack {
-                Circle()
-                    .fill(Color.white.opacity(0.1))
-                    .frame(width: 48, height: 48)
-
-                Image(systemName: systemName)
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.white)
-            }
+            Image(systemName: systemName)
+                .font(.system(size: 20, weight: .medium))
+                .foregroundColor(.white)
         }
         .buttonStyle(.plain)
     }

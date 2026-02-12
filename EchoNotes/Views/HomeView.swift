@@ -143,16 +143,11 @@ struct HomeView: View {
                 NavigationStack {
                     EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation)
                         .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .topBarLeading) {
-                                Button(action: {
-                                    showingPlayerSheet = false
-                                }) {
-                                    Image(systemName: "chevron.down")
-                                        .font(.system(size: 20, weight: .semibold))
-                                        .foregroundColor(.mintAccent)
-                                }
-                            }
+                        .onAppear {
+                            print("👁️ [HomeView Player Sheet] EpisodePlayerView appeared")
+                        }
+                        .onDisappear {
+                            print("👁️ [HomeView Player Sheet] EpisodePlayerView disappeared")
                         }
                 }
                 .presentationDragIndicator(.visible)
