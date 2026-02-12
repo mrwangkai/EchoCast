@@ -70,7 +70,9 @@ struct PodcastDiscoveryView: View {
                     onAdd: loadRSSFeed
                 )
             }
-            .sheet(item: $selectedPodcast) { podcast in
+            .sheet(item: $selectedPodcast, onDismiss: {
+                selectedPodcast = nil
+            }) { podcast in
                 PodcastDetailView(podcast: podcast)
                     .onAppear {
                         print("✅ [Browse] Sheet opened successfully with podcast: \(podcast.title ?? "nil")")
