@@ -221,6 +221,9 @@ struct HomeView: View {
         .onAppear {
             loadContinueListeningEpisodes()
         }
+        .onChange(of: allPodcasts.count) { _ in
+            loadContinueListeningEpisodes()
+        }
     }
 
     // MARK: - Following Section
@@ -354,18 +357,10 @@ struct HomeView: View {
             imageURL: podcast.artworkURL
         )
 
-        // Load episode into player
-        GlobalPlayerManager.shared.loadEpisode(episode, podcast: podcast)
+        print("🔍 [Debug] audioURL being passed: '\(item.audioURL)'")
+        print("🔍 [Debug] podcast: \(podcast.title ?? "nil"), id: \(podcast.id ?? "nil")")
 
-        // Seek to saved position
-        if item.currentTime > 0 {
-            GlobalPlayerManager.shared.seek(to: item.currentTime)
-        }
-
-        // Auto-play the episode
-        GlobalPlayerManager.shared.play()
-
-        // Show full player
+        GlobalPlayerManager.shared.loadEpisodeAndPlay(episode, podcast: podcast, seekTo: item.currentTime)
         showingPlayerSheet = true
     }
 

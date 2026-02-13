@@ -29,6 +29,8 @@ class GlobalPlayerManager: ObservableObject {
     private var timeObserver: Any?
     private var statusObserver: NSKeyValueObservation?
     private var lastHistoryUpdate: TimeInterval = 0
+    private var pendingSeekTime: TimeInterval?
+    private var pendingAutoPlay: Bool = false
 
     private init() {
         print("🎵 [Player] GlobalPlayerManager initializing")
@@ -113,6 +115,9 @@ class GlobalPlayerManager: ObservableObject {
     }
 
     func loadEpisode(_ episode: RSSEpisode, podcast: PodcastEntity) {
+        pendingSeekTime = nil
+        pendingAutoPlay = false
+
         // Check if this is the same episode that's already loaded
         if let currentEp = currentEpisode,
            currentEp.id == episode.id,
@@ -139,7 +144,8 @@ class GlobalPlayerManager: ObservableObject {
         let audioURL: URL?
 
         if let localURL = downloadManager.getLocalFileURL(for: episodeID),
-           downloadManager.isDownloaded(episodeID) {
+           downloadManager.isDownloaded(episodeID),
+           FileManager.default.fileExists(atPath: localURL.path) {
             // Use local file
             audioURL = localURL
             print("✅ Playing from local file: \(localURL.lastPathComponent)")
@@ -258,6 +264,18 @@ class GlobalPlayerManager: ObservableObject {
                         }
                     }
 
+                    // Handle pending seek time from loadEpisodeAndPlay
+                    if let pending = self.pendingSeekTime {
+                        self.seek(to: pending)
+                        self.pendingSeekTime = nil
+                    }
+
+                    // Auto-play when ready (for loadEpisodeAndPlay)
+                    if self.pendingAutoPlay {
+                        self.play()
+                        self.pendingAutoPlay = false
+                    }
+
                     // Add to playback history immediately when loaded so it shows in Continue Listening
                     self.savePlaybackHistory()
 
@@ -351,6 +369,13 @@ class GlobalPlayerManager: ObservableObject {
         }
 
         // Don't show mini player here - let the player view control this
+    }
+
+    func loadEpisodeAndPlay(_ episode: RSSEpisode, podcast: PodcastEntity, seekTo time: TimeInterval = 0) {
+        pendingSeekTime = time > 0 ? time : nil
+        pendingAutoPlay = true
+        loadEpisode(episode, podcast: podcast)
+        // play() will be called after readyToPlay fires
     }
 
     func togglePlayPause() {
