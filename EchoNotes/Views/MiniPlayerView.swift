@@ -30,6 +30,12 @@ struct MiniPlayerView: View {
             .cornerRadius(12, corners: [.topLeft, .topRight])
             .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: -2)
             .onTapGesture {
+                // Play/pause on tap, then show full player
+                if player.isPlaying {
+                    player.pause()
+                } else {
+                    player.play()
+                }
                 showFullPlayer = true
             }
             .sheet(isPresented: $showingAddNote) {

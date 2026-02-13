@@ -162,6 +162,7 @@ struct EpisodePlayerView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.echoBackground)
+        .presentationDetents([.fraction(0.90)])
         .presentationDragIndicator(.visible) // Native drag bar
         .ignoresSafeArea(edges: .bottom)
         .sheet(isPresented: $showingNoteCaptureSheet) {
@@ -176,14 +177,36 @@ struct EpisodePlayerView: View {
     // MARK: - Segmented Control
 
     private var segmentedControlSection: some View {
-        Picker("", selection: $selectedSegment) {
-            Text("Listening").tag(0)
-            Text("Notes").tag(1)
-            Text("Episode Info").tag(2)
+        HStack(spacing: 2) {
+            ForEach(["Listening", "Notes", "Episode Info"].indices, id: \.self) { index in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        selectedSegment = index
+                    }
+                } label: {
+                    Text(["Listening", "Notes", "Episode Info"][index])
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(
+                            selectedSegment == index
+                                ? Color.white
+                                : Color.white.opacity(0.4)
+                        )
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 32)
+                        .background(
+                            selectedSegment == index
+                                ? Color.white.opacity(0.15)
+                                : Color.clear
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .pickerStyle(.segmented)
-        .padding(.horizontal, 12)
-        .sensoryFeedback(.selection, trigger: selectedSegment)
+        .padding(3)
+        .background(Color.white.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(.horizontal, 24)
     }
 
     // MARK: - Episode Metadata (in Footer - 2 lines max)
@@ -200,6 +223,7 @@ struct EpisodePlayerView: View {
                 .foregroundColor(.echoTextSecondary)
                 .lineLimit(1)
         }
+        .padding(.bottom, 32)
     }
 
     // MARK: - Add Note Button
@@ -368,8 +392,7 @@ struct ListeningSegmentView: View {
     }
 
     private var albumArtworkView: some View {
-        GeometryReader { geometry in
-            CachedAsyncImage(url: URL(string: podcast.artworkURL ?? episode.imageURL ?? "")) {
+        CachedAsyncImage(url: URL(string: podcast.artworkURL ?? episode.imageURL ?? "")) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(red: 0.2, green: 0.2, blue: 0.2))
@@ -379,14 +402,12 @@ struct ListeningSegmentView: View {
                         .foregroundColor(.white.opacity(0.3))
                 }
             }
-            .frame(width: geometry.size.width, height: geometry.size.width)
+            .frame(width: 300, height: 300)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .matchedGeometryEffect(id: "artwork", in: namespace, isSource: true)
             .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
             .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
         }
-        .aspectRatio(1, contentMode: .fit)
-    }
 }
 
 // MARK: - Notes Segment View (Segment 1)
@@ -421,6 +442,8 @@ struct NotesSegmentView: View {
             } else {
                 notesListView
             }
+
+            Spacer(minLength: 32)
         }
         .padding(.top, 8)
     }
@@ -508,7 +531,7 @@ struct InfoSegmentView: View {
             episodeMetadataSection
         }
         .padding(.horizontal, EchoSpacing.screenPadding)
-        .padding(.top, 8)
+        .padding(.top, 40)
     }
 
     private func episodeDescriptionSection(_ description: String) -> some View {

@@ -1189,6 +1189,7 @@ struct NotesListView: View {
     @State private var noteToDelete: NoteEntity?
     @State private var showDeleteConfirmation = false
     @State private var selectedNote: NoteEntity?
+    @State private var showNoteDetail = false // Workaround for 2nd click issue
 
     var filteredNotes: [NoteEntity] {
         if searchText.isEmpty {
@@ -1222,9 +1223,11 @@ struct NotesListView: View {
                     TagNotesSheet(tag: tag, notes: getNotesForTag(tag))
                 }
             }
-            .sheet(item: $selectedNote) { note in
-                NavigationStack {
-                    NoteDetailSheetView(note: note)
+            .sheet(isPresented: $showNoteDetail) {
+                if let note = selectedNote {
+                    NavigationStack {
+                        NoteDetailSheetView(note: note)
+                    }
                 }
             }
             .alert("Delete Note", isPresented: $showDeleteConfirmation) {
@@ -1307,6 +1310,7 @@ struct NotesListView: View {
                 ForEach(notesForDate) { note in
                     Button(action: {
                         selectedNote = note
+                        showNoteDetail = true
                     }) {
                         NoteCardView(note: note)
                             .padding(.horizontal)
@@ -1316,6 +1320,7 @@ struct NotesListView: View {
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
+                    .contentShape(Rectangle())
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             noteToDelete = note
@@ -1344,6 +1349,7 @@ struct NotesListView: View {
                 ForEach(notesForEpisode) { note in
                     Button(action: {
                         selectedNote = note
+                        showNoteDetail = true
                     }) {
                         NoteCardView(note: note)
                             .padding(.horizontal)
@@ -1353,6 +1359,7 @@ struct NotesListView: View {
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
+                    .contentShape(Rectangle())
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             noteToDelete = note
@@ -3139,25 +3146,26 @@ struct NoteCardView: View {
 
             // BOTTOM: Podcast metadata
             HStack(spacing: 8) {
-                // Mini album art (88x88)
+                // Mini album art (32x32 with 8px right padding, 12px top from separator)
                 CachedAsyncImage(url: URL(string: note.podcast?.artworkURL ?? "")) {
                     $0
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(width: 88, height: 88)
+                        .frame(width: 32, height: 32)
                         .clipped()
                 } placeholder: {
                     Rectangle()
                         .fill(Color.echoTextTertiary.opacity(0.2))
-                        .frame(width: 88, height: 88)
+                        .frame(width: 32, height: 32)
                         .overlay {
                             Image(systemName: "music.note")
-                                .font(.system(size: 24))
+                                .font(.system(size: 16))
                                 .foregroundColor(.echoTextTertiary)
                         }
                 }
-                .frame(width: 88, height: 88)
-                .cornerRadius(8)
+                .frame(width: 32, height: 32)
+                .cornerRadius(6)
+                .padding(.trailing, 8)
 
                 // Episode information
                 VStack(alignment: .leading, spacing: 4) {
@@ -3180,7 +3188,9 @@ struct NoteCardView: View {
 
                 Spacer()
             }
-            .padding(16)
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .padding(.bottom, 16)
         }
         .background(Color.noteCardBackground)
         .cornerRadius(12)
