@@ -115,15 +115,22 @@ class GlobalPlayerManager: ObservableObject {
     }
 
     func loadEpisode(_ episode: RSSEpisode, podcast: PodcastEntity) {
-        pendingSeekTime = nil
-        pendingAutoPlay = false
-
         // Check if this is the same episode that's already loaded
         if let currentEp = currentEpisode,
            currentEp.id == episode.id,
            currentPodcast?.id == podcast.id {
             print("✅ Episode already loaded, resuming playback")
             showMiniPlayer = true
+
+            // Still handle pending seek and auto-play
+            if let pending = pendingSeekTime {
+                seek(to: pending)
+                pendingSeekTime = nil
+            }
+            if pendingAutoPlay {
+                play()
+                pendingAutoPlay = false
+            }
             return
         }
 
