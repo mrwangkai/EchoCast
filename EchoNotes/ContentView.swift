@@ -1189,7 +1189,6 @@ struct NotesListView: View {
     @State private var noteToDelete: NoteEntity?
     @State private var showDeleteConfirmation = false
     @State private var selectedNote: NoteEntity?
-    @State private var showNoteDetail = false // Workaround for 2nd click issue
 
     var filteredNotes: [NoteEntity] {
         if searchText.isEmpty {
@@ -1223,11 +1222,9 @@ struct NotesListView: View {
                     TagNotesSheet(tag: tag, notes: getNotesForTag(tag))
                 }
             }
-            .sheet(isPresented: $showNoteDetail) {
-                if let note = selectedNote {
-                    NavigationStack {
-                        NoteDetailSheetView(note: note)
-                    }
+            .sheet(item: $selectedNote) { note in
+                NavigationStack {
+                    NoteDetailSheetView(note: note)
                 }
             }
             .alert("Delete Note", isPresented: $showDeleteConfirmation) {
@@ -1310,7 +1307,6 @@ struct NotesListView: View {
                 ForEach(notesForDate) { note in
                     Button(action: {
                         selectedNote = note
-                        showNoteDetail = true
                     }) {
                         NoteCardView(note: note)
                             .padding(.horizontal)
@@ -1320,7 +1316,6 @@ struct NotesListView: View {
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
-                    .contentShape(Rectangle())
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             noteToDelete = note
@@ -1349,7 +1344,6 @@ struct NotesListView: View {
                 ForEach(notesForEpisode) { note in
                     Button(action: {
                         selectedNote = note
-                        showNoteDetail = true
                     }) {
                         NoteCardView(note: note)
                             .padding(.horizontal)
@@ -1359,7 +1353,6 @@ struct NotesListView: View {
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
-                    .contentShape(Rectangle())
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             noteToDelete = note

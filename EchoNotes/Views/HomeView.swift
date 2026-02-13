@@ -41,7 +41,6 @@ struct HomeView: View {
     @State private var showingSettings = false
     @State private var selectedPodcast: PodcastEntity?
     @State private var selectedNote: NoteEntity?
-    @State private var showingNoteDetail = false
 
     // Recently played episodes for Continue Listening section
     @State private var continueListeningEpisodes: [(historyItem: PlaybackHistoryItem, podcast: PodcastEntity)] = []
@@ -133,10 +132,8 @@ struct HomeView: View {
                     print("✅ [Home] Sheet opened successfully with podcast: \(podcast.title ?? "nil")")
                 }
         }
-        .sheet(isPresented: $showingNoteDetail) {
-            if let note = selectedNote {
-                NoteDetailSheet(note: note)
-            }
+        .sheet(item: $selectedNote) { note in
+            NoteDetailSheet(note: note)
         }
         .sheet(isPresented: $showingPlayerSheet) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
@@ -387,7 +384,6 @@ struct HomeView: View {
                     .onTapGesture {
                         print("📝 [HomeView] Note tapped: \(note.noteText?.prefix(50) ?? "No text")...")
                         selectedNote = note
-                        showingNoteDetail = true
                     }
             }
         }

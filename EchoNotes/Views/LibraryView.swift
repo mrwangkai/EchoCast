@@ -15,7 +15,6 @@ struct LibraryView: View {
 
     @State private var showingSortOptions = false
     @State private var selectedNote: NoteEntity?
-    @State private var showingNoteDetail = false
 
     var body: some View {
         NavigationStack {
@@ -55,10 +54,8 @@ struct LibraryView: View {
                 Button("Cancel", role: .cancel) {}
             }
         }
-        .sheet(isPresented: $showingNoteDetail) {
-            if let note = selectedNote {
-                NoteDetailSheet(note: note)
-            }
+        .sheet(item: $selectedNote) { note in
+            NoteDetailSheet(note: note)
         }
     }
     
@@ -164,7 +161,6 @@ struct LibraryView: View {
                         NoteCardView(note: note)
                             .onTapGesture {
                                 selectedNote = note
-                                showingNoteDetail = true
                             }
                             .contextMenu {
                                 Button(action: {
