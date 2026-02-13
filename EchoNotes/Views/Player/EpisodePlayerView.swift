@@ -79,7 +79,7 @@ struct EpisodePlayerView: View {
         _notes = FetchRequest<NoteEntity>(
             sortDescriptors: [NSSortDescriptor(keyPath: \NoteEntity.createdAt, ascending: false)],
             predicate: NSPredicate(
-                format: "episodeTitle == %@ AND showTitle == %@",
+                format: "episodeTitle ==[c] %@ AND showTitle ==[c] %@",
                 episodeTitle, podcastTitle
             ),
             animation: .default
@@ -363,18 +363,29 @@ struct EpisodePlayerView: View {
         return (timestamp / player.duration) * width - 4
     }
 
-    private func formatTime(_ seconds: TimeInterval) -> String {
-        let mins = Int(seconds) / 60
-        let secs = Int(seconds) % 60
-        return String(format: "%d:%02d", mins, secs)
-    }
 
     private func parseTimestamp(_ timestamp: String) -> TimeInterval? {
         let components = timestamp.split(separator: ":").compactMap { Int($0) }
         guard components.count == 3 else { return nil }
         return TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
     }
+
+    private func normalizeTimestamp(_ time: TimeInterval) -> String {
+        let hrs = Int(time) / 3600
+        let mins = Int(time) / 60 % 60
+        let secs = Int(time) % 60
+        if hrs > 0 {
+            return String(format: "%d:%02d:%02d", hrs, mins, secs)
+        } else {
+            return String(format: "%d:%02d", mins, secs)
+        }
+    }
+
+    private func formatTime(_ seconds: TimeInterval) -> String {
+        return normalizeTimestamp(seconds)
+    }
 }
+// MARK: - Segment Views
 
 // MARK: - Segment Views
 
