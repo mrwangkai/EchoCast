@@ -272,7 +272,7 @@ struct PodcastHeaderView: View {
                     Image(systemName: podcast.isFollowing ? "checkmark" : "plus")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                    Text(podcast.isFollowing ? "Followed" : "Follow")
+                    Text(podcast.isFollowing ? "Following" : "Follow")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                 }

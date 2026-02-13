@@ -227,7 +227,7 @@ struct HomeView: View {
 
     private var followingSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Following")
+            Text("Following podcasts")
                 .font(.title2Echo())
                 .foregroundColor(.echoTextPrimary)
                 .padding(.horizontal, EchoSpacing.screenPadding)
@@ -474,17 +474,6 @@ struct PodcastFollowingCard: View {
                 .truncationMode(.tail)
                 .multilineTextAlignment(.center)
                 .frame(width: 120, height: 16, alignment: .top)
-
-            // Follow indicator
-            HStack(spacing: 4) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.caption2)
-                    .foregroundColor(.mintAccent)
-                Text("Following")
-                    .font(.caption2)
-                    .foregroundColor(.echoTextSecondary)
-            }
-            .frame(height: 16)
         }
         .frame(height: 160)  // Fixed total height for consistent alignment
         .contentShape(Rectangle())
