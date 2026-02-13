@@ -357,9 +357,6 @@ struct HomeView: View {
             imageURL: podcast.artworkURL
         )
 
-        print("🔍 [Debug] audioURL being passed: '\(item.audioURL)'")
-        print("🔍 [Debug] podcast: \(podcast.title ?? "nil"), id: \(podcast.id ?? "nil")")
-
         GlobalPlayerManager.shared.loadEpisodeAndPlay(episode, podcast: podcast, seekTo: item.currentTime)
         showingPlayerSheet = true
     }
