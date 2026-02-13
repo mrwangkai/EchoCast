@@ -3900,6 +3900,8 @@ struct MiniPlayerBar: View {
 
     var body: some View {
         Button(action: {
+            // Play/pause on tap, then show full player
+            player.togglePlayPause()
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                 showFullPlayer = true
             }
