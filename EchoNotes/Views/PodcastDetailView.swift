@@ -79,6 +79,7 @@ struct PodcastDetailView: View {
                     ForEach(episodes) { episode in
                         Button(action: {
                             print("🎧 [PodcastDetail] Episode tapped: \(episode.title)")
+                            GlobalPlayerManager.shared.loadEpisodeAndPlay(episode, podcast: podcast)
                             selectedEpisode = episode  // Sheet opens automatically
                         }) {
                             EpisodeRowView(
@@ -136,17 +137,9 @@ struct PodcastDetailView: View {
             print("✅ [PodcastDetail] Task completed")
         }
         .sheet(item: $selectedEpisode) { episode in
-            PlayerSheetWrapper(
-                episode: episode,
-                podcast: podcast,
-                dismiss: { selectedEpisode = nil },
-                autoPlay: true,
-                seekToTime: nil,
-                namespace: namespace
-            )
-            .onAppear {
-                print("✅ [PodcastDetail] Player sheet opened with episode: \(episode.title)")
-            }
+            EpisodePlayerView(episode: episode, podcast: podcast, namespace: namespace)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
     }
 

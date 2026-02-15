@@ -91,11 +91,12 @@ struct EpisodePlayerView: View {
     var body: some View {
         VStack(spacing: 0) {
             // --- SECTION 1: HEADER (FIXED HEIGHT: ~68px) ---
-            segmentedControlSection
-                .frame(height: 36)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 32)
-                .padding(.horizontal, 12)
+            VStack(spacing: 0) {
+                segmentedControlSection
+                    .frame(height: 36)
+                    .frame(maxWidth: .infinity)
+            }
+            .padding(.top, 16)
 
             // --- SECTION 2: MID-SECTION (FIXED HEIGHT: 377px) ---
             Group {
@@ -109,6 +110,7 @@ struct EpisodePlayerView: View {
                         addNoteAction: { showingNoteCaptureSheet = true }
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.top, 40)
 
                 case 1:
                     // Notes: Scrollable List
@@ -120,6 +122,7 @@ struct EpisodePlayerView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .scrollIndicators(.hidden)
+                    .padding(.top, 40)
 
                 case 2:
                     // Info: Scrollable Text
@@ -131,6 +134,7 @@ struct EpisodePlayerView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .scrollIndicators(.hidden)
+                    .padding(.top, 40)
 
                 default:
                     EmptyView()
@@ -273,17 +277,52 @@ struct EpisodePlayerView: View {
                         )
                         .frame(maxHeight: .infinity, alignment: .center)
 
-                    // Note markers
-                    ForEach(notes.filter { $0.timestamp != nil }) { note in
-                        if let timestamp = note.timestamp,
-                           let timeInSeconds = parseTimestamp(timestamp),
-                           player.duration > 0 {
+                    // Scrubber knob
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 14, height: 14)
+                        .offset(
+                            x: geo.size.width * CGFloat(player.duration > 0
+                                ? min(player.currentTime / player.duration, 1.0)
+                                : 0) - 7,
+                            y: 0
+                        )
+                        .frame(maxHeight: .infinity, alignment: .center)
+
+                    // Note markers (grouped by proximity)
+                    let groupedNotes: [(position: TimeInterval, count: Int)] = {
+                        var groups: [(position: TimeInterval, count: Int)] = []
+                        let threshold = player.duration * 0.05
+                        for note in notes {
+                            guard let timestamp = note.timestamp,
+                                  let seconds = parseTimestamp(timestamp),
+                                  player.duration > 1 else { continue }
+                            if let idx = groups.firstIndex(where: {
+                                abs($0.position - seconds) < threshold
+                            }) {
+                                groups[idx].count += 1
+                            } else {
+                                groups.append((position: seconds, count: 1))
+                            }
+                        }
+                        return groups
+                    }()
+
+                    ForEach(Array(groupedNotes.enumerated()), id: \.offset) { _, group in
+                        let xPos = (group.position / player.duration) * geo.size.width - 12
+
+                        ZStack {
                             Circle()
                                 .fill(Color.mintAccent)
-                                .frame(width: 8, height: 8)
-                                .offset(x: markerPosition(timeInSeconds, width: geo.size.width))
-                                .offset(y: -2)
+                                .frame(width: 24, height: 24)
+
+                            if group.count > 1 {
+                                Text("\(group.count)")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
                         }
+                        .offset(x: xPos, y: -20)
                     }
                 }
                 .contentShape(Rectangle())
@@ -295,7 +334,7 @@ struct EpisodePlayerView: View {
                         }
                 )
             }
-            .frame(height: 24)
+            .frame(height: 36)
             .padding(.horizontal, EchoSpacing.screenPadding)
 
             HStack {
@@ -366,8 +405,12 @@ struct EpisodePlayerView: View {
 
     private func parseTimestamp(_ timestamp: String) -> TimeInterval? {
         let components = timestamp.split(separator: ":").compactMap { Int($0) }
-        guard components.count == 3 else { return nil }
-        return TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
+        if components.count == 2 {
+            return TimeInterval(components[0] * 60 + components[1])
+        } else if components.count == 3 {
+            return TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
+        }
+        return nil
     }
 
     private func normalizeTimestamp(_ time: TimeInterval) -> String {
