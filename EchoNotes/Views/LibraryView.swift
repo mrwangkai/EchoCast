@@ -15,15 +15,11 @@ struct LibraryView: View {
 
     @State private var showingSortOptions = false
     @State private var selectedNote: NoteEntity?
-    @State private var searchText = ""
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
-                    // Header
-                    headerSection
-                    
                     // Search and Filter Section
                     searchAndFilterSection
                     
@@ -38,10 +34,10 @@ struct LibraryView: View {
                 .padding(.top, EchoSpacing.headerTopPadding)
             }
             .background(Color.echoBackground)
-            .searchable(text: $searchText, placement: .navigationBarDrawer)
             .navigationTitle("Library")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
+            .preferredColorScheme(.dark)
             .confirmationDialog("Sort By", isPresented: $showingSortOptions) {
                 Button("Date (Newest First)") {
                     viewModel.sortOrder = .dateDescending
@@ -62,21 +58,7 @@ struct LibraryView: View {
             NoteDetailSheet(note: note)
         }
     }
-    
-    // MARK: - Header Section
-    
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Library")
-                .font(.largeTitleEcho())
-                .foregroundColor(.echoTextPrimary)
-            
-            Text("All your notes in one place")
-                .font(.bodyEcho())
-                .foregroundColor(.echoTextSecondary)
-        }
-    }
-    
+
     // MARK: - Search and Filter Section
     
     private var searchAndFilterSection: some View {

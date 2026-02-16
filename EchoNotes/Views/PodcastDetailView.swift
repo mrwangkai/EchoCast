@@ -16,10 +16,16 @@ struct PodcastDetailView: View {
     @State private var errorMessage: String?
     @State private var selectedEpisode: RSSEpisode?
     @State private var showDeleteConfirmation = false
+    @State private var isFollowing: Bool
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var downloadManager = EpisodeDownloadManager.shared
     @Namespace private var namespace
+
+    init(podcast: PodcastEntity) {
+        self.podcast = podcast
+        self._isFollowing = State(initialValue: podcast.isFollowing)
+    }
 
     var body: some View {
         let _ = print("🎬 [PodcastDetail] BODY EVALUATED")
@@ -28,7 +34,7 @@ struct PodcastDetailView: View {
 
         VStack(spacing: 0) {
             // Podcast Header
-            PodcastHeaderView(podcast: podcast, onToggleFollow: toggleFollow)
+            PodcastHeaderView(podcast: podcast, isFollowing: $isFollowing, onToggleFollow: toggleFollow)
                 .padding()
 
             Divider()
@@ -210,11 +216,12 @@ struct PodcastDetailView: View {
     }
 
     private func toggleFollow() {
-        podcast.isFollowing.toggle()
+        isFollowing.toggle()
+        podcast.isFollowing = isFollowing
 
         do {
             try viewContext.save()
-            print("✅ Podcast follow state changed: \(podcast.isFollowing ? "Following" : "Unfollowed")")
+            print("✅ Podcast follow state changed: \(isFollowing ? "Following" : "Unfollowed")")
         } catch {
             print("❌ Error toggling follow: \(error)")
         }
@@ -225,6 +232,7 @@ struct PodcastDetailView: View {
 
 struct PodcastHeaderView: View {
     let podcast: PodcastEntity
+    @Binding var isFollowing: Bool
     let onToggleFollow: () -> Void
 
     var body: some View {
@@ -262,17 +270,17 @@ struct PodcastHeaderView: View {
             // Follow/Unfollow button - centered
             Button(action: onToggleFollow) {
                 HStack(spacing: 6) {
-                    Image(systemName: podcast.isFollowing ? "checkmark" : "plus")
+                    Image(systemName: isFollowing ? "checkmark" : "plus")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                    Text(podcast.isFollowing ? "Following" : "Follow")
+                    Text(isFollowing ? "Following" : "Follow")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                 }
-                .foregroundColor(podcast.isFollowing ? .echoTextPrimary : .mintButtonText)
+                .foregroundColor(isFollowing ? .echoTextPrimary : .mintButtonText)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 10)
-                .background(podcast.isFollowing ? Color.noteCardBackground : Color.mintAccent)
+                .background(isFollowing ? Color.noteCardBackground : Color.mintAccent)
                 .cornerRadius(20)
             }
             .buttonStyle(.plain)

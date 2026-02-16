@@ -41,7 +41,6 @@ struct HomeView: View {
     @State private var showingSettings = false
     @State private var selectedPodcast: PodcastEntity?
     @State private var selectedNote: NoteEntity?
-    @State private var searchText = ""
 
     // Recently played episodes for Continue Listening section
     @State private var continueListeningEpisodes: [(historyItem: PlaybackHistoryItem, podcast: PodcastEntity)] = []
@@ -76,10 +75,10 @@ struct HomeView: View {
                 .padding(.bottom, 100)
             }
             .background(Color.echoBackground)
-            .searchable(text: $searchText, placement: .navigationBarDrawer)
             .navigationTitle("EchoCast")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
+            .preferredColorScheme(.dark)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 16) {
