@@ -60,29 +60,32 @@ struct LibraryView: View {
     }
 
     // MARK: - Search and Filter Section
-    
+
     private var searchAndFilterSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Search bar
-            HStack {
+            HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(.echoTextSecondary)
+                    .foregroundColor(.echoTextTertiary)
+                    .font(.system(size: 17))
                 TextField("Search notes...", text: $viewModel.searchText)
+                    .textFieldStyle(.plain)
+                    .font(.bodyEcho())
                     .foregroundColor(.echoTextPrimary)
-                    .tint(.mintAccent)
                 if !viewModel.searchText.isEmpty {
                     Button(action: {
                         viewModel.searchText = ""
                     }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.echoTextSecondary)
+                            .foregroundColor(.echoTextTertiary)
                     }
                 }
             }
-            .padding(12)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
             .background(Color.searchFieldBackground)
-            .cornerRadius(10)
-            
+            .cornerRadius(8)
+
             // Filter and Sort buttons
             HStack(spacing: 12) {
                 Button(action: {
