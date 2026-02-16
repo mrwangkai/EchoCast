@@ -22,16 +22,17 @@ struct LibraryView: View {
                 VStack(alignment: .leading, spacing: 32) {
                     // Search and Filter Section
                     searchAndFilterSection
-                    
+                        .padding(.horizontal, EchoSpacing.screenPadding)
+                        .padding(.top, 12)
+
                     // Notes Section
                     if viewModel.notes.isEmpty {
                         emptyStateView
                     } else {
                         notesSection
+                            .padding(.horizontal, EchoSpacing.screenPadding)
                     }
                 }
-                .padding(.horizontal, EchoSpacing.screenPadding)
-                .padding(.top, EchoSpacing.headerTopPadding)
             }
             .background(Color.echoBackground)
             .navigationTitle("Library")
