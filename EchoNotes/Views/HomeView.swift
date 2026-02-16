@@ -41,6 +41,7 @@ struct HomeView: View {
     @State private var showingSettings = false
     @State private var selectedPodcast: PodcastEntity?
     @State private var selectedNote: NoteEntity?
+    @State private var searchText = ""
 
     // Recently played episodes for Continue Listening section
     @State private var continueListeningEpisodes: [(historyItem: PlaybackHistoryItem, podcast: PodcastEntity)] = []
@@ -52,46 +53,6 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
-                    // Header with inline buttons
-                    HStack(alignment: .center) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("EchoCast")
-                                .font(.largeTitleEcho())
-                                .foregroundColor(.echoTextPrimary)
-
-                            Text(greetingText)
-                                .font(.bodyEcho())
-                                .foregroundColor(.echoTextSecondary)
-                        }
-                        
-                        Spacer()
-                        
-                        // Buttons inline with header
-                        HStack(spacing: 16) {
-                            Button(action: {
-                                print("🔍 [HomeView] Browse button tapped")
-                                selectedTab = 1  // Switch to Browse tab
-                            }) {
-                                Image(systemName: "magnifyingglass")
-                                    .font(.body)
-                                    .foregroundColor(.echoTextPrimary)
-                                    .frame(width: 44, height: 44)
-                            }
-
-                            Button(action: {
-                                print("⚙️ [HomeView] Settings button tapped")
-                                showingSettings = true
-                            }) {
-                                Image(systemName: "gearshape")
-                                    .font(.body)
-                                    .foregroundColor(.echoTextPrimary)
-                                    .frame(width: 44, height: 44)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, EchoSpacing.screenPadding)
-                    .padding(.top, EchoSpacing.headerTopPadding)
-
                     // Continue Listening Section
                     if player.currentEpisode != nil || !recentNotes.isEmpty {
                         continueListeningSection
@@ -115,7 +76,33 @@ struct HomeView: View {
                 .padding(.bottom, 100)
             }
             .background(Color.echoBackground)
-            .navigationBarHidden(true)
+            .searchable(text: $searchText, placement: .navigationBarDrawer)
+            .navigationTitle("EchoCast")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(Color.echoBackground, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack(spacing: 16) {
+                        Button(action: {
+                            print("🔍 [HomeView] Browse button tapped")
+                            selectedTab = 1
+                        }) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.body)
+                                .foregroundColor(.echoTextPrimary)
+                        }
+
+                        Button(action: {
+                            print("⚙️ [HomeView] Settings button tapped")
+                            showingSettings = true
+                        }) {
+                            Image(systemName: "gearshape")
+                                .font(.body)
+                                .foregroundColor(.echoTextPrimary)
+                        }
+                    }
+                }
+            }
             .onAppear {
                 print("🏠 [HomeView] View appeared")
                 print("🏠 [HomeView] Recent notes count: \(recentNotes.count)")

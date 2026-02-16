@@ -15,6 +15,7 @@ struct LibraryView: View {
 
     @State private var showingSortOptions = false
     @State private var selectedNote: NoteEntity?
+    @State private var searchText = ""
 
     var body: some View {
         NavigationStack {
@@ -37,7 +38,10 @@ struct LibraryView: View {
                 .padding(.top, EchoSpacing.headerTopPadding)
             }
             .background(Color.echoBackground)
-            .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $searchText, placement: .navigationBarDrawer)
+            .navigationTitle("Library")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(Color.echoBackground, for: .navigationBar)
             .confirmationDialog("Sort By", isPresented: $showingSortOptions) {
                 Button("Date (Newest First)") {
                     viewModel.sortOrder = .dateDescending
