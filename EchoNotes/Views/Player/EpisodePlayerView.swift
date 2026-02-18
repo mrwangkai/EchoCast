@@ -64,6 +64,12 @@ struct EpisodePlayerView: View {
     // Note marker popover state
     @State private var selectedMarkerNote: NoteEntity? = nil
 
+    // Go Back button state
+    @State private var showGoBackButton = false
+    @State private var previousPlaybackPosition: TimeInterval = 0
+    @State private var goBackTimer: Timer?
+    @State private var goBackCountdown: CGFloat = 8.0
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
 
@@ -199,6 +205,9 @@ struct EpisodePlayerView: View {
             .presentationDetents([.height(200)])
             .presentationDragIndicator(.visible)
         }
+        .onDisappear {
+            goBackTimer?.invalidate()
+        }
     }
 
     // MARK: - Segmented Control
@@ -332,7 +341,7 @@ struct EpisodePlayerView: View {
                     }()
 
                     ForEach(Array(groupedNotes.enumerated()), id: \.offset) { _, group in
-                        let xPos = (group.position / player.duration) * geo.size.width - 12
+                        let xPos = (group.position / player.duration) * geo.size.width - 14
 
                         Button {
                             // Show popover with first note at this position
@@ -340,26 +349,50 @@ struct EpisodePlayerView: View {
                         } label: {
                             ZStack {
                                 Circle()
-                                    .fill(Color.mintAccent)
-                                    .frame(width: 24, height: 24)
+                                    .fill(Color.mintAccent.opacity(0.75))
+                                    .frame(width: 28, height: 28)
 
                                 if group.notes.count > 1 {
                                     Text("\(group.notes.count)")
-                                        .font(.system(size: 11, weight: .bold))
+                                        .font(.system(size: 12, weight: .bold))
                                         .foregroundColor(.white)
                                 }
                             }
                         }
                         .buttonStyle(.plain)
-                        .offset(x: xPos, y: -20)
+                        .offset(x: xPos, y: -24)
                     }
                 }
                 .contentShape(Rectangle())
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
+                            // Save position on first drag (scrub start)
+                            if !showGoBackButton && previousPlaybackPosition == 0 {
+                                previousPlaybackPosition = player.currentTime
+                            }
                             let pct = min(max(0, value.location.x / geo.size.width), 1.0)
                             player.seek(to: pct * player.duration)
+                        }
+                        .onEnded { _ in
+                            // Show go back button when scrub ends
+                            showGoBackButton = true
+                            goBackCountdown = 8.0
+
+                            // Cancel existing timer
+                            goBackTimer?.invalidate()
+
+                            // Set 8-second timer with countdown
+                            goBackTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+                                goBackCountdown -= 0.1
+                                if goBackCountdown <= 0 {
+                                    timer.invalidate()
+                                    withAnimation {
+                                        showGoBackButton = false
+                                    }
+                                    previousPlaybackPosition = 0
+                                }
+                            }
                         }
                 )
             }
@@ -376,6 +409,53 @@ struct EpisodePlayerView: View {
                 Text("-\(formatTime(player.duration - player.currentTime))")
                     .font(.caption2Medium())
                     .foregroundColor(.echoTextTertiary)
+            }
+
+            // Go Back button overlay (appears above timeline after scrubbing)
+            if showGoBackButton {
+                HStack(spacing: 8) {
+                    // Circular countdown indicator
+                    ZStack {
+                        Circle()
+                            .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                            .frame(width: 24, height: 24)
+
+                        Circle()
+                            .trim(from: 0, to: goBackCountdown / 8.0)
+                            .stroke(Color.mintAccent, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                            .frame(width: 24, height: 24)
+                            .rotationEffect(.degrees(-90))
+                            .animation(.linear, value: goBackCountdown)
+                    }
+
+                    Button {
+                        // Jump back to previous position
+                        player.seek(to: previousPlaybackPosition)
+
+                        // Hide button immediately
+                        withAnimation {
+                            showGoBackButton = false
+                        }
+                        goBackTimer?.invalidate()
+                        previousPlaybackPosition = 0
+
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.uturn.backward")
+                                .font(.system(size: 14, weight: .medium))
+                            Text("go back")
+                                .font(.caption2Medium())
+                        }
+                        .foregroundColor(.mintAccent)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+                .padding(.top, 8)
             }
         }
     }
