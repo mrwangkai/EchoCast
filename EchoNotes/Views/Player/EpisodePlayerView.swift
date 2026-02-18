@@ -61,6 +61,9 @@ struct EpisodePlayerView: View {
     @State private var selectedSegment = 0
     @State private var showingNoteCaptureSheet = false
 
+    // Note marker popover state
+    @State private var selectedMarkerNote: NoteEntity? = nil
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
 
@@ -178,6 +181,24 @@ struct EpisodePlayerView: View {
                 currentTime: player.currentTime
             )
         }
+        .sheet(item: $selectedMarkerNote) { note in
+            NotePreviewPopover(
+                note: note,
+                notesAtSameTimestamp: notesAtTimestamp(note.timestamp ?? ""),
+                onJumpToTime: {
+                    if let timestamp = note.timestamp,
+                       let timeInSeconds = parseTimestamp(timestamp) {
+                        player.seek(to: timeInSeconds)
+                        selectedMarkerNote = nil
+                    }
+                },
+                onDismiss: {
+                    selectedMarkerNote = nil
+                }
+            )
+            .presentationDetents([.height(200)])
+            .presentationDragIndicator(.visible)
+        }
     }
 
     // MARK: - Segmented Control
@@ -292,8 +313,8 @@ struct EpisodePlayerView: View {
                         .frame(maxHeight: .infinity, alignment: .center)
 
                     // Note markers (grouped by proximity)
-                    let groupedNotes: [(position: TimeInterval, count: Int)] = {
-                        var groups: [(position: TimeInterval, count: Int)] = []
+                    let groupedNotes: [(position: TimeInterval, notes: [NoteEntity])] = {
+                        var groups: [(position: TimeInterval, notes: [NoteEntity])] = []
                         let threshold = player.duration * 0.05
                         for note in notes {
                             guard let timestamp = note.timestamp,
@@ -302,9 +323,9 @@ struct EpisodePlayerView: View {
                             if let idx = groups.firstIndex(where: {
                                 abs($0.position - seconds) < threshold
                             }) {
-                                groups[idx].count += 1
+                                groups[idx].notes.append(note)
                             } else {
-                                groups.append((position: seconds, count: 1))
+                                groups.append((position: seconds, notes: [note]))
                             }
                         }
                         return groups
@@ -313,17 +334,23 @@ struct EpisodePlayerView: View {
                     ForEach(Array(groupedNotes.enumerated()), id: \.offset) { _, group in
                         let xPos = (group.position / player.duration) * geo.size.width - 12
 
-                        ZStack {
-                            Circle()
-                                .fill(Color.mintAccent)
-                                .frame(width: 24, height: 24)
+                        Button {
+                            // Show popover with first note at this position
+                            selectedMarkerNote = group.notes.first
+                        } label: {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.mintAccent)
+                                    .frame(width: 24, height: 24)
 
-                            if group.count > 1 {
-                                Text("\(group.count)")
-                                    .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.white)
+                                if group.notes.count > 1 {
+                                    Text("\(group.notes.count)")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
                             }
                         }
+                        .buttonStyle(.plain)
                         .offset(x: xPos, y: -20)
                     }
                 }
@@ -413,6 +440,10 @@ struct EpisodePlayerView: View {
             return TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
         }
         return nil
+    }
+
+    private func notesAtTimestamp(_ timestamp: String) -> [NoteEntity] {
+        notes.filter { $0.timestamp == timestamp }
     }
 
     private func normalizeTimestamp(_ time: TimeInterval) -> String {
@@ -825,5 +856,79 @@ struct NoteCaptureSheetWrapper: View {
 
         try? viewContext.save()
         dismiss()
+    }
+}
+
+// MARK: - Note Preview Popover
+
+struct NotePreviewPopover: View {
+    let note: NoteEntity
+    let notesAtSameTimestamp: [NoteEntity]
+    let onJumpToTime: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    // If multiple notes at same timestamp
+                    if notesAtSameTimestamp.count > 1 {
+                        Text("\(notesAtSameTimestamp.count) notes at this time")
+                            .font(.caption2Medium())
+                            .foregroundColor(.echoTextSecondary)
+                    }
+
+                    // Note preview(s)
+                    ForEach(notesAtSameTimestamp) { noteItem in
+                        VStack(alignment: .leading, spacing: 8) {
+                            // Note text (max 3 lines)
+                            Text(noteItem.noteText ?? "")
+                                .font(.bodyEcho())
+                                .foregroundColor(.echoTextPrimary)
+                                .lineLimit(3)
+
+                            // Tags if present
+                            if !noteItem.tagsArray.isEmpty {
+                                FlowLayout(spacing: 6) {
+                                    ForEach(noteItem.tagsArray.prefix(3), id: \.self) { tag in
+                                        Text(tag)
+                                            .font(.caption2Medium())
+                                            .foregroundColor(.echoTextSecondary)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.white.opacity(0.1))
+                                            .cornerRadius(6)
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.vertical, 8)
+
+                        if noteItem != notesAtSameTimestamp.last {
+                            Divider()
+                        }
+                    }
+                }
+                .padding(EchoSpacing.screenPadding)
+            }
+            .navigationTitle("Note at \(note.timestamp ?? "")")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Close") {
+                        onDismiss()
+                    }
+                    .foregroundColor(.mintAccent)
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Jump to Time") {
+                        onJumpToTime()
+                    }
+                    .foregroundColor(.mintAccent)
+                    .font(.bodyRoundedMedium())
+                }
+            }
+        }
     }
 }
