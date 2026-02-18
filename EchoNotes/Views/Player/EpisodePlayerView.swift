@@ -117,7 +117,9 @@ struct EpisodePlayerView: View {
                     ScrollView {
                         NotesSegmentView(
                             notes: Array(notes),
-                            addNoteAction: { showingNoteCaptureSheet = true }
+                            addNoteAction: { showingNoteCaptureSheet = true },
+                            player: player,
+                            selectedSegment: $selectedSegment
                         )
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -414,14 +416,12 @@ struct EpisodePlayerView: View {
     }
 
     private func normalizeTimestamp(_ time: TimeInterval) -> String {
-        let hrs = Int(time) / 3600
-        let mins = Int(time) / 60 % 60
-        let secs = Int(time) % 60
-        if hrs > 0 {
-            return String(format: "%d:%02d:%02d", hrs, mins, secs)
-        } else {
-            return String(format: "%d:%02d", mins, secs)
-        }
+        // Always render as H:MM:SS regardless of duration
+        let totalSeconds = Int(max(0, time))
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+        return String(format: "%d:%02d:%02d", hours, minutes, seconds)
     }
 
     private func formatTime(_ seconds: TimeInterval) -> String {
@@ -469,28 +469,12 @@ struct ListeningSegmentView: View {
 struct NotesSegmentView: View {
     let notes: [NoteEntity]
     let addNoteAction: () -> Void
+    @ObservedObject var player: GlobalPlayerManager
+    @Binding var selectedSegment: Int
+    @Environment(\.managedObjectContext) private var viewContext
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Add Note button (scrollable in Notes tab)
-            Button(action: addNoteAction) {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 16, weight: .medium))
-
-                    Text("Add note at current time")
-                        .font(.bodyRoundedMedium())
-                }
-                .foregroundColor(.mintButtonText)
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(Color.mintButtonBackground.opacity(0.8))
-                .cornerRadius(12)
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, EchoSpacing.screenPadding)
-
             if notes.isEmpty {
                 emptyNotesState
             } else {
@@ -515,11 +499,30 @@ struct NotesSegmentView: View {
                 .font(.title2Echo())
                 .foregroundColor(.echoTextPrimary)
 
-            Text("Tap 'Add note at current time' while listening to capture your thoughts")
+            Text("Tap the button below while listening to capture your thoughts.")
                 .font(.bodyEcho())
                 .foregroundColor(.echoTextSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
+
+            // CTA button inline in empty state
+            Button(action: addNoteAction) {
+                HStack(spacing: 8) {
+                    Image(systemName: "note.text.badge.plus")
+                        .font(.system(size: 15, weight: .medium))
+
+                    Text("Add note at current time")
+                        .font(.bodyRoundedMedium())
+                }
+                .foregroundColor(.mintButtonText)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .background(Color.mintButtonBackground)
+                .cornerRadius(12)
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, EchoSpacing.screenPadding)
+            .padding(.top, 8)
 
             Spacer()
         }
@@ -527,12 +530,62 @@ struct NotesSegmentView: View {
     }
 
     private var notesListView: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 12) {
             ForEach(notes, id: \.id) { note in
-                NoteRow(note: note)
+                NoteRow(note: note) {
+                    // Haptic feedback
+                    let generator = UIImpactFeedbackGenerator(style: .light)
+                    generator.impactOccurred()
+
+                    // Seek to timestamp
+                    if let timestamp = note.timestamp {
+                        let components = timestamp.split(separator: ":").compactMap { Int($0) }
+                        let timeInSeconds: TimeInterval?
+                        if components.count == 2 {
+                            timeInSeconds = TimeInterval(components[0] * 60 + components[1])
+                        } else if components.count == 3 {
+                            timeInSeconds = TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
+                        } else {
+                            timeInSeconds = nil
+                        }
+
+                        if let timeInSeconds = timeInSeconds {
+                            player.seek(to: timeInSeconds)
+                            withAnimation {
+                                selectedSegment = 0
+                            }
+                        }
+                    }
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        deleteNote(note)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+                .contextMenu {
+                    // TODO: wire edit when AddNoteSheet/NoteCaptureSheetWrapper supports existingNote
+                    Button(role: .destructive) {
+                        deleteNote(note)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
             }
         }
         .padding(.horizontal, EchoSpacing.screenPadding)
+    }
+
+    private func deleteNote(_ note: NoteEntity) {
+        withAnimation {
+            viewContext.delete(note)
+            do {
+                try viewContext.save()
+            } catch {
+                print("❌ Failed to delete note: \(error)")
+            }
+        }
     }
 }
 
@@ -540,29 +593,40 @@ struct NotesSegmentView: View {
 
 struct NoteRow: View {
     let note: NoteEntity
+    let onTap: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            if let timestamp = note.timestamp {
-                Text(timestamp)
-                    .font(.body.monospacedDigit())
-                    .foregroundColor(.mintAccent)
-                    .padding(.top, 4)
-            }
+        Button(action: onTap) {
+            HStack(alignment: .top, spacing: 16) {
+                if let timestamp = note.timestamp {
+                    HStack {
+                        Text(timestamp)
+                            .font(.body.monospacedDigit())
+                            .foregroundColor(.mintAccent)
+                            .padding(.top, 4)
 
-            VStack(alignment: .leading, spacing: 4) {
-                if let noteText = note.noteText, !noteText.isEmpty {
-                    Text(noteText)
-                        .font(.subheadline)
-                        .foregroundColor(.echoTextPrimary)
-                        .lineLimit(3)
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.echoTextTertiary)
+                    }
                 }
 
-                Divider()
-                    .padding(.top, 8)
+                VStack(alignment: .leading, spacing: 4) {
+                    if let noteText = note.noteText, !noteText.isEmpty {
+                        Text(noteText)
+                            .font(.subheadline)
+                            .foregroundColor(.echoTextPrimary)
+                            .lineLimit(3)
+                    }
+                }
             }
         }
-        .padding(.vertical, 8)
+        .buttonStyle(.plain)
+        .padding(EchoSpacing.noteCardPadding)
+        .background(Color.noteCardBackground)
+        .cornerRadius(EchoSpacing.noteCardCornerRadius)
     }
 }
 
@@ -736,14 +800,12 @@ struct NoteCaptureSheetWrapper: View {
     }
 
     private func formatTime(_ seconds: TimeInterval) -> String {
-        let hrs = Int(seconds) / 3600
-        let mins = Int(seconds) / 60 % 60
-        let secs = Int(seconds) % 60
-        if hrs > 0 {
-            return String(format: "%d:%02d:%02d", hrs, mins, secs)
-        } else {
-            return String(format: "%d:%02d", mins, secs)
-        }
+        // Always render as H:MM:SS regardless of duration
+        let totalSeconds = Int(max(0, seconds))
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let second = totalSeconds % 60
+        return String(format: "%d:%02d:%02d", hours, minutes, second)
     }
 
     private func saveNote() {
