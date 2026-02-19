@@ -105,7 +105,7 @@ struct EpisodePlayerView: View {
                     .frame(height: 36)
                     .frame(maxWidth: .infinity)
             }
-            .padding(.top, 24)
+            .padding(.top, 16)
 
             // --- SECTION 2: MID-SECTION (FIXED HEIGHT: 377px) ---
             ZStack(alignment: .top) {
@@ -152,7 +152,8 @@ struct EpisodePlayerView: View {
                         EmptyView()
                     }
                 }
-                .frame(height: 377)
+                .frame(maxHeight: .infinity)
+                .padding(.bottom, 24)
 
                 // Floating Go Back button overlay (CENTERED)
                 if showGoBackButton {
@@ -188,7 +189,7 @@ struct EpisodePlayerView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.echoBackground)
-        .presentationDetents([.fraction(0.82)])
+        .presentationDetents([.large])
         .presentationDragIndicator(.visible) // Native drag bar
         .ignoresSafeArea(edges: .bottom)
         .sheet(isPresented: $showingNoteCaptureSheet) {
@@ -259,14 +260,14 @@ struct EpisodePlayerView: View {
     // MARK: - Episode Metadata (in Footer - 2 lines max)
 
     private var episodeMetadataView: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 10) {
             Text(episode.title)
                 .font(.bodyRoundedMedium())
                 .foregroundColor(.echoTextPrimary)
                 .lineLimit(2)
 
             Text(podcast.title ?? "Unknown Podcast")
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.echoTextSecondary)
                 .lineLimit(1)
         }
@@ -289,12 +290,12 @@ struct EpisodePlayerView: View {
             .foregroundColor(.mintButtonText)
             .frame(maxWidth: .infinity)
             .frame(height: 48)
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 32)
+            .padding(.bottom, 32)
             .background(Color.mintButtonBackground)
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
-        .padding(.bottom, 32)
     }
 
     // MARK: - Player Controls
@@ -373,7 +374,7 @@ struct EpisodePlayerView: View {
                             }
                         }
                         .buttonStyle(.plain)
-                        .offset(x: xPos, y: -28)
+                        .offset(x: xPos, y: -32)
                     }
                 }
                 .contentShape(Rectangle())
