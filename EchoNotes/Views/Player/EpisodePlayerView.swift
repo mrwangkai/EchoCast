@@ -120,7 +120,7 @@ struct EpisodePlayerView: View {
                             addNoteAction: { showingNoteCaptureSheet = true }
                         )
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.top, 40)
+                        .padding(.top, 16)
 
                     case 1:
                         // Notes: Scrollable List
@@ -134,7 +134,7 @@ struct EpisodePlayerView: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .scrollIndicators(.hidden)
-                        .padding(.top, 40)
+                        .padding(.top, 16)
 
                     case 2:
                         // Info: Scrollable Text
@@ -146,7 +146,7 @@ struct EpisodePlayerView: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .scrollIndicators(.hidden)
-                        .padding(.top, 40)
+                        .padding(.top, 16)
 
                     default:
                         EmptyView()
@@ -182,13 +182,13 @@ struct EpisodePlayerView: View {
                     .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
             }
             .padding(.horizontal, EchoSpacing.screenPadding)
-            .padding(.top, 20)
+            .padding(.top, 24)
             .background(Color.echoBackground)
             .footerPadding()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.echoBackground)
-        .presentationDetents([.fraction(0.90)])
+        .presentationDetents([.fraction(0.82)])
         .presentationDragIndicator(.visible) // Native drag bar
         .ignoresSafeArea(edges: .bottom)
         .sheet(isPresented: $showingNoteCaptureSheet) {
@@ -259,14 +259,14 @@ struct EpisodePlayerView: View {
     // MARK: - Episode Metadata (in Footer - 2 lines max)
 
     private var episodeMetadataView: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 6) {
             Text(episode.title)
                 .font(.bodyRoundedMedium())
                 .foregroundColor(.echoTextPrimary)
                 .lineLimit(2)
 
             Text(podcast.title ?? "Unknown Podcast")
-                .font(.caption2Medium())
+                .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.echoTextSecondary)
                 .lineLimit(1)
         }
@@ -289,10 +289,12 @@ struct EpisodePlayerView: View {
             .foregroundColor(.mintButtonText)
             .frame(maxWidth: .infinity)
             .frame(height: 48)
+            .padding(.horizontal, 24)
             .background(Color.mintButtonBackground)
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
+        .padding(.bottom, 32)
     }
 
     // MARK: - Player Controls
@@ -371,7 +373,7 @@ struct EpisodePlayerView: View {
                             }
                         }
                         .buttonStyle(.plain)
-                        .offset(x: xPos, y: -24)
+                        .offset(x: xPos, y: -28)
                     }
                 }
                 .contentShape(Rectangle())
