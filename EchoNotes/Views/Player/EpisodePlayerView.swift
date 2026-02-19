@@ -129,7 +129,8 @@ struct EpisodePlayerView: View {
                                 notes: Array(notes),
                                 addNoteAction: { showingNoteCaptureSheet = true },
                                 player: player,
-                                selectedSegment: $selectedSegment
+                                selectedSegment: $selectedSegment,
+                                selectedNote: $selectedMarkerNote
                             )
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -409,18 +410,18 @@ struct EpisodePlayerView: View {
                 )
             }
             .frame(height: 36)
-            .padding(.horizontal, EchoSpacing.screenPadding)
+            .padding(.horizontal, 24)
 
             HStack {
                 Text(formatTime(player.currentTime))
-                    .font(.caption2Medium())
-                    .foregroundColor(.echoTextTertiary)
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(.white)
 
                 Spacer()
 
                 Text("-\(formatTime(player.duration - player.currentTime))")
-                    .font(.caption2Medium())
-                    .foregroundColor(.echoTextTertiary)
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(.white)
             }
         }
     }
@@ -515,6 +516,7 @@ struct EpisodePlayerView: View {
             Image(systemName: systemName)
                 .font(.system(size: 20, weight: .medium))
                 .foregroundColor(.white)
+                .frame(width: 64, height: 64)
         }
         .buttonStyle(PressEffectButtonStyle())
     }
@@ -612,6 +614,7 @@ struct NotesSegmentView: View {
     let addNoteAction: () -> Void
     @ObservedObject var player: GlobalPlayerManager
     @Binding var selectedSegment: Int
+    @Binding var selectedNote: NoteEntity?
     @Environment(\.managedObjectContext) private var viewContext
 
     var body: some View {
@@ -659,25 +662,8 @@ struct NotesSegmentView: View {
                     let generator = UIImpactFeedbackGenerator(style: .light)
                     generator.impactOccurred()
 
-                    // Seek to timestamp
-                    if let timestamp = note.timestamp {
-                        let components = timestamp.split(separator: ":").compactMap { Int($0) }
-                        let timeInSeconds: TimeInterval?
-                        if components.count == 2 {
-                            timeInSeconds = TimeInterval(components[0] * 60 + components[1])
-                        } else if components.count == 3 {
-                            timeInSeconds = TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
-                        } else {
-                            timeInSeconds = nil
-                        }
-
-                        if let timeInSeconds = timeInSeconds {
-                            player.seek(to: timeInSeconds)
-                            withAnimation {
-                                selectedSegment = 0
-                            }
-                        }
-                    }
+                    // Show note preview popover
+                    selectedNote = note
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     Button(role: .destructive) {
