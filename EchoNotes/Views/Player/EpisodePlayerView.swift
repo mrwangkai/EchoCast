@@ -63,6 +63,7 @@ struct EpisodePlayerView: View {
 
     // Note marker popover state
     @State private var selectedMarkerNote: NoteEntity? = nil
+    @State private var selectedListNote: NoteEntity? = nil
 
     // Go Back button state
     @State private var showGoBackButton = false
@@ -130,7 +131,7 @@ struct EpisodePlayerView: View {
                                 addNoteAction: { showingNoteCaptureSheet = true },
                                 player: player,
                                 selectedSegment: $selectedSegment,
-                                selectedNote: $selectedMarkerNote
+                                selectedNote: $selectedListNote
                             )
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -212,6 +213,24 @@ struct EpisodePlayerView: View {
                 },
                 onDismiss: {
                     selectedMarkerNote = nil
+                }
+            )
+            .presentationDetents([.height(200)])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(item: $selectedListNote) { note in
+            NotePreviewPopover(
+                note: note,
+                notesAtSameTimestamp: notesAtTimestamp(note.timestamp ?? ""),
+                onJumpToTime: {
+                    if let timestamp = note.timestamp,
+                       let timeInSeconds = parseTimestamp(timestamp) {
+                        player.seek(to: timeInSeconds)
+                        selectedListNote = nil
+                    }
+                },
+                onDismiss: {
+                    selectedListNote = nil
                 }
             )
             .presentationDetents([.height(200)])
