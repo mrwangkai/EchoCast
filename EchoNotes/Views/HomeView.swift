@@ -123,19 +123,10 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingPlayerSheet) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                NavigationStack {
-                    EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation)
-                        .navigationBarTitleDisplayMode(.inline)
-                        .onAppear {
-                            print("👁️ [HomeView Player Sheet] EpisodePlayerView appeared")
-                        }
-                        .onDisappear {
-                            print("👁️ [HomeView Player Sheet] EpisodePlayerView disappeared")
-                        }
-                }
-                .presentationDragIndicator(.visible)
-                .presentationDetents([.large])
-                .presentationCornerRadius(20)
+                EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation)
+                    .presentationDragIndicator(.visible)
+                    .presentationDetents([.fraction(0.92)])
+                    .presentationCornerRadius(20)
             }
         }
     }

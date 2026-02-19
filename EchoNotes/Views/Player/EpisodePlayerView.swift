@@ -120,7 +120,7 @@ struct EpisodePlayerView: View {
                             addNoteAction: { showingNoteCaptureSheet = true }
                         )
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.top, 16)
+                        .padding(.top, 8)
 
                     case 1:
                         // Notes: Scrollable List
@@ -153,7 +153,7 @@ struct EpisodePlayerView: View {
                     }
                 }
                 .frame(maxHeight: .infinity)
-                .padding(.bottom, 24)
+                .padding(.bottom, 0)
 
                 // Floating Go Back button overlay (CENTERED)
                 if showGoBackButton {
@@ -164,8 +164,6 @@ struct EpisodePlayerView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            Spacer(minLength: 0) // Pushes footer to bottom
 
             // --- SECTION 3: FOOTER (FIXED HEIGHT: ~290px) ---
             VStack(spacing: 16) {
@@ -183,13 +181,13 @@ struct EpisodePlayerView: View {
                     .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
             }
             .padding(.horizontal, EchoSpacing.screenPadding)
-            .padding(.top, 24)
+            .padding(.top, 16)
             .background(Color.echoBackground)
-            .footerPadding()
+            .padding(.bottom, 48)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.echoBackground)
-        .presentationDetents([.large])
+        .presentationDetents([.fraction(0.92)])
         .presentationDragIndicator(.visible) // Native drag bar
         .ignoresSafeArea(edges: .bottom)
         .sheet(isPresented: $showingNoteCaptureSheet) {
@@ -288,10 +286,9 @@ struct EpisodePlayerView: View {
                     .font(.bodyRoundedMedium())
             }
             .foregroundColor(.mintButtonText)
+            .padding(.horizontal, 32)
             .frame(maxWidth: .infinity)
             .frame(height: 48)
-            .padding(.horizontal, 32)
-            .padding(.bottom, 32)
             .background(Color.mintButtonBackground)
             .cornerRadius(12)
         }
@@ -599,7 +596,7 @@ struct ListeningSegmentView: View {
                         .foregroundColor(.white.opacity(0.3))
                 }
             }
-            .frame(width: 300, height: 300)
+            .frame(width: 280, height: 280)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .matchedGeometryEffect(id: "artwork", in: namespace, isSource: true)
             .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
@@ -647,25 +644,6 @@ struct NotesSegmentView: View {
                 .foregroundColor(.echoTextSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
-
-            // CTA button inline in empty state
-            Button(action: addNoteAction) {
-                HStack(spacing: 8) {
-                    Image(systemName: "note.text.badge.plus")
-                        .font(.system(size: 15, weight: .medium))
-
-                    Text("Add note at current time")
-                        .font(.bodyRoundedMedium())
-                }
-                .foregroundColor(.mintButtonText)
-                .frame(maxWidth: .infinity)
-                .frame(height: 48)
-                .background(Color.mintButtonBackground)
-                .cornerRadius(12)
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, EchoSpacing.screenPadding)
-            .padding(.top, 8)
 
             Spacer()
         }

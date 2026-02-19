@@ -144,7 +144,7 @@ struct PodcastDetailView: View {
         }
         .sheet(item: $selectedEpisode) { episode in
             EpisodePlayerView(episode: episode, podcast: podcast, namespace: namespace)
-                .presentationDetents([.large])
+                .presentationDetents([.fraction(0.92)])
                 .presentationDragIndicator(.visible)
         }
     }
