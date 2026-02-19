@@ -108,50 +108,62 @@ struct EpisodePlayerView: View {
             .padding(.top, 16)
 
             // --- SECTION 2: MID-SECTION (FIXED HEIGHT: 377px) ---
-            Group {
-                switch selectedSegment {
-                case 0:
-                    // Listening: Static Art (Not scrollable)
-                    ListeningSegmentView(
-                        episode: episode,
-                        podcast: podcast,
-                        namespace: namespace,
-                        addNoteAction: { showingNoteCaptureSheet = true }
-                    )
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.top, 40)
-
-                case 1:
-                    // Notes: Scrollable List
-                    ScrollView {
-                        NotesSegmentView(
-                            notes: Array(notes),
-                            addNoteAction: { showingNoteCaptureSheet = true },
-                            player: player,
-                            selectedSegment: $selectedSegment
-                        )
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .scrollIndicators(.hidden)
-                    .padding(.top, 40)
-
-                case 2:
-                    // Info: Scrollable Text
-                    ScrollView {
-                        InfoSegmentView(
+            ZStack(alignment: .topTrailing) {
+                Group {
+                    switch selectedSegment {
+                    case 0:
+                        // Listening: Static Art (Not scrollable)
+                        ListeningSegmentView(
                             episode: episode,
-                            podcast: podcast
+                            podcast: podcast,
+                            namespace: namespace,
+                            addNoteAction: { showingNoteCaptureSheet = true }
                         )
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .scrollIndicators(.hidden)
-                    .padding(.top, 40)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(.top, 40)
 
-                default:
-                    EmptyView()
+                    case 1:
+                        // Notes: Scrollable List
+                        ScrollView {
+                            NotesSegmentView(
+                                notes: Array(notes),
+                                addNoteAction: { showingNoteCaptureSheet = true },
+                                player: player,
+                                selectedSegment: $selectedSegment
+                            )
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .scrollIndicators(.hidden)
+                        .padding(.top, 40)
+
+                    case 2:
+                        // Info: Scrollable Text
+                        ScrollView {
+                            InfoSegmentView(
+                                episode: episode,
+                                podcast: podcast
+                            )
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .scrollIndicators(.hidden)
+                        .padding(.top, 40)
+
+                    default:
+                        EmptyView()
+                    }
+                }
+                .frame(height: 377)
+
+                // Floating Go Back button overlay
+                if showGoBackButton {
+                    goBackButtonOverlay
+                        .padding(.top, 16)
+                        .padding(.trailing, 16)
+                        .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                        .zIndex(100)
                 }
             }
-            .frame(height: 377)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             Spacer(minLength: 0) // Pushes footer to bottom
 
@@ -410,53 +422,6 @@ struct EpisodePlayerView: View {
                     .font(.caption2Medium())
                     .foregroundColor(.echoTextTertiary)
             }
-
-            // Go Back button overlay (appears above timeline after scrubbing)
-            if showGoBackButton {
-                HStack(spacing: 8) {
-                    // Circular countdown indicator
-                    ZStack {
-                        Circle()
-                            .stroke(Color.white.opacity(0.3), lineWidth: 2)
-                            .frame(width: 24, height: 24)
-
-                        Circle()
-                            .trim(from: 0, to: goBackCountdown / 8.0)
-                            .stroke(Color.mintAccent, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                            .frame(width: 24, height: 24)
-                            .rotationEffect(.degrees(-90))
-                            .animation(.linear, value: goBackCountdown)
-                    }
-
-                    Button {
-                        // Jump back to previous position
-                        player.seek(to: previousPlaybackPosition)
-
-                        // Hide button immediately
-                        withAnimation {
-                            showGoBackButton = false
-                        }
-                        goBackTimer?.invalidate()
-                        previousPlaybackPosition = 0
-
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "arrow.uturn.backward")
-                                .font(.system(size: 14, weight: .medium))
-                            Text("go back")
-                                .font(.caption2Medium())
-                        }
-                        .foregroundColor(.mintAccent)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(8)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
-                .padding(.top, 8)
-            }
         }
     }
 
@@ -486,6 +451,53 @@ struct EpisodePlayerView: View {
             skipButton(systemName: "goforward.30", action: { player.skipForward(30) })
         }
         .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Go Back Button Overlay
+
+    private var goBackButtonOverlay: some View {
+        HStack(spacing: 8) {
+            // Circular countdown indicator
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                    .frame(width: 24, height: 24)
+
+                Circle()
+                    .trim(from: 0, to: goBackCountdown / 8.0)
+                    .stroke(Color.mintAccent, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .frame(width: 24, height: 24)
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear, value: goBackCountdown)
+            }
+
+            Button {
+                // Jump back to previous position
+                player.seek(to: previousPlaybackPosition)
+
+                // Hide button immediately
+                withAnimation {
+                    showGoBackButton = false
+                }
+                goBackTimer?.invalidate()
+                previousPlaybackPosition = 0
+
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.uturn.backward")
+                        .font(.system(size: 14, weight: .medium))
+                    Text("go back")
+                        .font(.caption2Medium())
+                }
+                .foregroundColor(.mintAccent)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.1))
+                .cornerRadius(8)
+            }
+            .buttonStyle(.plain)
+        }
+        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 2)
     }
 
     // MARK: - Helper Methods
