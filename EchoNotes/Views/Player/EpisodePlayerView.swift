@@ -462,7 +462,6 @@ struct EpisodePlayerView: View {
 
     private var playbackControlButtons: some View {
         HStack(spacing: 24) {
-            skipButton(systemName: "gobackward.30", action: { player.skipBackward(30) })
             skipButton(systemName: "gobackward.15", action: { player.skipBackward(15) })
 
             Button {
@@ -482,9 +481,8 @@ struct EpisodePlayerView: View {
                         .foregroundColor(.white)
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressEffectButtonStyle())
 
-            skipButton(systemName: "goforward.15", action: { player.skipForward(15) })
             skipButton(systemName: "goforward.30", action: { player.skipForward(30) })
         }
         .frame(maxWidth: .infinity)
@@ -498,7 +496,7 @@ struct EpisodePlayerView: View {
                 .font(.system(size: 20, weight: .medium))
                 .foregroundColor(.white)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressEffectButtonStyle())
     }
 
     private func progressWidth(_ totalWidth: CGFloat) -> CGFloat {
@@ -539,6 +537,18 @@ struct EpisodePlayerView: View {
         return normalizeTimestamp(seconds)
     }
 }
+
+// MARK: - Press Effect Button Style
+
+struct PressEffectButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.9 : 1.0)
+            .opacity(configuration.isPressed ? 0.7 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
 // MARK: - Segment Views
 
 // MARK: - Segment Views
