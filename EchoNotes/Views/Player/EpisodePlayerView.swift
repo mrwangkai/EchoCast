@@ -105,10 +105,10 @@ struct EpisodePlayerView: View {
                     .frame(height: 36)
                     .frame(maxWidth: .infinity)
             }
-            .padding(.top, 16)
+            .padding(.top, 20)
 
             // --- SECTION 2: MID-SECTION (FIXED HEIGHT: 377px) ---
-            ZStack(alignment: .top) {
+            ZStack(alignment: .bottom) {
                 Group {
                     switch selectedSegment {
                     case 0:
@@ -158,7 +158,7 @@ struct EpisodePlayerView: View {
                 // Floating Go Back button overlay (CENTERED)
                 if showGoBackButton {
                     goBackButtonOverlay
-                        .padding(.top, 16)
+                        .padding(.bottom, 16)
                         .transition(.opacity.combined(with: .scale(scale: 0.95)))
                         .zIndex(100)
                 }
@@ -178,10 +178,11 @@ struct EpisodePlayerView: View {
 
                 // Add Note CTA (Always visible with player controls)
                 addNoteButton
+                    .padding(.horizontal, 16)
                     .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
             }
             .padding(.horizontal, EchoSpacing.screenPadding)
-            .padding(.top, 16)
+            .padding(.top, 12)
             .background(Color.echoBackground)
             .padding(.bottom, 48)
         }
