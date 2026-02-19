@@ -108,7 +108,7 @@ struct EpisodePlayerView: View {
             .padding(.top, 16)
 
             // --- SECTION 2: MID-SECTION (FIXED HEIGHT: 377px) ---
-            ZStack(alignment: .topTrailing) {
+            ZStack(alignment: .top) {
                 Group {
                     switch selectedSegment {
                     case 0:
@@ -154,12 +154,11 @@ struct EpisodePlayerView: View {
                 }
                 .frame(height: 377)
 
-                // Floating Go Back button overlay
+                // Floating Go Back button overlay (CENTERED)
                 if showGoBackButton {
                     goBackButtonOverlay
                         .padding(.top, 16)
-                        .padding(.trailing, 16)
-                        .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
                         .zIndex(100)
                 }
             }
@@ -456,17 +455,17 @@ struct EpisodePlayerView: View {
     // MARK: - Go Back Button Overlay
 
     private var goBackButtonOverlay: some View {
-        HStack(spacing: 8) {
-            // Circular countdown indicator
+        HStack(spacing: 10) {
+            // Circular countdown indicator (LARGER, more prominent)
             ZStack {
                 Circle()
-                    .stroke(Color.white.opacity(0.3), lineWidth: 2)
-                    .frame(width: 24, height: 24)
+                    .stroke(Color.white.opacity(0.3), lineWidth: 2.5)
+                    .frame(width: 32, height: 32)
 
                 Circle()
                     .trim(from: 0, to: goBackCountdown / 8.0)
-                    .stroke(Color.mintAccent, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                    .frame(width: 24, height: 24)
+                    .stroke(Color.mintAccent, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                    .frame(width: 32, height: 32)
                     .rotationEffect(.degrees(-90))
                     .animation(.linear, value: goBackCountdown)
             }
@@ -485,19 +484,27 @@ struct EpisodePlayerView: View {
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.uturn.backward")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 15, weight: .semibold))
                     Text("go back")
-                        .font(.caption2Medium())
+                        .font(.system(size: 15, weight: .semibold))
                 }
-                .foregroundColor(.mintAccent)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color.white.opacity(0.1))
-                .cornerRadius(8)
+                .foregroundColor(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.black.opacity(0.75))
+                )
             }
             .buttonStyle(.plain)
         }
-        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 2)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.black.opacity(0.6))
+        )
+        .shadow(color: Color.black.opacity(0.5), radius: 12, x: 0, y: 4)
     }
 
     // MARK: - Helper Methods

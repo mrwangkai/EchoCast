@@ -67,7 +67,7 @@ default:
 **Wrap this entire content switcher in a ZStack** and add the Go Back button as an overlay:
 
 ```swift
-ZStack(alignment: .topTrailing) {
+ZStack(alignment: .top) {  // Changed to .top for center alignment
     // Original content switcher
     switch selectedSegment {
     case 0:
@@ -78,12 +78,11 @@ ZStack(alignment: .topTrailing) {
         EmptyView()
     }
     
-    // Floating Go Back button overlay
+    // Floating Go Back button overlay (CENTERED)
     if showGoBackButton {
         goBackButtonOverlay
-            .padding(.top, 16)      // Distance from top edge
-            .padding(.trailing, 16)  // Distance from right edge
-            .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            .padding(.top, 16)  // Distance from top edge
+            .transition(.opacity.combined(with: .scale(scale: 0.95)))
             .zIndex(100)  // Ensure it's above all content
     }
 }
@@ -91,8 +90,8 @@ ZStack(alignment: .topTrailing) {
 ```
 
 **Key changes:**
-- `ZStack(alignment: .topTrailing)` — positions overlay in top-right
-- `.padding(.top, 16)` and `.padding(.trailing, 16)` — safe margin from edges
+- `ZStack(alignment: .top)` — centers button horizontally, aligns to top
+- Remove `.padding(.trailing, 16)` — button is now centered, not right-aligned
 - `.transition(.opacity.combined(with: .scale))` — smooth pop-in/out animation
 - `.zIndex(100)` — ensures button is above scrolling content
 
@@ -106,17 +105,17 @@ Add this new computed property to `EpisodePlayerView` (place it near other view 
 // MARK: - Go Back Button Overlay
 
 private var goBackButtonOverlay: some View {
-    HStack(spacing: 8) {
-        // Circular countdown indicator
+    HStack(spacing: 10) {
+        // Circular countdown indicator (LARGER, more prominent)
         ZStack {
             Circle()
-                .stroke(Color.white.opacity(0.3), lineWidth: 2)
-                .frame(width: 24, height: 24)
+                .stroke(Color.white.opacity(0.3), lineWidth: 2.5)
+                .frame(width: 32, height: 32)  // Increased from 24
             
             Circle()
                 .trim(from: 0, to: goBackCountdown / 8.0)
-                .stroke(Color.mintAccent, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                .frame(width: 24, height: 24)
+                .stroke(Color.mintAccent, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                .frame(width: 32, height: 32)  // Increased from 24
                 .rotationEffect(.degrees(-90))
                 .animation(.linear, value: goBackCountdown)
         }
@@ -135,23 +134,39 @@ private var goBackButtonOverlay: some View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "arrow.uturn.backward")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 15, weight: .semibold))  // Slightly larger, bolder
                 Text("go back")
-                    .font(.caption2Medium())
+                    .font(.system(size: 15, weight: .semibold))  // Match weight
             }
-            .foregroundColor(.mintAccent)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(8)
+            .foregroundColor(.white)  // Pure white for better contrast
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(
+                // Darker, more opaque background like Overcast
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.black.opacity(0.75))
+            )
         }
         .buttonStyle(.plain)
     }
-    .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 2)  // Add shadow for depth
+    .padding(.horizontal, 16)
+    .padding(.vertical, 10)
+    .background(
+        // Darker pill background for entire button group
+        RoundedRectangle(cornerRadius: 20)
+            .fill(Color.black.opacity(0.6))
+    )
+    .shadow(color: Color.black.opacity(0.5), radius: 12, x: 0, y: 4)  // Stronger shadow
 }
 ```
 
-**Key addition:** `.shadow()` modifier gives the floating button visual depth against any background.
+**Key changes for better visibility:**
+1. **Larger countdown circle:** 32x32pt (up from 24x24pt)
+2. **Bolder text:** Semibold weight at 15pt (up from 14pt medium)
+3. **Pure white text:** Better contrast than mint accent
+4. **Darker backgrounds:** Black at 75% opacity for inner button, 60% for outer pill
+5. **Stronger shadow:** Radius 12 with higher opacity for more depth
+6. **Pill-shaped outer container:** Wraps entire button group for cohesive look
 
 ---
 
@@ -175,12 +190,12 @@ Alternatively, use `.safeAreaInset` if available in your deployment target.
 ## Visual Result
 
 **Before:** Button appears inline with timeline → content jumps up/down  
-**After:** Button floats in top-right corner → content stays put, button fades in/out
+**After:** Button floats centered at top → content stays put, button fades in/out
 
 **Positioning:**
 ```
 ┌─────────────────────────────────┐
-│                   [⏱️ go back]   │ ← Floating overlay, top-right
+│        [⏱️ go back]              │ ← Floating overlay, CENTERED at top
 │                                  │
 │   (Notes list / Artwork /        │ ← Content area (unchanged)
 │    Episode info — depending      │
@@ -191,20 +206,32 @@ Alternatively, use `.safeAreaInset` if available in your deployment target.
      [Timeline and controls]        ← Sticky bottom (unchanged)
 ```
 
+**Styling matches Overcast:**
+- Centered horizontally (not top-right)
+- Darker backgrounds (black 60-75% opacity) for better contrast
+- Larger countdown circle (32pt) for visibility
+- Pure white text (not mint) for maximum readability
+- Pill-shaped outer container wrapping countdown + button
+- Strong shadow for depth
+
 ---
 
 ## Testing Checklist
 
-- [ ] Button appears in **top-right corner** when user scrubs timeline
+- [ ] Button appears **centered horizontally** at top when user scrubs timeline
 - [ ] Button **does not push content** up/down when appearing
 - [ ] Button floats **above** scrolling content (notes list in Listening tab)
+- [ ] Button has **dark backgrounds** (black 60-75% opacity) for contrast
+- [ ] Countdown circle is **32pt** diameter (larger, more visible)
+- [ ] Text is **pure white** and **semibold** at 15pt (readable)
+- [ ] Pill-shaped outer container wraps countdown + button
+- [ ] Strong shadow gives depth (radius 12, black 50% opacity)
 - [ ] Countdown circle animates correctly (8 seconds)
 - [ ] Tapping button seeks back to saved position
 - [ ] Button auto-dismisses after 8 seconds
 - [ ] Button fades in with scale transition (smooth pop-in)
-- [ ] Button has shadow for visual depth
 - [ ] Button respects safe area (not cut off by notch/status bar)
-- [ ] Works correctly across all 3 tabs (Listening, Notes, Episode Info)
+- [ ] Works correctly across all tabs (Listening, Episode Info)
 - [ ] Timer cleanup still happens on `.onDisappear`
 
 ---
@@ -220,6 +247,12 @@ Alternatively, use `.safeAreaInset` if available in your deployment target.
 
 ## Notes
 
+**Why centered instead of top-right?**  
+Following the Overcast reference design you provided — the "Jump Back" button is centered at the top for maximum visibility and easier thumb reach. Center positioning also avoids the "easy to miss" problem you experienced with top-right alignment.
+
+**Why darker backgrounds?**  
+The black 60-75% opacity backgrounds provide strong contrast against any content (light album art, white text in notes list, etc.). This matches Overcast's approach and ensures the button is always prominent.
+
 **Why ZStack on content switcher, not on entire view?**  
 Because the button should float **above content** but **below the segmented control** and **not overlap sticky player controls**. Placing it on the content switcher achieves this hierarchy:
 
@@ -227,4 +260,4 @@ Because the button should float **above content** but **below the segmented cont
 2. Content area with floating button overlay ← Button here
 3. Player controls (bottom, sticky)
 
-**Alternative positioning:** If you want the button to appear in a different corner (e.g., top-left), change `ZStack(alignment: .topTrailing)` to `.topLeading` and swap `.padding(.trailing, 16)` with `.padding(.leading, 16)`.
+**Alternative positioning:** If you want the button in a different vertical position (e.g., middle of screen), adjust `.padding(.top, 16)` to a larger value or use `Spacer()` before the button.
