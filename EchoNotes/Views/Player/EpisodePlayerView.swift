@@ -105,7 +105,7 @@ struct EpisodePlayerView: View {
                     .frame(height: 36)
                     .frame(maxWidth: .infinity)
             }
-            .padding(.top, 16)
+            .padding(.top, 24)
 
             // --- SECTION 2: MID-SECTION (FIXED HEIGHT: 377px) ---
             ZStack(alignment: .top) {
