@@ -87,6 +87,9 @@ struct EpisodePlayerView: View {
     // Unified sheet state
     @State private var activeSheet: PlayerSheet? = nil
 
+    // Track if player was playing before opening note sheet
+    @State private var wasPlayingBeforeNote: Bool = false
+
     // Go Back button state
     @State private var showGoBackButton = false
     @State private var previousPlaybackPosition: TimeInterval = 0
@@ -225,6 +228,19 @@ struct EpisodePlayerView: View {
                     podcast: podcast,
                     currentTime: player.currentTime
                 )
+                .onAppear {
+                    // Save current playback state and pause if playing
+                    wasPlayingBeforeNote = player.isPlaying
+                    if player.isPlaying {
+                        player.pause()
+                    }
+                }
+                .onDisappear {
+                    // Resume playback if it was playing before
+                    if wasPlayingBeforeNote {
+                        player.play()
+                    }
+                }
             case .notePreview(let note):
                 NotePreviewPopover(
                     note: note,
