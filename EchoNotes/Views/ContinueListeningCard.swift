@@ -104,9 +104,23 @@ struct ContinueListeningCard: View {
                     .frame(height: 4)
                     .cornerRadius(2)
 
-                    // Time remaining
+                    // Time remaining + notes count
                     HStack {
+                        // Notes indicator (LEFT)
+                        if episode.notesCount > 0 {
+                            HStack(spacing: 4) {
+                                Image(systemName: "doc.text")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.echoTextTertiary)
+                                Text("\(episode.notesCount) note\(episode.notesCount == 1 ? "" : "s")")
+                                    .font(.caption2Medium())
+                                    .foregroundColor(.echoTextTertiary)
+                            }
+                        }
+
                         Spacer()
+
+                        // Time remaining (RIGHT)
                         Text("-\(episode.timeRemaining)")
                             .font(.caption2Medium())
                             .foregroundColor(.echoTextTertiary)
