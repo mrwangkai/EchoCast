@@ -125,6 +125,7 @@ struct ContinueListeningCard: View {
                             .font(.caption2Medium())
                             .foregroundColor(.echoTextTertiary)
                     }
+                    .padding(.top, 4)
                 }
             }
             .padding(16)
