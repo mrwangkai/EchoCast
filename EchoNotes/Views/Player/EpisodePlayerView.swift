@@ -129,8 +129,7 @@ struct EpisodePlayerView: View {
                                 notes: Array(notes),
                                 addNoteAction: { showingNoteCaptureSheet = true },
                                 player: player,
-                                selectedSegment: $selectedSegment,
-                                selectedNote: $selectedMarkerNote
+                                selectedSegment: $selectedSegment
                             )
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -614,7 +613,6 @@ struct NotesSegmentView: View {
     let addNoteAction: () -> Void
     @ObservedObject var player: GlobalPlayerManager
     @Binding var selectedSegment: Int
-    @Binding var selectedNote: NoteEntity?
     @Environment(\.managedObjectContext) private var viewContext
 
     var body: some View {
@@ -658,12 +656,25 @@ struct NotesSegmentView: View {
         VStack(spacing: 12) {
             ForEach(notes, id: \.id) { note in
                 NoteRow(note: note) {
-                    // Haptic feedback
-                    let generator = UIImpactFeedbackGenerator(style: .light)
-                    generator.impactOccurred()
+                    // Seek to timestamp
+                    if let timestamp = note.timestamp {
+                        let components = timestamp.split(separator: ":").compactMap { Int($0) }
+                        let timeInSeconds: TimeInterval?
+                        if components.count == 2 {
+                            timeInSeconds = TimeInterval(components[0] * 60 + components[1])
+                        } else if components.count == 3 {
+                            timeInSeconds = TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
+                        } else {
+                            timeInSeconds = nil
+                        }
 
-                    // Show note preview popover
-                    selectedNote = note
+                        if let timeInSeconds = timeInSeconds {
+                            player.seek(to: timeInSeconds)
+                            withAnimation {
+                                selectedSegment = 0
+                            }
+                        }
+                    }
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     Button(role: .destructive) {
