@@ -615,6 +615,9 @@ struct NotesSegmentView: View {
     @Binding var selectedSegment: Int
     @Environment(\.managedObjectContext) private var viewContext
 
+    // Note preview state for notes list rows
+    @State private var selectedRowNote: NoteEntity? = nil
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             if notes.isEmpty {
@@ -656,25 +659,8 @@ struct NotesSegmentView: View {
         VStack(spacing: 12) {
             ForEach(notes, id: \.id) { note in
                 NoteRow(note: note) {
-                    // Seek to timestamp
-                    if let timestamp = note.timestamp {
-                        let components = timestamp.split(separator: ":").compactMap { Int($0) }
-                        let timeInSeconds: TimeInterval?
-                        if components.count == 2 {
-                            timeInSeconds = TimeInterval(components[0] * 60 + components[1])
-                        } else if components.count == 3 {
-                            timeInSeconds = TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
-                        } else {
-                            timeInSeconds = nil
-                        }
-
-                        if let timeInSeconds = timeInSeconds {
-                            player.seek(to: timeInSeconds)
-                            withAnimation {
-                                selectedSegment = 0
-                            }
-                        }
-                    }
+                    // Show preview popover
+                    selectedRowNote = note
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     Button(role: .destructive) {
@@ -694,6 +680,39 @@ struct NotesSegmentView: View {
             }
         }
         .padding(.horizontal, EchoSpacing.screenPadding)
+        .sheet(item: $selectedRowNote) { note in
+            NotePreviewPopover(
+                note: note,
+                notesAtSameTimestamp: notesAtTimestamp(note.timestamp ?? ""),
+                onJumpToTime: {
+                    if let timestamp = note.timestamp,
+                       let timeInSeconds = parseTimestamp(timestamp) {
+                        player.seek(to: timeInSeconds)
+                        selectedSegment = 0
+                        selectedRowNote = nil
+                    }
+                },
+                onDismiss: {
+                    selectedRowNote = nil
+                }
+            )
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+        }
+    }
+
+    private func parseTimestamp(_ timestamp: String) -> TimeInterval? {
+        let components = timestamp.split(separator: ":").compactMap { Int($0) }
+        if components.count == 2 {
+            return TimeInterval(components[0] * 60 + components[1])
+        } else if components.count == 3 {
+            return TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
+        }
+        return nil
+    }
+
+    private func notesAtTimestamp(_ timestamp: String) -> [NoteEntity] {
+        notes.filter { $0.timestamp == timestamp }
     }
 
     private func deleteNote(_ note: NoteEntity) {
