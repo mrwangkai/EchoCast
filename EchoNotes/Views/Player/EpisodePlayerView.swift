@@ -50,6 +50,30 @@ extension View {
 
 // MARK: - Main Episode Player View
 
+// MARK: - Player Sheet Enum
+private enum PlayerSheet: Identifiable, Equatable {
+    case noteCapture
+    case notePreview(NoteEntity)
+
+    var id: String {
+        switch self {
+        case .noteCapture: return "noteCapture"
+        case .notePreview(let note): return "notePreview-\(note.objectID)"
+        }
+    }
+
+    static func == (lhs: PlayerSheet, rhs: PlayerSheet) -> Bool {
+        switch (lhs, rhs) {
+        case (.noteCapture, .noteCapture):
+            return true
+        case (.notePreview(let lhsNote), .notePreview(let rhsNote)):
+            return lhsNote.objectID == rhsNote.objectID
+        default:
+            return false
+        }
+    }
+}
+
 struct EpisodePlayerView: View {
     // MARK: - Properties
 
@@ -59,10 +83,9 @@ struct EpisodePlayerView: View {
 
     @ObservedObject private var player = GlobalPlayerManager.shared
     @State private var selectedSegment = 0
-    @State private var showingNoteCaptureSheet = false
 
-    // Note marker popover state
-    @State private var selectedMarkerNote: NoteEntity? = nil
+    // Unified sheet state
+    @State private var activeSheet: PlayerSheet? = nil
 
     // Go Back button state
     @State private var showGoBackButton = false
@@ -117,7 +140,7 @@ struct EpisodePlayerView: View {
                             episode: episode,
                             podcast: podcast,
                             namespace: namespace,
-                            addNoteAction: { showingNoteCaptureSheet = true }
+                            addNoteAction: { activeSheet = .noteCapture }
                         )
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .padding(.top, 8)
@@ -127,9 +150,12 @@ struct EpisodePlayerView: View {
                         ScrollView {
                             NotesSegmentView(
                                 notes: Array(notes),
-                                addNoteAction: { showingNoteCaptureSheet = true },
+                                addNoteAction: { activeSheet = .noteCapture },
                                 player: player,
-                                selectedSegment: $selectedSegment
+                                selectedSegment: $selectedSegment,
+                                onNoteTap: { note in
+                                    activeSheet = .notePreview(note)
+                                }
                             )
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -179,7 +205,7 @@ struct EpisodePlayerView: View {
                 // Add Note CTA (Always visible with player controls)
                 addNoteButton
                     .padding(.horizontal, 16)
-                    .sensoryFeedback(.impact, trigger: showingNoteCaptureSheet)
+                    .sensoryFeedback(.impact, trigger: activeSheet == .noteCapture)
             }
             .padding(.horizontal, EchoSpacing.screenPadding)
             .padding(.top, 12)
@@ -191,30 +217,32 @@ struct EpisodePlayerView: View {
         .presentationDetents([.fraction(0.92)])
         .presentationDragIndicator(.visible) // Native drag bar
         .ignoresSafeArea(edges: .bottom)
-        .sheet(isPresented: $showingNoteCaptureSheet) {
-            NoteCaptureSheetWrapper(
-                episode: episode,
-                podcast: podcast,
-                currentTime: player.currentTime
-            )
-        }
-        .sheet(item: $selectedMarkerNote) { note in
-            NotePreviewPopover(
-                note: note,
-                notesAtSameTimestamp: notesAtTimestamp(note.timestamp ?? ""),
-                onJumpToTime: {
-                    if let timestamp = note.timestamp,
-                       let timeInSeconds = parseTimestamp(timestamp) {
-                        player.seek(to: timeInSeconds)
-                        selectedMarkerNote = nil
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .noteCapture:
+                NoteCaptureSheetWrapper(
+                    episode: episode,
+                    podcast: podcast,
+                    currentTime: player.currentTime
+                )
+            case .notePreview(let note):
+                NotePreviewPopover(
+                    note: note,
+                    notesAtSameTimestamp: notesAtTimestamp(note.timestamp ?? ""),
+                    onJumpToTime: {
+                        if let timestamp = note.timestamp,
+                           let timeInSeconds = parseTimestamp(timestamp) {
+                            player.seek(to: timeInSeconds)
+                            activeSheet = nil
+                        }
+                    },
+                    onDismiss: {
+                        activeSheet = nil
                     }
-                },
-                onDismiss: {
-                    selectedMarkerNote = nil
-                }
-            )
-            .presentationDetents([.height(200)])
-            .presentationDragIndicator(.visible)
+                )
+                .presentationDetents([.height(200)])
+                .presentationDragIndicator(.visible)
+            }
         }
         .onDisappear {
             goBackTimer?.invalidate()
@@ -277,7 +305,7 @@ struct EpisodePlayerView: View {
 
     private var addNoteButton: some View {
         Button {
-            showingNoteCaptureSheet = true
+            activeSheet = .noteCapture
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "note.text.badge.plus")
@@ -357,7 +385,9 @@ struct EpisodePlayerView: View {
 
                         Button {
                             // Show popover with first note at this position
-                            selectedMarkerNote = group.notes.first
+                            if let firstNote = group.notes.first {
+                                activeSheet = .notePreview(firstNote)
+                            }
                         } label: {
                             ZStack {
                                 Circle()
@@ -613,10 +643,8 @@ struct NotesSegmentView: View {
     let addNoteAction: () -> Void
     @ObservedObject var player: GlobalPlayerManager
     @Binding var selectedSegment: Int
+    let onNoteTap: (NoteEntity) -> Void
     @Environment(\.managedObjectContext) private var viewContext
-
-    // Note preview state for notes list rows
-    @State private var selectedRowNote: NoteEntity? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -659,8 +687,8 @@ struct NotesSegmentView: View {
         VStack(spacing: 12) {
             ForEach(notes, id: \.id) { note in
                 NoteRow(note: note) {
-                    // Show preview popover
-                    selectedRowNote = note
+                    // Show preview popover via callback
+                    onNoteTap(note)
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     Button(role: .destructive) {
@@ -680,39 +708,6 @@ struct NotesSegmentView: View {
             }
         }
         .padding(.horizontal, EchoSpacing.screenPadding)
-        .sheet(item: $selectedRowNote) { note in
-            NotePreviewPopover(
-                note: note,
-                notesAtSameTimestamp: notesAtTimestamp(note.timestamp ?? ""),
-                onJumpToTime: {
-                    if let timestamp = note.timestamp,
-                       let timeInSeconds = parseTimestamp(timestamp) {
-                        player.seek(to: timeInSeconds)
-                        selectedSegment = 0
-                        selectedRowNote = nil
-                    }
-                },
-                onDismiss: {
-                    selectedRowNote = nil
-                }
-            )
-            .presentationDetents([.medium])
-            .presentationDragIndicator(.visible)
-        }
-    }
-
-    private func parseTimestamp(_ timestamp: String) -> TimeInterval? {
-        let components = timestamp.split(separator: ":").compactMap { Int($0) }
-        if components.count == 2 {
-            return TimeInterval(components[0] * 60 + components[1])
-        } else if components.count == 3 {
-            return TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
-        }
-        return nil
-    }
-
-    private func notesAtTimestamp(_ timestamp: String) -> [NoteEntity] {
-        notes.filter { $0.timestamp == timestamp }
     }
 
     private func deleteNote(_ note: NoteEntity) {
