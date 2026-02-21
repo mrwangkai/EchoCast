@@ -51,27 +51,10 @@ extension View {
 // MARK: - Main Episode Player View
 
 // MARK: - Player Sheet Enum
-private enum PlayerSheet: Identifiable, Equatable {
+private enum PlayerSheet: Identifiable {
     case noteCapture
-    case notePreview(NoteEntity)
 
-    var id: String {
-        switch self {
-        case .noteCapture: return "noteCapture"
-        case .notePreview(let note): return "notePreview-\(note.objectID)"
-        }
-    }
-
-    static func == (lhs: PlayerSheet, rhs: PlayerSheet) -> Bool {
-        switch (lhs, rhs) {
-        case (.noteCapture, .noteCapture):
-            return true
-        case (.notePreview(let lhsNote), .notePreview(let rhsNote)):
-            return lhsNote.objectID == rhsNote.objectID
-        default:
-            return false
-        }
-    }
+    var id: String { "noteCapture" }
 }
 
 struct EpisodePlayerView: View {
@@ -89,6 +72,10 @@ struct EpisodePlayerView: View {
 
     // Track if player was playing before opening note sheet
     @State private var wasPlayingBeforeNote: Bool = false
+
+    // Note preview overlay state
+    @State private var previewNote: NoteEntity? = nil
+    @State private var showingNotePreview: Bool = false
 
     // Go Back button state
     @State private var showGoBackButton = false
@@ -166,7 +153,10 @@ struct EpisodePlayerView: View {
                                     player: player,
                                     selectedSegment: $selectedSegment,
                                     onNoteTap: { note in
-                                        activeSheet = .notePreview(note)
+                                        withAnimation(.spring(response: 0.3)) {
+                                            previewNote = note
+                                            showingNotePreview = true
+                                        }
                                     }
                                 )
                             }
@@ -230,6 +220,43 @@ struct EpisodePlayerView: View {
                 playerLoadingSkeleton
                     .transition(.opacity)
             }
+
+            // Note preview overlay card
+            if showingNotePreview, let note = previewNote {
+                // Dimming background tap to dismiss
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.3)) {
+                            showingNotePreview = false
+                            previewNote = nil
+                        }
+                    }
+
+                NoteOverlayCard(
+                    note: note,
+                    allNotesAtTimestamp: notesAtTimestamp(note.timestamp ?? ""),
+                    onJump: {
+                        if let timestamp = note.timestamp,
+                           let timeInSeconds = parseTimestamp(timestamp) {
+                            player.seek(to: timeInSeconds)
+                            withAnimation(.spring(response: 0.3)) {
+                                showingNotePreview = false
+                                previewNote = nil
+                                selectedSegment = 0
+                            }
+                        }
+                    },
+                    onDismiss: {
+                        withAnimation(.spring(response: 0.3)) {
+                            showingNotePreview = false
+                            previewNote = nil
+                        }
+                    }
+                )
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+            }
         }
         .animation(.easeInOut(duration: 0.3), value: isPlayerReady)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -258,24 +285,6 @@ struct EpisodePlayerView: View {
                         player.play()
                     }
                 }
-            case .notePreview(let note):
-                NotePreviewPopover(
-                    note: note,
-                    notesAtSameTimestamp: notesAtTimestamp(note.timestamp ?? ""),
-                    onJumpToTime: {
-                        if let timestamp = note.timestamp,
-                           let timeInSeconds = parseTimestamp(timestamp) {
-                            player.seek(to: timeInSeconds)
-                            activeSheet = nil
-                        }
-                    },
-                    onDismiss: {
-                        activeSheet = nil
-                    }
-                )
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
-                .zIndex(1000)
             }
         }
         .onDisappear {
@@ -418,9 +427,12 @@ struct EpisodePlayerView: View {
                         let xPos = (group.position / player.duration) * geo.size.width - 14
 
                         Button {
-                            // Show popover with first note at this position
+                            // Show overlay with first note at this position
                             if let firstNote = group.notes.first {
-                                activeSheet = .notePreview(firstNote)
+                                withAnimation(.spring(response: 0.3)) {
+                                    previewNote = firstNote
+                                    showingNotePreview = true
+                                }
                             }
                         } label: {
                             ZStack {
@@ -1140,5 +1152,101 @@ struct NotePreviewPopover: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Note Overlay Card
+
+private struct NoteOverlayCard: View {
+    let note: NoteEntity
+    let allNotesAtTimestamp: [NoteEntity]
+    let onJump: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Dismiss handle area — tap anywhere outside card dismisses
+            // (handled by the parent ZStack tap)
+
+            VStack(alignment: .leading, spacing: 12) {
+
+                // Header row: timestamp badge + close button
+                HStack {
+                    if let timestamp = note.timestamp {
+                        Text(timestamp)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Color(red: 0.102, green: 0.235, blue: 0.204))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.mintAccent)
+                            .clipShape(Capsule())
+                    }
+
+                    if allNotesAtTimestamp.count > 1 {
+                        Text("\(allNotesAtTimestamp.count) notes here")
+                            .font(.system(size: 11))
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+
+                    Spacer()
+
+                    Button(action: onDismiss) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.white.opacity(0.4))
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                // Note text
+                if let text = note.noteText, !text.isEmpty {
+                    Text(text)
+                        .font(.system(size: 15))
+                        .foregroundColor(.white)
+                        .lineLimit(4)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                // Tags
+                let tags = note.tagsArray
+                if !tags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(tags, id: \.self) { tag in
+                                Text(tag)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 3)
+                                    .background(Color.white.opacity(0.12))
+                                    .clipShape(Capsule())
+                            }
+                        }
+                    }
+                }
+
+                // Jump button
+                Button(action: onJump) {
+                    HStack {
+                        Image(systemName: "arrow.forward.circle.fill")
+                        Text("Jump to time")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .foregroundColor(.mintAccent)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.mintAccent.opacity(0.15))
+                    .cornerRadius(10)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color(red: 0.14, green: 0.14, blue: 0.16))
+                    .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: -4)
+            )
+        }
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 }
