@@ -372,57 +372,94 @@ struct EpisodePlayerView: View {
     private var timeProgressWithMarkers: some View {
         VStack(spacing: 8) {
             GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    // Inactive track
-                    Capsule()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(height: 4)
-                        .frame(maxHeight: .infinity, alignment: .center)
-
-                    // Active track
-                    Capsule()
-                        .fill(Color.mintAccent)
-                        .frame(
-                            width: geo.size.width * CGFloat(
-                                player.duration > 0
-                                    ? min(player.currentTime / player.duration, 1.0)
-                                    : 0
-                            ),
-                            height: 4
-                        )
-                        .frame(maxHeight: .infinity, alignment: .center)
-
-                    // Scrubber knob
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: 14, height: 14)
-                        .offset(
-                            x: geo.size.width * CGFloat(player.duration > 0
-                                ? min(player.currentTime / player.duration, 1.0)
-                                : 0) - 7,
-                            y: 0
-                        )
-                        .frame(maxHeight: .infinity, alignment: .center)
-
-                    // Note markers (grouped by proximity)
-                    let groupedNotes: [(position: TimeInterval, notes: [NoteEntity])] = {
-                        var groups: [(position: TimeInterval, notes: [NoteEntity])] = []
-                        let threshold = player.duration * 0.05
-                        for note in notes {
-                            guard let timestamp = note.timestamp,
-                                  let seconds = parseTimestamp(timestamp),
-                                  player.duration > 1 else { continue }
-                            if let idx = groups.firstIndex(where: {
-                                abs($0.position - seconds) < threshold
-                            }) {
-                                groups[idx].notes.append(note)
-                            } else {
-                                groups.append((position: seconds, notes: [note]))
-                            }
+                // Note markers (grouped by proximity) - computed once, available to all
+                let groupedNotes: [(position: TimeInterval, notes: [NoteEntity])] = {
+                    var groups: [(position: TimeInterval, notes: [NoteEntity])] = []
+                    let threshold = player.duration * 0.05
+                    for note in notes {
+                        guard let timestamp = note.timestamp,
+                              let seconds = parseTimestamp(timestamp),
+                              player.duration > 1 else { continue }
+                        if let idx = groups.firstIndex(where: {
+                            abs($0.position - seconds) < threshold
+                        }) {
+                            groups[idx].notes.append(note)
+                        } else {
+                            groups.append((position: seconds, notes: [note]))
                         }
-                        return groups
-                    }()
+                    }
+                    return groups
+                }()
 
+                // Outer ZStack for layout - markers sit alongside inner track ZStack
+                ZStack(alignment: .leading) {
+                    // Inner ZStack: track + scrubber with DragGesture
+                    ZStack(alignment: .leading) {
+                        // Inactive track
+                        Capsule()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(height: 4)
+                            .frame(maxHeight: .infinity, alignment: .center)
+
+                        // Active track
+                        Capsule()
+                            .fill(Color.mintAccent)
+                            .frame(
+                                width: geo.size.width * CGFloat(
+                                    player.duration > 0
+                                        ? min(player.currentTime / player.duration, 1.0)
+                                        : 0
+                                ),
+                                height: 4
+                            )
+                            .frame(maxHeight: .infinity, alignment: .center)
+
+                        // Scrubber knob
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: 14, height: 14)
+                            .offset(
+                                x: geo.size.width * CGFloat(player.duration > 0
+                                    ? min(player.currentTime / player.duration, 1.0)
+                                    : 0) - 7,
+                                y: 0
+                            )
+                            .frame(maxHeight: .infinity, alignment: .center)
+                    }
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                // Save position on first drag (scrub start)
+                                if !showGoBackButton && previousPlaybackPosition == 0 {
+                                    previousPlaybackPosition = player.currentTime
+                                }
+                                let pct = min(max(0, value.location.x / geo.size.width), 1.0)
+                                player.seek(to: pct * player.duration)
+                            }
+                            .onEnded { _ in
+                                // Show go back button when scrub ends
+                                showGoBackButton = true
+                                goBackCountdown = 8.0
+
+                                // Cancel existing timer
+                                goBackTimer?.invalidate()
+
+                                // Set 8-second timer with countdown
+                                goBackTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+                                    goBackCountdown -= 0.1
+                                    if goBackCountdown <= 0 {
+                                        timer.invalidate()
+                                        withAnimation {
+                                            showGoBackButton = false
+                                        }
+                                        previousPlaybackPosition = 0
+                                    }
+                                }
+                            }
+                    )
+
+                    // Markers sit ALONGSIDE the inner ZStack, outside DragGesture
                     ForEach(Array(groupedNotes.enumerated()), id: \.offset) { _, group in
                         let xPos = (group.position / player.duration) * geo.size.width - 14
 
@@ -448,41 +485,9 @@ struct EpisodePlayerView: View {
                             }
                         }
                         .buttonStyle(.plain)
-                        .offset(x: xPos, y: -32)
+                        .position(x: xPos + 14, y: -8)
                     }
                 }
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            // Save position on first drag (scrub start)
-                            if !showGoBackButton && previousPlaybackPosition == 0 {
-                                previousPlaybackPosition = player.currentTime
-                            }
-                            let pct = min(max(0, value.location.x / geo.size.width), 1.0)
-                            player.seek(to: pct * player.duration)
-                        }
-                        .onEnded { _ in
-                            // Show go back button when scrub ends
-                            showGoBackButton = true
-                            goBackCountdown = 8.0
-
-                            // Cancel existing timer
-                            goBackTimer?.invalidate()
-
-                            // Set 8-second timer with countdown
-                            goBackTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-                                goBackCountdown -= 0.1
-                                if goBackCountdown <= 0 {
-                                    timer.invalidate()
-                                    withAnimation {
-                                        showGoBackButton = false
-                                    }
-                                    previousPlaybackPosition = 0
-                                }
-                            }
-                        }
-                )
             }
             .frame(height: 36)
             .padding(.horizontal, 24)

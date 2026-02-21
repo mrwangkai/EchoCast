@@ -1,25 +1,26 @@
-We are replacing the note preview sheet approach with an in-player 
-overlay card. No new sheets. The preview appears as a floating card 
-INSIDE EpisodePlayerView using a ZStack overlay.
+# Claude Code Prompt: Note Preview Overlay Card
 
-Checkpoint: b614e6e — revert here if anything breaks.
+**Goal:** Tapping a note marker on the timeline OR tapping a note row in the
+Notes tab shows a floating overlay card INSIDE EpisodePlayerView. No new
+sheets — the card appears as a ZStack layer within the existing player.
+From the card, the user can jump to the timestamp or dismiss.
+
+Checkpoint: if anything breaks, revert to `998185f`.
+
+Do NOT use web search. Read files first, then implement in order.
 
 ---
 
-## STEP 1: Read only, no changes
+## STEP 1: Read — no changes yet
 
-Read EchoNotes/Views/Player/EpisodePlayerView.swift and report:
+Read `EchoNotes/Views/Player/EpisodePlayerView.swift` and report:
 
-1. The outermost view structure of body — is it a VStack, ZStack, 
-   or something else? Show the opening 20 lines of body.
-
-2. The current .sheet(item: $activeSheet) block — we will be 
-   removing the .notePreview case from it (keeping .noteCapture).
-
-3. The PlayerSheet enum — show current cases.
-
-4. Where activeSheet = .notePreview(note) is called (both the 
-   marker tap and the onNoteTap callback).
+1. All `@State` variables at the top of EpisodePlayerView
+2. The outermost view structure of `body` — first 20 lines
+3. Every `.sheet()` modifier currently in the file
+4. The current note marker tap handler
+5. The current NotesSegmentView call site (how onNoteTap is wired)
+6. The full NotesSegmentView struct signature
 
 Report before touching anything.
 
@@ -27,17 +28,23 @@ Report before touching anything.
 
 ## STEP 2: Add overlay state to EpisodePlayerView
 
-Add these two @State vars:
+Add exactly these two `@State` vars — types must be exact:
 
+```swift
 @State private var previewNote: NoteEntity? = nil
 @State private var showingNotePreview: Bool = false
+```
+
+⚠️ Critical: the type MUST be `NoteEntity?` not `Entity?` or any
+other type. Double-check after adding.
 
 ---
 
-## STEP 3: Create the overlay card view
+## STEP 3: Create NoteOverlayCard
 
-Add this as a private struct at the bottom of EpisodePlayerView.swift:
+Add this as a private struct at the BOTTOM of EpisodePlayerView.swift:
 
+```swift
 private struct NoteOverlayCard: View {
     let note: NoteEntity
     let allNotesAtTimestamp: [NoteEntity]
@@ -45,112 +52,109 @@ private struct NoteOverlayCard: View {
     let onDismiss: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Dismiss handle area — tap anywhere outside card dismisses
-            // (handled by the parent ZStack tap)
+        VStack(alignment: .leading, spacing: 12) {
 
-            VStack(alignment: .leading, spacing: 12) {
-
-                // Header row: timestamp badge + close button
-                HStack {
-                    if let timestamp = note.timestamp {
-                        Text(timestamp)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Color(red: 0.102, green: 0.235, blue: 0.204))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.mintAccent)
-                            .clipShape(Capsule())
-                    }
-
-                    if allNotesAtTimestamp.count > 1 {
-                        Text("\(allNotesAtTimestamp.count) notes here")
-                            .font(.system(size: 11))
-                            .foregroundColor(.white.opacity(0.5))
-                    }
-
-                    Spacer()
-
-                    Button(action: onDismiss) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.white.opacity(0.4))
-                    }
-                    .buttonStyle(.plain)
+            // Header: timestamp badge + note count + close button
+            HStack {
+                if let timestamp = note.timestamp {
+                    Text(timestamp)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color(red: 0.102, green: 0.235, blue: 0.204))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.mintAccent)
+                        .clipShape(Capsule())
                 }
 
-                // Note text
-                if let text = note.noteText, !text.isEmpty {
-                    Text(text)
-                        .font(.system(size: 15))
-                        .foregroundColor(.white)
-                        .lineLimit(4)
-                        .fixedSize(horizontal: false, vertical: true)
+                if allNotesAtTimestamp.count > 1 {
+                    Text("\(allNotesAtTimestamp.count) notes here")
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.5))
                 }
 
-                // Tags
-                let tags = note.tagsArray
-                if !tags.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 6) {
-                            ForEach(tags, id: \.self) { tag in
-                                Text(tag)
-                                    .font(.system(size: 11, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.7))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 3)
-                                    .background(Color.white.opacity(0.12))
-                                    .clipShape(Capsule())
-                            }
-                        }
-                    }
-                }
+                Spacer()
 
-                // Jump button
-                Button(action: onJump) {
-                    HStack {
-                        Image(systemName: "arrow.forward.circle.fill")
-                        Text("Jump to time")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                    .foregroundColor(.mintAccent)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.mintAccent.opacity(0.15))
-                    .cornerRadius(10)
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.white.opacity(0.4))
                 }
                 .buttonStyle(.plain)
             }
-            .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(red: 0.14, green: 0.14, blue: 0.16))
-                    .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: -4)
-            )
+
+            // Note text
+            if let text = note.noteText, !text.isEmpty {
+                Text(text)
+                    .font(.system(size: 15))
+                    .foregroundColor(.white)
+                    .lineLimit(4)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            // Tags
+            let tags = note.tagsArray
+            if !tags.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(tags, id: \.self) { tag in
+                            Text(tag)
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(Color.white.opacity(0.12))
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+            }
+
+            // Jump button
+            Button(action: onJump) {
+                HStack {
+                    Image(systemName: "arrow.forward.circle.fill")
+                    Text("Jump to time")
+                        .font(.system(size: 14, weight: .semibold))
+                }
+                .foregroundColor(.mintAccent)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.mintAccent.opacity(0.15))
+                .cornerRadius(10)
+            }
+            .buttonStyle(.plain)
         }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(red: 0.14, green: 0.14, blue: 0.16))
+                .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: -4)
+        )
         .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 }
+```
 
 ---
 
-## STEP 4: Wrap EpisodePlayerView body in a ZStack
+## STEP 4: Wrap body in a ZStack with the overlay
 
-The current outermost view in body needs to become the bottom 
-layer of a ZStack, with the overlay card as the top layer.
+The existing body content becomes the bottom layer. Add the overlay
+card as the top layer, gated by `showingNotePreview`.
 
-Wrap the existing body content like this:
-
+```swift
 var body: some View {
     ZStack(alignment: .bottom) {
-        
-        // ── existing body content unchanged ──
-        // (the VStack with segmented control, tab content, player controls)
-        // Keep ALL existing modifiers (.background, .presentationDetents etc)
-        
-        // ── overlay card ──
+
+        // ── EXISTING BODY CONTENT (unchanged) ──
+        // Move ALL current body content here as-is.
+        // Keep ALL existing modifiers (.background, .presentationDetents,
+        // .sheet(item: $activeSheet), etc.) attached to this inner content.
+
+        // ── OVERLAY LAYER ──
         if showingNotePreview, let note = previewNote {
-            // Dimming background tap to dismiss
+
+            // Dimming background — tap to dismiss
             Color.black.opacity(0.3)
                 .ignoresSafeArea()
                 .onTapGesture {
@@ -159,7 +163,7 @@ var body: some View {
                         previewNote = nil
                     }
                 }
-            
+
             NoteOverlayCard(
                 note: note,
                 allNotesAtTimestamp: notesAtTimestamp(note.timestamp ?? ""),
@@ -185,49 +189,90 @@ var body: some View {
             .padding(.bottom, 12)
         }
     }
+    // No modifiers here — all modifiers stay on the inner content view
 }
+```
 
 ---
 
-## STEP 5: Replace activeSheet = .notePreview(note) with overlay trigger
+## STEP 5: Update trigger locations
 
-Anywhere that currently calls activeSheet = .notePreview(note) 
-— both the marker tap and the onNoteTap callback — replace with:
+### Marker tap (timeline):
+Find the Button inside the ForEach marker block. Replace its action with:
 
-withAnimation(.spring(response: 0.3)) {
-    previewNote = note
-    showingNotePreview = true
+```swift
+Button {
+    if let firstNote = group.notes.first {
+        withAnimation(.spring(response: 0.3)) {
+            previewNote = firstNote       // NoteEntity, not Entity
+            showingNotePreview = true
+        }
+    }
+} label: { ... }
+```
+
+### Note row tap (Notes tab):
+The onNoteTap callback in the NotesSegmentView call site should be:
+
+```swift
+onNoteTap: { note in
+    withAnimation(.spring(response: 0.3)) {
+        previewNote = note               // NoteEntity, not Entity
+        showingNotePreview = true
+    }
 }
+```
 
 ---
 
-## STEP 6: Clean up PlayerSheet enum and activeSheet
+## STEP 6: PlayerSheet enum — remove .notePreview if present
 
-Remove the .notePreview case from the PlayerSheet enum entirely.
-Keep only .noteCapture.
+If the PlayerSheet enum still has a `.notePreview(NoteEntity)` case,
+remove it. Only `.noteCapture` should remain.
 
-Remove the .notePreview case from the .sheet(item: $activeSheet) 
-switch block.
-
-The enum becomes:
-private enum PlayerSheet: Identifiable {
-    case noteCapture
-    
-    var id: String { "noteCapture" }
-}
+Remove any `.notePreview` case from the `.sheet(item: $activeSheet)`
+switch block as well.
 
 ---
 
-## STEP 7: Build
+## STEP 7: Type safety verification
+
+Before building, run this and paste the output:
+
+```
+grep -n "previewNote" EchoNotes/Views/Player/EpisodePlayerView.swift
+```
+
+Confirm that every occurrence of `previewNote` refers to type
+`NoteEntity?` — not `Entity?` or any other type.
+If any line shows the wrong type, fix it before building.
+
+---
+
+## STEP 8: Build
 
 Build only. Report pass or fail with exact errors.
 Do not fix errors without reporting first.
 
 ---
 
-## STEP 8: If build passes
+## STEP 9: If build passes
 
+```bash
 git add -A
-git commit -m "Note preview: overlay card inside player (no nested sheets)"
+git commit -m "Note preview: ZStack overlay card inside player, no nested sheets"
+```
 
 Report commit hash.
+
+---
+
+## Expected behavior when complete
+
+- Tapping a timeline marker → overlay card slides up from bottom of player
+- Tapping a note row in Notes tab → same overlay card
+- Player artwork, controls, and context remain fully visible behind card
+- Dimming layer behind card, tap outside to dismiss
+- "Jump to time" seeks player, switches to Listening tab, dismisses card
+- Dismissing without jumping leaves playback unchanged
+- No sheet swapping, no nested sheet conflicts
