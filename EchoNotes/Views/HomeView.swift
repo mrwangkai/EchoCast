@@ -201,6 +201,9 @@ struct HomeView: View {
         .onChange(of: allPodcasts.count) { _ in
             loadContinueListeningEpisodes()
         }
+        .onChange(of: player.currentEpisode?.id) { _ in
+            loadContinueListeningEpisodes()
+        }
     }
 
     // MARK: - Following Section
