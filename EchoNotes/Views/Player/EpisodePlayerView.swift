@@ -228,8 +228,10 @@ struct EpisodePlayerView: View {
             // Skeleton loading overlay (shown when player is loading)
             if !isPlayerReady {
                 playerLoadingSkeleton
+                    .transition(.opacity)
             }
         }
+        .animation(.easeInOut(duration: 0.3), value: isPlayerReady)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.echoBackground)
         .presentationDetents([.fraction(0.92)])
@@ -271,8 +273,9 @@ struct EpisodePlayerView: View {
                         activeSheet = nil
                     }
                 )
-                .presentationDetents([.height(200)])
+                .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
+                .zIndex(1000)
             }
         }
         .onDisappear {
@@ -636,21 +639,21 @@ struct EpisodePlayerView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.white.opacity(0.1))
                         .frame(width: 200, height: 200)
-                        .shimmer()
+                        .redacted(reason: .placeholder)
 
                     // Episode title skeleton
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color.white.opacity(0.1))
                         .frame(height: 20)
                         .frame(maxWidth: 280)
-                        .shimmer()
+                        .redacted(reason: .placeholder)
 
                     // Podcast name skeleton
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color.white.opacity(0.1))
                         .frame(height: 16)
                         .frame(maxWidth: 200)
-                        .shimmer()
+                        .redacted(reason: .placeholder)
 
                     Spacer()
                 }
@@ -663,7 +666,7 @@ struct EpisodePlayerView: View {
                         .fill(Color.white.opacity(0.1))
                         .frame(height: 4)
                         .frame(maxWidth: .infinity)
-                        .shimmer()
+                        .redacted(reason: .placeholder)
 
                     // Controls skeleton
                     HStack(spacing: 16) {
@@ -671,11 +674,11 @@ struct EpisodePlayerView: View {
                         RoundedRectangle(cornerRadius: 16)
                             .fill(Color.white.opacity(0.1))
                             .frame(width: 50, height: 50)
-                            .shimmer()
+                            .redacted(reason: .placeholder)
                         RoundedRectangle(cornerRadius: 16)
                             .fill(Color.white.opacity(0.1))
                             .frame(width: 50, height: 50)
-                            .shimmer()
+                            .redacted(reason: .placeholder)
                         Spacer()
                     }
 
@@ -683,7 +686,7 @@ struct EpisodePlayerView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color.white.opacity(0.1))
                         .frame(height: 48)
-                        .shimmer()
+                        .redacted(reason: .placeholder)
                 }
                 .padding(.horizontal, EchoSpacing.screenPadding)
                 .padding(.top, 12)
@@ -1137,27 +1140,5 @@ struct NotePreviewPopover: View {
                 }
             }
         }
-    }
-}
-
-// MARK: - Shimmer Effect Modifier
-
-extension View {
-    func shimmer() -> some View {
-        self.overlay(
-            LinearGradient(
-                colors: [Color.clear, Color.white.opacity(0.3), Color.clear],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            .rotationEffect(.degrees(30))
-            .offset(x: -200)
-            .task {
-                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
-                    // Animate the shimmer effect
-                }
-            }
-        )
-        .clipped()
     }
 }
