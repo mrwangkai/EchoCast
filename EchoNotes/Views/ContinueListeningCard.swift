@@ -111,10 +111,10 @@ struct ContinueListeningCard: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "doc.text")
                                     .font(.system(size: 12))
-                                    .foregroundColor(.echoTextTertiary)
+                                    .foregroundColor(Color(red: 0.6, green: 0.6, blue: 0.6))
                                 Text("\(episode.notesCount) note\(episode.notesCount == 1 ? "" : "s")")
                                     .font(.caption2Medium())
-                                    .foregroundColor(.echoTextTertiary)
+                                    .foregroundColor(Color(red: 0.6, green: 0.6, blue: 0.6))
                             }
                         }
 
@@ -123,9 +123,9 @@ struct ContinueListeningCard: View {
                         // Time remaining (RIGHT)
                         Text("-\(episode.timeRemaining)")
                             .font(.caption2Medium())
-                            .foregroundColor(.echoTextTertiary)
+                            .foregroundColor(Color(red: 0.6, green: 0.6, blue: 0.6))
                     }
-                    .padding(.top, 4)
+                    .padding(.top, 8)
                 }
             }
             .padding(16)
