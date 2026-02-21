@@ -101,6 +101,13 @@ struct EpisodePlayerView: View {
 
     @FetchRequest private var notes: FetchedResults<NoteEntity>
 
+    // MARK: - Computed Properties
+
+    /// Check if player has loaded enough data to display
+    private var isPlayerReady: Bool {
+        player.duration > 0
+    }
+
     // MARK: - Initialization
 
     init(episode: RSSEpisode, podcast: PodcastEntity, namespace: Namespace.ID) {
@@ -124,96 +131,104 @@ struct EpisodePlayerView: View {
     // MARK: - Body
 
     var body: some View {
-        VStack(spacing: 0) {
-            // --- SECTION 1: HEADER (FIXED HEIGHT: ~68px) ---
+        ZStack {
+            // Actual player content
             VStack(spacing: 0) {
-                segmentedControlSection
-                    .frame(height: 36)
-                    .frame(maxWidth: .infinity)
-            }
-            .padding(.top, 20)
+                // --- SECTION 1: HEADER (FIXED HEIGHT: ~68px) ---
+                VStack(spacing: 0) {
+                    segmentedControlSection
+                        .frame(height: 36)
+                        .frame(maxWidth: .infinity)
+                }
+                .padding(.top, 20)
 
-            // --- SECTION 2: MID-SECTION (FIXED HEIGHT: 377px) ---
-            ZStack(alignment: .bottom) {
-                Group {
-                    switch selectedSegment {
-                    case 0:
-                        // Listening: Static Art (Not scrollable)
-                        ListeningSegmentView(
-                            episode: episode,
-                            podcast: podcast,
-                            namespace: namespace,
-                            addNoteAction: { activeSheet = .noteCapture }
-                        )
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.top, 8)
-
-                    case 1:
-                        // Notes: Scrollable List
-                        ScrollView {
-                            NotesSegmentView(
-                                notes: Array(notes),
-                                addNoteAction: { activeSheet = .noteCapture },
-                                player: player,
-                                selectedSegment: $selectedSegment,
-                                onNoteTap: { note in
-                                    activeSheet = .notePreview(note)
-                                }
-                            )
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .scrollIndicators(.hidden)
-                        .padding(.top, 16)
-
-                    case 2:
-                        // Info: Scrollable Text
-                        ScrollView {
-                            InfoSegmentView(
+                // --- SECTION 2: MID-SECTION (FIXED HEIGHT: 377px) ---
+                ZStack(alignment: .bottom) {
+                    Group {
+                        switch selectedSegment {
+                        case 0:
+                            // Listening: Static Art (Not scrollable)
+                            ListeningSegmentView(
                                 episode: episode,
-                                podcast: podcast
+                                podcast: podcast,
+                                namespace: namespace,
+                                addNoteAction: { activeSheet = .noteCapture }
                             )
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .scrollIndicators(.hidden)
-                        .padding(.top, 16)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.top, 8)
 
-                    default:
-                        EmptyView()
+                        case 1:
+                            // Notes: Scrollable List
+                            ScrollView {
+                                NotesSegmentView(
+                                    notes: Array(notes),
+                                    addNoteAction: { activeSheet = .noteCapture },
+                                    player: player,
+                                    selectedSegment: $selectedSegment,
+                                    onNoteTap: { note in
+                                        activeSheet = .notePreview(note)
+                                    }
+                                )
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .scrollIndicators(.hidden)
+                            .padding(.top, 16)
+
+                        case 2:
+                            // Info: Scrollable Text
+                            ScrollView {
+                                InfoSegmentView(
+                                    episode: episode,
+                                    podcast: podcast
+                                )
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .scrollIndicators(.hidden)
+                            .padding(.top, 16)
+
+                        default:
+                            EmptyView()
+                        }
+                    }
+                    .frame(maxHeight: .infinity)
+                    .padding(.bottom, 0)
+
+                    // Floating Go Back button overlay (CENTERED)
+                    if showGoBackButton {
+                        goBackButtonOverlay
+                            .padding(.bottom, 16)
+                            .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                            .zIndex(100)
                     }
                 }
-                .frame(maxHeight: .infinity)
-                .padding(.bottom, 0)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                // Floating Go Back button overlay (CENTERED)
-                if showGoBackButton {
-                    goBackButtonOverlay
-                        .padding(.bottom, 16)
-                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                        .zIndex(100)
+                // --- SECTION 3: FOOTER (FIXED HEIGHT: ~290px) ---
+                VStack(spacing: 16) {
+                    // Metadata (Always visible, 2 lines max)
+                    episodeMetadataView
+
+                    // Scrubber
+                    timeProgressWithMarkers
+
+                    // Playback controls
+                    playbackControlButtons
+
+                    // Add Note CTA (Always visible with player controls)
+                    addNoteButton
+                        .padding(.horizontal, 16)
+                        .sensoryFeedback(.impact, trigger: activeSheet == .noteCapture)
                 }
+                .padding(.horizontal, EchoSpacing.screenPadding)
+                .padding(.top, 12)
+                .background(Color.echoBackground)
+                .padding(.bottom, 48)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // --- SECTION 3: FOOTER (FIXED HEIGHT: ~290px) ---
-            VStack(spacing: 16) {
-                // Metadata (Always visible, 2 lines max)
-                episodeMetadataView
-
-                // Scrubber
-                timeProgressWithMarkers
-
-                // Playback controls
-                playbackControlButtons
-
-                // Add Note CTA (Always visible with player controls)
-                addNoteButton
-                    .padding(.horizontal, 16)
-                    .sensoryFeedback(.impact, trigger: activeSheet == .noteCapture)
+            // Skeleton loading overlay (shown when player is loading)
+            if !isPlayerReady {
+                playerLoadingSkeleton
             }
-            .padding(.horizontal, EchoSpacing.screenPadding)
-            .padding(.top, 12)
-            .background(Color.echoBackground)
-            .padding(.bottom, 48)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.echoBackground)
@@ -602,6 +617,80 @@ struct EpisodePlayerView: View {
 
     private func formatTime(_ seconds: TimeInterval) -> String {
         return normalizeTimestamp(seconds)
+    }
+
+    // MARK: - Loading Skeleton
+
+    private var playerLoadingSkeleton: some View {
+        ZStack {
+            Color.echoBackground
+
+            VStack(spacing: 0) {
+                // Spacer for header
+                Spacer()
+                    .frame(height: 56)
+
+                // Content area skeleton
+                VStack(spacing: 16) {
+                    // Album art skeleton
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.1))
+                        .frame(width: 200, height: 200)
+                        .shimmer()
+
+                    // Episode title skeleton
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.white.opacity(0.1))
+                        .frame(height: 20)
+                        .frame(maxWidth: 280)
+                        .shimmer()
+
+                    // Podcast name skeleton
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.white.opacity(0.1))
+                        .frame(height: 16)
+                        .frame(maxWidth: 200)
+                        .shimmer()
+
+                    Spacer()
+                }
+                .padding(.top, 40)
+
+                // Footer skeleton
+                VStack(spacing: 16) {
+                    // Progress bar skeleton
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color.white.opacity(0.1))
+                        .frame(height: 4)
+                        .frame(maxWidth: .infinity)
+                        .shimmer()
+
+                    // Controls skeleton
+                    HStack(spacing: 16) {
+                        Spacer()
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white.opacity(0.1))
+                            .frame(width: 50, height: 50)
+                            .shimmer()
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white.opacity(0.1))
+                            .frame(width: 50, height: 50)
+                            .shimmer()
+                        Spacer()
+                    }
+
+                    // Add note button skeleton
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.1))
+                        .frame(height: 48)
+                        .shimmer()
+                }
+                .padding(.horizontal, EchoSpacing.screenPadding)
+                .padding(.top, 12)
+                .padding(.bottom, 48)
+            }
+        }
+        .ignoresSafeArea(edges: .bottom)
     }
 }
 
@@ -1048,5 +1137,27 @@ struct NotePreviewPopover: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Shimmer Effect Modifier
+
+extension View {
+    func shimmer() -> some View {
+        self.overlay(
+            LinearGradient(
+                colors: [Color.clear, Color.white.opacity(0.3), Color.clear],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .rotationEffect(.degrees(30))
+            .offset(x: -200)
+            .task {
+                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
+                    // Animate the shimmer effect
+                }
+            }
+        )
+        .clipped()
     }
 }
