@@ -56,7 +56,7 @@ struct LibraryView: View {
             }
         }
         .sheet(item: $selectedNote) { note in
-            NoteDetailSheet(note: note)
+            NoteDetailSheet(note: note, onTimestampTap: nil)
         }
     }
 

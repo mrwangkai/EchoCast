@@ -119,7 +119,9 @@ struct HomeView: View {
                 }
         }
         .sheet(item: $selectedNote) { note in
-            NoteDetailSheet(note: note)
+            NoteDetailSheet(note: note) {
+                jumpToNoteTimestamp(note)
+            }
         }
         .sheet(isPresented: $showingPlayerSheet) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
@@ -128,6 +130,61 @@ struct HomeView: View {
                     .presentationDetents([.fraction(0.92)])
                     .presentationCornerRadius(20)
             }
+        }
+    }
+
+    // MARK: - Timestamp Jump
+
+    private func jumpToNoteTimestamp(_ note: NoteEntity) {
+        guard let timestamp = note.timestamp,
+              let podcast = note.podcast else {
+            print("⚠️ [Home] Cannot jump: note missing timestamp or podcast")
+            return
+        }
+
+        // Parse timestamp to seconds
+        guard let timeInSeconds = parseTimestamp(timestamp) else {
+            print("⚠️ [Home] Cannot parse timestamp: \(timestamp)")
+            return
+        }
+
+        print("⏭️ [Home] Jumping to timestamp: \(timestamp) (\(timeInSeconds)s)")
+
+        // Check if this episode is in playback history (fastest path)
+        let historyItems = PlaybackHistoryManager.shared.recentlyPlayed
+        if let historyItem = historyItems.first(where: { item in
+            item.episodeTitle == note.episodeTitle && item.podcastTitle == podcast.title
+        }) {
+            // Found in history - load from there
+            let episode = RSSEpisode(
+                title: historyItem.episodeTitle,
+                description: nil,
+                pubDate: nil,
+                duration: formatDuration(historyItem.duration),
+                audioURL: historyItem.audioURL,
+                imageURL: podcast.artworkURL
+            )
+            GlobalPlayerManager.shared.loadEpisodeAndPlay(episode, podcast: podcast, seekTo: timeInSeconds)
+            showingPlayerSheet = true
+            selectedNote = nil  // Close note sheet
+            return
+        }
+
+        // Not in history - need to fetch from RSS
+        // For now, show alert that episode needs to be loaded first
+        print("⚠️ [Home] Episode not in playback history - needs RSS fetch")
+        // TODO: Implement async RSS fetch to find episode by title
+    }
+
+    private func parseTimestamp(_ timestamp: String) -> TimeInterval? {
+        let parts = timestamp.split(separator: ":").compactMap { Double($0) }
+        switch parts.count {
+        case 2: // MM:SS
+            return parts[0] * 60 + parts[1]
+        case 3: // HH:MM:SS
+            return parts[0] * 3600 + parts[1] * 60 + parts[2]
+        default:
+            return nil
         }
     }
 

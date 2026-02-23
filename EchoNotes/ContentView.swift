@@ -3195,6 +3195,7 @@ struct NoteCardView: View {
 
 struct NoteDetailSheet: View {
     let note: NoteEntity
+    let onTimestampTap: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
     @State private var showingEditSheet = false
 
@@ -3219,19 +3220,26 @@ struct NoteDetailSheet: View {
 
                     Divider()
 
-                    // Timestamp badge
+                    // Timestamp badge (clickable)
                     if let timestamp = note.timestamp {
-                        HStack(spacing: 6) {
-                            Image(systemName: "clock.fill")
-                                .font(.caption)
-                            Text(timestamp)
-                                .font(.caption2Medium())
+                        Button(action: {
+                            onTimestampTap?()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "clock.fill")
+                                    .font(.caption)
+                                Text(timestamp)
+                                    .font(.caption2Medium())
+                                Image(systemName: "play.circle.fill")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(.mintAccent)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.mintAccent.opacity(0.2))
+                            .cornerRadius(8)
                         }
-                        .foregroundColor(.mintAccent)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.mintAccent.opacity(0.2))
-                        .cornerRadius(8)
+                        .buttonStyle(.plain)
                     }
 
                     // Note content
