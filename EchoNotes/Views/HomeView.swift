@@ -170,10 +170,35 @@ struct HomeView: View {
             return
         }
 
-        // Not in history - need to fetch from RSS
-        // For now, show alert that episode needs to be loaded first
-        print("⚠️ [Home] Episode not in playback history - needs RSS fetch")
-        // TODO: Implement async RSS fetch to find episode by title
+        // Not in history - fetch from RSS
+        print("📡 [Home] Episode not in history, fetching from RSS...")
+        fetchEpisodeAndPlay(from: podcast, episodeTitle: note.episodeTitle ?? "", seekTo: timeInSeconds)
+    }
+
+    private func fetchEpisodeAndPlay(from podcast: PodcastEntity, episodeTitle: String, seekTo: TimeInterval) {
+        Task { @MainActor in
+            guard let feedURL = podcast.feedURL else {
+                print("⚠️ [Home] No feed URL for podcast")
+                return
+            }
+
+            do {
+                let service = PodcastRSSService.shared
+                let rssPodcast = try await service.fetchPodcast(from: feedURL)
+
+                // Find episode by title
+                if let episode = rssPodcast.episodes.first(where: { $0.title == episodeTitle }) {
+                    print("✅ [Home] Found episode in RSS feed: \(episode.title)")
+                    GlobalPlayerManager.shared.loadEpisodeAndPlay(episode, podcast: podcast, seekTo: seekTo)
+                    showingPlayerSheet = true
+                    selectedNote = nil
+                } else {
+                    print("⚠️ [Home] Episode not found in RSS feed: \(episodeTitle)")
+                }
+            } catch {
+                print("❌ [Home] Failed to fetch RSS feed: \(error)")
+            }
+        }
     }
 
     private func parseTimestamp(_ timestamp: String) -> TimeInterval? {
