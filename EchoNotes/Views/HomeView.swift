@@ -66,6 +66,8 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
+                    headerSection
+
                     // Continue Listening Section
                     if player.currentEpisode != nil || !recentNotes.isEmpty {
                         continueListeningSection
@@ -89,33 +91,7 @@ struct HomeView: View {
                 .padding(.bottom, 100)
             }
             .background(Color.echoBackground)
-            .navigationTitle("EchoCast")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(Color.echoBackground, for: .navigationBar)
             .preferredColorScheme(.dark)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 16) {
-                        Button(action: {
-                            print("🔍 [HomeView] Browse button tapped")
-                            selectedTab = 1
-                        }) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.body)
-                                .foregroundColor(.echoTextPrimary)
-                        }
-
-                        Button(action: {
-                            print("⚙️ [HomeView] Settings button tapped")
-                            showingSettings = true
-                        }) {
-                            Image(systemName: "gearshape")
-                                .font(.body)
-                                .foregroundColor(.echoTextPrimary)
-                        }
-                    }
-                }
-            }
             .onAppear {
                 print("🏠 [HomeView] View appeared")
                 print("🏠 [HomeView] Recent notes count: \(recentNotes.count)")
@@ -231,14 +207,39 @@ struct HomeView: View {
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("EchoCast")
-                .font(.largeTitleEcho())
-                .foregroundColor(.echoTextPrimary)
+            HStack {
+                Text("EchoCast")
+                    .font(.largeTitleEcho())
+                    .foregroundColor(.echoTextPrimary)
+
+                Spacer()
+
+                HStack(spacing: 16) {
+                    Button(action: {
+                        print("🔍 [HomeView] Browse button tapped")
+                        selectedTab = 1
+                    }) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.body)
+                            .foregroundColor(.echoTextPrimary)
+                    }
+
+                    Button(action: {
+                        print("⚙️ [HomeView] Settings button tapped")
+                        showingSettings = true
+                    }) {
+                        Image(systemName: "gearshape")
+                            .font(.body)
+                            .foregroundColor(.echoTextPrimary)
+                    }
+                }
+            }
 
             Text(greetingText)
                 .font(.bodyEcho())
                 .foregroundColor(.echoTextSecondary)
         }
+        .padding(.horizontal, EchoSpacing.screenPadding)
     }
 
     private var greetingText: String {
@@ -297,10 +298,23 @@ struct HomeView: View {
 
     private var followingSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Following podcasts")
-                .font(.title2Echo())
-                .foregroundColor(.echoTextPrimary)
-                .padding(.horizontal, EchoSpacing.screenPadding)
+            HStack {
+                Text("Podcasts")
+                    .font(.title2Echo())
+                    .foregroundColor(.echoTextPrimary)
+
+                Spacer()
+
+                Button(action: {
+                    print("🔍 [HomeView] Find more tapped")
+                    selectedTab = 1
+                }) {
+                    Text("Find more")
+                        .font(.bodyEcho())
+                        .foregroundColor(.mintAccent)
+                }
+            }
+            .padding(.horizontal, EchoSpacing.screenPadding)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
