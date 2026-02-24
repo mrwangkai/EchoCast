@@ -3134,8 +3134,10 @@ struct NoteCardView: View {
             .padding(16)
 
             // SEPARATOR
-            Divider()
-                .background(Color.echoTextTertiary.opacity(0.2))
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(height: 1)
+                .padding(.horizontal, 16)
 
             // BOTTOM: Podcast metadata
             HStack(spacing: 8) {
@@ -3187,6 +3189,10 @@ struct NoteCardView: View {
         }
         .background(Color.noteCardBackground)
         .cornerRadius(12)
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+        }
         .shadow(color: Color.black.opacity(0.3), radius: 3, x: 0, y: 1)
     }
 }

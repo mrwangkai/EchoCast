@@ -28,6 +28,10 @@ struct MiniPlayerView: View {
             .padding(12)
             .background(Color(red: 0.2, green: 0.2, blue: 0.2))
             .cornerRadius(12, corners: [.topLeft, .topRight])
+            .overlay {
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+            }
             .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: -2)
             .onTapGesture {
                 // Play/pause on tap, then show full player
