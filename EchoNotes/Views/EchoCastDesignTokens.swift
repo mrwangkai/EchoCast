@@ -20,7 +20,7 @@ extension Color {
     static let echoTextTertiary = Color(red: 0.4, green: 0.4, blue: 0.4)
 
     // Card backgrounds
-    static let noteCardBackground = Color(red: 0.15, green: 0.15, blue: 0.15)
+    static let noteCardBackground = Color(red: 0.24, green: 0.24, blue: 0.24)
 
     // Button colors
     static let mintButtonBackground = Color(red: 0.647, green: 0.898, blue: 0.847)
