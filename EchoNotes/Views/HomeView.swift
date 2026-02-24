@@ -297,10 +297,23 @@ struct HomeView: View {
 
     private var followingSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Following podcasts")
-                .font(.title2Echo())
-                .foregroundColor(.echoTextPrimary)
-                .padding(.horizontal, EchoSpacing.screenPadding)
+            HStack {
+                Text("Podcasts")
+                    .font(.title2Echo())
+                    .foregroundColor(.echoTextPrimary)
+
+                Spacer()
+
+                Button(action: {
+                    print("🔍 [HomeView] Find more tapped")
+                    selectedTab = 1
+                }) {
+                    Text("Find more")
+                        .font(.bodyEcho())
+                        .foregroundColor(.mintAccent)
+                }
+            }
+            .padding(.horizontal, EchoSpacing.screenPadding)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
