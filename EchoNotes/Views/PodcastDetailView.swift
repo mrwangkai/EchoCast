@@ -219,6 +219,13 @@ struct PodcastDetailView: View {
         isFollowing.toggle()
         podcast.isFollowing = isFollowing
 
+        // Set followedAt when following, clear it when unfollowing
+        if isFollowing {
+            podcast.followedAt = Date()
+        } else {
+            podcast.followedAt = nil
+        }
+
         do {
             try viewContext.save()
             print("✅ Podcast follow state changed: \(isFollowing ? "Following" : "Unfollowed")")

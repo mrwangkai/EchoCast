@@ -28,7 +28,7 @@ struct HomeView: View {
 
     // Fetch followed podcasts
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \PodcastEntity.title, ascending: true)],
+        sortDescriptors: [NSSortDescriptor(keyPath: \PodcastEntity.followedAt, ascending: false)],
         predicate: NSPredicate(format: "isFollowing == YES"),
         animation: .default
     )
