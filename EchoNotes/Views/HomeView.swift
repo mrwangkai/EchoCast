@@ -36,17 +36,31 @@ struct HomeView: View {
 
     // Player state
     @ObservedObject private var player = GlobalPlayerManager.shared
+    @ObservedObject private var historyManager = PlaybackHistoryManager.shared
 
     @State private var showingPlayerSheet = false
     @State private var showingSettings = false
     @State private var selectedPodcast: PodcastEntity?
     @State private var selectedNote: NoteEntity?
 
-    // Recently played episodes for Continue Listening section
-    @State private var continueListeningEpisodes: [(historyItem: PlaybackHistoryItem, podcast: PodcastEntity)] = []
-
     // Namespace for matched geometry effect with mini player
     @Namespace private var playerAnimation
+
+    /// Computed property that derives continue listening episodes from historyManager
+    /// This ensures HomeView re-renders automatically when recentlyPlayed changes
+    private var continueListeningEpisodes: [(historyItem: PlaybackHistoryItem, podcast: PodcastEntity)] {
+        let historyItems = historyManager.recentlyPlayed.prefix(5)
+        return historyItems.compactMap { historyItem in
+            // Find the podcast entity for this history item
+            // Try to match by podcastID first, then by podcast title as fallback
+            if let foundPodcast = allPodcasts.first(where: { $0.id == historyItem.podcastID }) {
+                return (historyItem: historyItem, podcast: foundPodcast)
+            } else if let foundPodcast = allPodcasts.first(where: { $0.title == historyItem.podcastTitle }) {
+                return (historyItem: historyItem, podcast: foundPodcast)
+            }
+            return nil
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -277,15 +291,6 @@ struct HomeView: View {
                     .padding(.horizontal, EchoSpacing.screenPadding)
             }
         }
-        .onAppear {
-            loadContinueListeningEpisodes()
-        }
-        .onChange(of: allPodcasts.count) { _ in
-            loadContinueListeningEpisodes()
-        }
-        .onChange(of: player.currentEpisode?.id) { _ in
-            loadContinueListeningEpisodes()
-        }
     }
 
     // MARK: - Following Section
@@ -354,37 +359,6 @@ struct HomeView: View {
         } else {
             return String(format: "%d:%02d", mins, secs)
         }
-    }
-
-    // MARK: - Continue Listening from History
-
-    /// Loads recently played episodes from playback history and matches them with podcast entities
-    private func loadContinueListeningEpisodes() {
-        let historyItems = PlaybackHistoryManager.shared.getRecentlyPlayed(limit: 5)
-
-        var episodes: [(historyItem: PlaybackHistoryItem, podcast: PodcastEntity)] = []
-
-        for historyItem in historyItems {
-            // Find the podcast entity for this history item
-            // Try to match by podcastID first, then by podcast title as fallback
-            let podcast: PodcastEntity?
-
-            if let foundPodcast = allPodcasts.first(where: { $0.id == historyItem.podcastID }) {
-                podcast = foundPodcast
-            } else if let foundPodcast = allPodcasts.first(where: { $0.title == historyItem.podcastTitle }) {
-                podcast = foundPodcast
-            } else {
-                podcast = nil
-            }
-
-            if let p = podcast {
-                episodes.append((historyItem: historyItem, podcast: p))
-            }
-        }
-
-        continueListeningEpisodes = episodes
-
-        print("🎧 [HomeView] Loaded \(continueListeningEpisodes.count) continue listening episodes")
     }
 
     /// Converts a playback history item to a ContinueListeningEpisode
