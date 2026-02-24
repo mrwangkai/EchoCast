@@ -1110,7 +1110,7 @@ struct NotePreviewPopover: View {
                         VStack(alignment: .leading, spacing: 8) {
                             // Note text (max 3 lines)
                             Text(noteItem.noteText ?? "")
-                                .font(.bodyEcho())
+                                .font(.system(size: 17, weight: .regular, design: .serif))
                                 .foregroundColor(.echoTextPrimary)
                                 .lineLimit(3)
 

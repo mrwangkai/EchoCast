@@ -3078,7 +3078,7 @@ struct NoteCardView: View {
                 // Note text
                 if let noteText = note.noteText, !noteText.isEmpty {
                     Text(noteText)
-                        .font(.bodyEcho())
+                        .font(.system(size: 17, weight: .regular, design: .serif))
                         .foregroundColor(.echoTextPrimary)
                         .lineLimit(4)
                         .lineSpacing(4)
@@ -3251,7 +3251,7 @@ struct NoteDetailSheet: View {
                     // Note content
                     if let noteText = note.noteText, !noteText.isEmpty {
                         Text(noteText)
-                            .font(.bodyEcho())
+                            .font(.system(size: 17, weight: .regular, design: .serif))
                             .foregroundColor(.echoTextPrimary)
                             .lineSpacing(6)
                     }
