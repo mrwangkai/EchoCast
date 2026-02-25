@@ -22,6 +22,9 @@ struct EchoNotesApp: App {
                 // .onOpenURL { url in
                 //     _ = deepLinkManager.handleURL(url)
                 // }
+                .onAppear {
+                    EchoNotesShortcuts.updateAppShortcutParameters()
+                }
         }
     }
 }
