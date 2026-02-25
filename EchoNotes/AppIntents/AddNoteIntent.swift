@@ -17,6 +17,12 @@ struct AddNoteIntent: AppIntent {
     )
     static var openAppWhenRun: Bool = false
 
+    @Parameter(
+        title: "Note",
+        requestValueDialog: IntentDialog("What's your note?")
+    )
+    var noteContent: String
+
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let sharedDefaults = UserDefaults(suiteName: "group.com.echonotes.app202601302226.echocast")
         let timestamp = sharedDefaults?.double(forKey: "siri_currentTime") ?? 0
@@ -36,7 +42,7 @@ struct AddNoteIntent: AppIntent {
             note.episodeTitle = episodeTitle
             note.showTitle = podcastTitle
             note.timestamp = self.formatTime(timestamp)
-            note.noteText = ""   // blank — user can edit in app
+            note.noteText = noteContent
             note.isPriority = false
             note.tags = ""
             note.createdAt = Date()
@@ -50,7 +56,7 @@ struct AddNoteIntent: AppIntent {
         }
 
         let formattedTime = formatTime(timestamp)
-        return .result(dialog: "Note saved at \(formattedTime) in \(episodeTitle). Open EchoCast to add details.")
+        return .result(dialog: "Saved: \"\(noteContent)\" at \(formattedTime).")
     }
 
     private func formatTime(_ seconds: TimeInterval) -> String {
