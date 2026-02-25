@@ -35,32 +35,15 @@ struct AddNoteIntent: AppIntent {
             return .result(dialog: "No podcast is currently playing in EchoCast.")
         }
 
-        let formattedTime = formatTime(timestamp)
-
-        // Stage 1: Show confirmation preview with countdown
-        // Siri auto-confirms after ~3 seconds (system controlled)
-        try await requestConfirmation(
-            result: .result(
-                dialog: "Ready to save this note at \(formattedTime)?",
-                view: NoteSnippetView(
-                    noteContent: noteContent,
-                    timestamp: formattedTime,
-                    episodeTitle: episodeTitle,
-                    podcastTitle: podcastTitle,
-                    isSaved: false   // "Saving..." state
-                )
-            )
-        )
-
-        // Stage 2: User confirmed (or countdown elapsed) — save the note
+        // Save note to Core Data
         let context = PersistenceController.shared.container.viewContext
         await context.perform {
             let note = NoteEntity(context: context)
             note.id = UUID()
             note.episodeTitle = episodeTitle
             note.showTitle = podcastTitle
-            note.timestamp = formattedTime
-            note.noteText = self.noteContent
+            note.timestamp = self.formatTime(timestamp)
+            note.noteText = noteContent
             note.isPriority = false
             note.tags = ""
             note.createdAt = Date()
@@ -73,15 +56,15 @@ struct AddNoteIntent: AppIntent {
             }
         }
 
-        // Stage 3: Show saved confirmation
+        let formattedTime = formatTime(timestamp)
         return .result(
-            dialog: "Note saved.",
+            dialog: "Saved: \"\(noteContent)\" at \(formattedTime).",
             view: NoteSnippetView(
                 noteContent: noteContent,
                 timestamp: formattedTime,
                 episodeTitle: episodeTitle,
                 podcastTitle: podcastTitle,
-                isSaved: true   // "Saved ✓" state
+                isSaved: true
             )
         )
     }
