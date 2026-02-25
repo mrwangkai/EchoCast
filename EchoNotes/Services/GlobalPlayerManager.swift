@@ -29,6 +29,9 @@ class GlobalPlayerManager: ObservableObject {
     private var timeObserver: Any?
     private var statusObserver: NSKeyValueObservation?
     private var lastHistoryUpdate: TimeInterval = 0
+
+    // App Group for Siri Intent shared state
+    private let sharedDefaults = UserDefaults(suiteName: "group.com.echonotes.app202601302226.echocast")
     private var pendingSeekTime: TimeInterval?
     private var pendingAutoPlay: Bool = false
 
@@ -37,6 +40,17 @@ class GlobalPlayerManager: ObservableObject {
         setupAudioSession()
         setupRemoteCommandCenter()
         print("✅ [Player] GlobalPlayerManager initialized")
+    }
+
+    // MARK: - Siri Shared State
+
+    /// Writes current player state to App Group UserDefaults for Siri Intent access
+    private func writeSharedPlayerState() {
+        sharedDefaults?.set(currentTime, forKey: "siri_currentTime")
+        sharedDefaults?.set(isPlaying, forKey: "siri_isPlaying")
+        sharedDefaults?.set(currentEpisode?.title, forKey: "siri_episodeTitle")
+        sharedDefaults?.set(currentPodcast?.title, forKey: "siri_podcastTitle")
+        sharedDefaults?.set(currentEpisode?.audioURL, forKey: "siri_episodeID")
     }
 
     private func setupAudioSession() {
@@ -138,6 +152,9 @@ class GlobalPlayerManager: ObservableObject {
         currentPodcast = podcast
         playerError = nil
         isBuffering = true
+
+        // Write shared state for Siri Intent
+        writeSharedPlayerState()
 
         Task { @MainActor in
             DevStatusManager.shared.playerStatus = .loading
@@ -354,6 +371,9 @@ class GlobalPlayerManager: ObservableObject {
                 self.savePlaybackHistory()
                 self.lastHistoryUpdate = self.currentTime
             }
+
+            // Write shared state for Siri Intent
+            self.writeSharedPlayerState()
         }
 
         print("✅ [Player] Time observer setup complete")

@@ -66,6 +66,15 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
+                    // TEMPORARY DEBUG — remove after Chunk 1 checkpoint passes
+                    if let time = UserDefaults(suiteName: "group.com.echonotes.app202601302226.echocast")?.double(forKey: "siri_currentTime"),
+                       let title = UserDefaults(suiteName: "group.com.echonotes.app202601302226.echocast")?.string(forKey: "siri_episodeTitle") {
+                        Text("Shared state: \(title) @ \(Int(time))s")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 4)
+                    }
+
                     // Continue Listening Section
                     if player.currentEpisode != nil || !recentNotes.isEmpty {
                         continueListeningSection

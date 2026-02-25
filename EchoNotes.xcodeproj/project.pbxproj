@@ -82,6 +82,7 @@
 		B01276756CBF1F6C45AB7677 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		BA6EFC002F36A954003EC3C4 /* worklog-xcodeassistant-20260206.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "worklog-xcodeassistant-20260206.md"; sourceTree = "<group>"; };
 		BA6EFC032F36D644003EC3C4 /* COMMIT_MESSAGE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = COMMIT_MESSAGE.txt; sourceTree = "<group>"; };
+		BA6EFCD22F4E8CA3003EC3C4 /* EchoNotes.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EchoNotes.entitlements; sourceTree = "<group>"; };
 		CA2011DE4F5DA850C5620FBC /* PodcastDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastDetailView.swift; sourceTree = "<group>"; };
 		D6FD48759719F0A48ACDFE95 /* GlobalPlayerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalPlayerManager.swift; sourceTree = "<group>"; };
 		DAB032ABF6B07EDBEB3E5FC7 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
@@ -143,6 +144,7 @@
 		A30000000000000000000002 /* EchoNotes */ = {
 			isa = PBXGroup;
 			children = (
+				BA6EFCD22F4E8CA3003EC3C4 /* EchoNotes.entitlements */,
 				A00000000000000000000010 /* Info.plist */,
 				56A10B3EA8425F797B107908 /* EchoNotesApp.swift */,
 				B01276756CBF1F6C45AB7677 /* ContentView.swift */,
@@ -468,9 +470,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = EchoNotes/EchoNotes.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = BY2WMSQ7U3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = EchoNotes/Info.plist;
@@ -503,9 +507,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = EchoNotes/EchoNotes.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = BY2WMSQ7U3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = EchoNotes/Info.plist;

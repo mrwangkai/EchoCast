@@ -59,4 +59,4 @@ After changes, the Continue Listening section should use continueListeningEpisod
 (now a computed property) everywhere it was used before. No other files should need 
 to change.
 
-Build and confirm no compiler errors. Do not change any other files.
+Build and confirm no compiler errors. Do not change any other files. 
