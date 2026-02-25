@@ -38,6 +38,7 @@
 		BA6EFC042F36D644003EC3C4 /* COMMIT_MESSAGE.txt in Resources */ = {isa = PBXBuildFile; fileRef = BA6EFC032F36D644003EC3C4 /* COMMIT_MESSAGE.txt */; };
 		BE245BBE30074AACA289C192 /* EpisodeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29B3BD3927C3A99156079726 /* EpisodeDetailView.swift */; };
 		C8ADB94949E1542B64678C06 /* AddNoteIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAC0568ECC00DF51EF175765 /* AddNoteIntent.swift */; };
+		SIRI1NOTE2SNIPPET4VIEW5BUILD6 /* NoteSnippetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SIRI1NOTE2SNIPPET4VIEW5FILE7 /* NoteSnippetView.swift */; };
 		E4P1AYER78VIEW90BUILDFILE23456 /* Player/EpisodePlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4P1AYER78VIEW0FILEREFGHIJKL /* Player/EpisodePlayerView.swift */; };
 		E8B0FC6D8C4B1BE4CD420BF7 /* SiriShortcutsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 543B86F71016EB6FBBDE162E /* SiriShortcutsManager.swift */; };
 		EBBC5664163B5EEAF0595A57 /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAB032ABF6B07EDBEB3E5FC7 /* ExportService.swift */; };
@@ -79,6 +80,7 @@
 		A4B4374ACBF2F8DF02D162D8 /* MiniPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerView.swift; sourceTree = "<group>"; };
 		A889EAE90DD5982B6BF699CC /* EchoCastDesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoCastDesignTokens.swift; sourceTree = "<group>"; };
 		AAC0568ECC00DF51EF175765 /* AddNoteIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddNoteIntent.swift; sourceTree = "<group>"; };
+		SIRI1NOTE2SNIPPET4VIEW5FILE7 /* NoteSnippetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSnippetView.swift; sourceTree = "<group>"; };
 		B01276756CBF1F6C45AB7677 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		BA6EFC002F36A954003EC3C4 /* worklog-xcodeassistant-20260206.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "worklog-xcodeassistant-20260206.md"; sourceTree = "<group>"; };
 		BA6EFC032F36D644003EC3C4 /* COMMIT_MESSAGE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = COMMIT_MESSAGE.txt; sourceTree = "<group>"; };
@@ -123,6 +125,7 @@
 			isa = PBXGroup;
 			children = (
 				AAC0568ECC00DF51EF175765 /* AddNoteIntent.swift */,
+				SIRI1NOTE2SNIPPET4VIEW5FILE7 /* NoteSnippetView.swift */,
 			);
 			path = AppIntents;
 			sourceTree = "<group>";
@@ -308,6 +311,7 @@
 				AADBA7C1B9A35AE6C78C95D4 /* EchoNotesApp.swift in Sources */,
 				A6C751F49B50AB8C7DEE741E /* ContentView.swift in Sources */,
 				C8ADB94949E1542B64678C06 /* AddNoteIntent.swift in Sources */,
+				SIRI1NOTE2SNIPPET4VIEW5BUILD6 /* NoteSnippetView.swift in Sources */,
 				2DC01F93397A5FD79DFF1C40 /* EchoCastDesignTokens.swift in Sources */,
 				109A73E1374BD17B86D18612 /* Note.swift in Sources */,
 				571ECFBE1F6E119C5162E298 /* Podcast.swift in Sources */,

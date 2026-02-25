@@ -8,6 +8,7 @@
 import Foundation
 import AppIntents
 import CoreData
+import SwiftUI
 
 /// App Intent that allows users to add a note at the current playback position via Siri
 struct AddNoteIntent: AppIntent {
@@ -23,7 +24,7 @@ struct AddNoteIntent: AppIntent {
     )
     var noteContent: String
 
-    func perform() async throws -> some IntentResult & ProvidesDialog {
+    func perform() async throws -> some IntentResult & ProvidesDialog & ShowsSnippetView {
         let sharedDefaults = UserDefaults(suiteName: "group.com.echonotes.app202601302226.echocast")
         let timestamp = sharedDefaults?.double(forKey: "siri_currentTime") ?? 0
         let episodeTitle = sharedDefaults?.string(forKey: "siri_episodeTitle") ?? ""
@@ -56,7 +57,16 @@ struct AddNoteIntent: AppIntent {
         }
 
         let formattedTime = formatTime(timestamp)
-        return .result(dialog: "Saved: \"\(noteContent)\" at \(formattedTime).")
+        return .result(
+            dialog: "Saved: \"\(noteContent)\" at \(formattedTime).",
+            view: NoteSnippetView(
+                noteContent: noteContent,
+                timestamp: formattedTime,
+                episodeTitle: episodeTitle,
+                podcastTitle: podcastTitle,
+                isSaved: true
+            )
+        )
     }
 
     private func formatTime(_ seconds: TimeInterval) -> String {
