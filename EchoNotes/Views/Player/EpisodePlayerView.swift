@@ -639,7 +639,7 @@ struct EpisodePlayerView: View {
                                     .frame(width: 28, height: 28)
                                 Image(systemName: "bookmark.fill")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color(red: 26/255, green: 60/255, blue: 52/255))
                             }
                         }
                         .buttonStyle(.plain)
