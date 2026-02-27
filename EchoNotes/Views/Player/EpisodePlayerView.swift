@@ -261,9 +261,6 @@ struct EpisodePlayerView: View {
         .animation(.easeInOut(duration: 0.3), value: isPlayerReady)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.echoBackground)
-        .presentationDetents([.fraction(0.92)])
-        .presentationDragIndicator(.visible) // Native drag bar
-        .ignoresSafeArea(edges: .bottom)
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .noteCapture:

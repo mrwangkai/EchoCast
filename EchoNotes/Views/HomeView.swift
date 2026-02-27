@@ -141,7 +141,7 @@ struct HomeView: View {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
                 EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation)
                     .presentationDragIndicator(.visible)
-                    .presentationDetents([.fraction(0.92)])
+                    .presentationDetents([.large])
                     .presentationCornerRadius(20)
             }
         }

@@ -65,19 +65,15 @@ struct ContentView: View {
         // FULL PLAYER SHEET - Bottom sheet that slides up from mini player
         .sheet(isPresented: $showFullPlayer) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                NavigationStack {
-                    EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation)
-                        .navigationBarTitleDisplayMode(.inline)
-                        .onAppear {
-                            print("👁️ [ContentView Full Player] EpisodePlayerView appeared")
-                        }
-                        .onDisappear {
-                            print("👁️ [ContentView Full Player] EpisodePlayerView disappeared")
-                        }
-                }
+                EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation)
+                    .onAppear {
+                        print("👁️ [ContentView Full Player] EpisodePlayerView appeared")
+                    }
+                    .onDisappear {
+                        print("👁️ [ContentView Full Player] EpisodePlayerView disappeared")
+                    }
                 .presentationDragIndicator(.visible)
                 .presentationDetents([.large])
-                .presentationCornerRadius(20)
                 .interactiveDismissDisabled(false)
             } else {
                 VStack(spacing: 16) {
