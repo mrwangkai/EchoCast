@@ -273,6 +273,37 @@ struct EpisodePlayerView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)
             }
+
+            // Bookmark preview overlay card
+            if showingBookmarkPreview, let bookmark = previewBookmark {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.3)) {
+                            showingBookmarkPreview = false
+                            previewBookmark = nil
+                        }
+                    }
+
+                BookmarkOverlayCard(
+                    bookmark: bookmark,
+                    onJump: {
+                        player.seek(to: bookmark.timestamp)
+                        withAnimation(.spring(response: 0.3)) {
+                            showingBookmarkPreview = false
+                            previewBookmark = nil
+                        }
+                    },
+                    onDismiss: {
+                        withAnimation(.spring(response: 0.3)) {
+                            showingBookmarkPreview = false
+                            previewBookmark = nil
+                        }
+                    }
+                )
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+            }
         }
         .animation(.easeInOut(duration: 0.3), value: isPlayerReady)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

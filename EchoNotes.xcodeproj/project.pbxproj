@@ -34,6 +34,7 @@
 		A715819144FB62C0B169C5D9 /* DeepLinkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0B9E736394AE5D3705E7F1 /* DeepLinkManager.swift */; };
 		AADBA7C1B9A35AE6C78C95D4 /* EchoNotesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A10B3EA8425F797B107908 /* EchoNotesApp.swift */; };
 		B019C4E07965C65CC57A335A /* PodcastRSSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5740F3ADA838A89AAE98902C /* PodcastRSSService.swift */; };
+		BA6E078C2F52397F003EC3C4 /* BookmarkOverlayCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6E078B2F52397F003EC3C4 /* BookmarkOverlayCard.swift */; };
 		BA6EFC012F36A955003EC3C4 /* worklog-xcodeassistant-20260206.md in Resources */ = {isa = PBXBuildFile; fileRef = BA6EFC002F36A954003EC3C4 /* worklog-xcodeassistant-20260206.md */; };
 		BA6EFC042F36D644003EC3C4 /* COMMIT_MESSAGE.txt in Resources */ = {isa = PBXBuildFile; fileRef = BA6EFC032F36D644003EC3C4 /* COMMIT_MESSAGE.txt */; };
 		BE245BBE30074AACA289C192 /* EpisodeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29B3BD3927C3A99156079726 /* EpisodeDetailView.swift */; };
@@ -81,6 +82,7 @@
 		A889EAE90DD5982B6BF699CC /* EchoCastDesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoCastDesignTokens.swift; sourceTree = "<group>"; };
 		AAC0568ECC00DF51EF175765 /* AddNoteIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddNoteIntent.swift; sourceTree = "<group>"; };
 		B01276756CBF1F6C45AB7677 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		BA6E078B2F52397F003EC3C4 /* BookmarkOverlayCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkOverlayCard.swift; sourceTree = "<group>"; };
 		BA6EFC002F36A954003EC3C4 /* worklog-xcodeassistant-20260206.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "worklog-xcodeassistant-20260206.md"; sourceTree = "<group>"; };
 		BA6EFC032F36D644003EC3C4 /* COMMIT_MESSAGE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = COMMIT_MESSAGE.txt; sourceTree = "<group>"; };
 		BA6EFCD22F4E8CA3003EC3C4 /* EchoNotes.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EchoNotes.entitlements; sourceTree = "<group>"; };
@@ -172,6 +174,7 @@
 		A30000000000000000000004 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				BA6E078B2F52397F003EC3C4 /* BookmarkOverlayCard.swift */,
 				E9C0C11EEA60C007F10FA350 /* CachedAsyncImage.swift */,
 				7D86BD8271F50A31B9BF357F /* DevStatusOverlay.swift */,
 				A889EAE90DD5982B6BF699CC /* EchoCastDesignTokens.swift */,
@@ -312,6 +315,7 @@
 				A6C751F49B50AB8C7DEE741E /* ContentView.swift in Sources */,
 				C8ADB94949E1542B64678C06 /* AddNoteIntent.swift in Sources */,
 				SIRI1NOTE2SNIPPET4VIEW5BUILD6 /* NoteSnippetView.swift in Sources */,
+				BA6E078C2F52397F003EC3C4 /* BookmarkOverlayCard.swift in Sources */,
 				2DC01F93397A5FD79DFF1C40 /* EchoCastDesignTokens.swift in Sources */,
 				109A73E1374BD17B86D18612 /* Note.swift in Sources */,
 				571ECFBE1F6E119C5162E298 /* Podcast.swift in Sources */,
