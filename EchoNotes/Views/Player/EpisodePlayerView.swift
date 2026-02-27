@@ -89,6 +89,9 @@ struct EpisodePlayerView: View {
     @State private var goBackTimer: Timer?
     @State private var goBackCountdown: CGFloat = 8.0
 
+    // Toast notification state
+    @State private var toastMessage: ToastMessage? = nil
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
 
@@ -304,6 +307,24 @@ struct EpisodePlayerView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)
             }
+
+            // Toast overlay
+            if let toast = toastMessage {
+                VStack {
+                    ToastView(toast: toast)
+                        .padding(.top, 60)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .allowsHitTesting(false)
+                .zIndex(1000)
+                .transition(
+                    .asymmetric(
+                        insertion: .move(edge: .top).combined(with: .opacity),
+                        removal: .opacity
+                    )
+                )
+            }
         }
         .animation(.easeInOut(duration: 0.3), value: isPlayerReady)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -328,6 +349,8 @@ struct EpisodePlayerView: View {
                     if wasPlayingBeforeNote {
                         player.play()
                     }
+                    // Note toast — fires after sheet dismisses so it's always visible
+                    showToast("Note at \(formatTime(player.currentTime)) added", icon: "note.text")
                 }
             }
         }
@@ -445,6 +468,7 @@ struct EpisodePlayerView: View {
             }
             bookmarkUndoTimer?.invalidate()
             recentBookmarkTime = nil
+            showToast("Bookmark at \(formatTime(lastTime)) removed", icon: "bookmark.slash.fill")
             return
         }
 
@@ -456,11 +480,23 @@ struct EpisodePlayerView: View {
         bookmark.showTitle = player.currentPodcast?.title
         bookmark.createdAt = Date()
         try? viewContext.save()
+        showToast("Bookmark at \(formatTime(currentTime)) added", icon: "bookmark.fill")
 
         recentBookmarkTime = currentTime
         bookmarkUndoTimer?.invalidate()
         bookmarkUndoTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { _ in
             recentBookmarkTime = nil
+        }
+    }
+
+    private func showToast(_ message: String, icon: String) {
+        withAnimation(.spring(response: 0.3)) {
+            toastMessage = ToastMessage(message: message, icon: icon)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            withAnimation(.spring(response: 0.3)) {
+                toastMessage = nil
+            }
         }
     }
 

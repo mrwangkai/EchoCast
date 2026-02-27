@@ -35,6 +35,7 @@
 		AADBA7C1B9A35AE6C78C95D4 /* EchoNotesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A10B3EA8425F797B107908 /* EchoNotesApp.swift */; };
 		B019C4E07965C65CC57A335A /* PodcastRSSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5740F3ADA838A89AAE98902C /* PodcastRSSService.swift */; };
 		BA6E078C2F52397F003EC3C4 /* BookmarkOverlayCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6E078B2F52397F003EC3C4 /* BookmarkOverlayCard.swift */; };
+		BA6E08672F5246C3003EC3C4 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6E08662F5246C3003EC3C4 /* ToastView.swift */; };
 		BA6EFC012F36A955003EC3C4 /* worklog-xcodeassistant-20260206.md in Resources */ = {isa = PBXBuildFile; fileRef = BA6EFC002F36A954003EC3C4 /* worklog-xcodeassistant-20260206.md */; };
 		BA6EFC042F36D644003EC3C4 /* COMMIT_MESSAGE.txt in Resources */ = {isa = PBXBuildFile; fileRef = BA6EFC032F36D644003EC3C4 /* COMMIT_MESSAGE.txt */; };
 		BE245BBE30074AACA289C192 /* EpisodeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29B3BD3927C3A99156079726 /* EpisodeDetailView.swift */; };
@@ -83,6 +84,7 @@
 		AAC0568ECC00DF51EF175765 /* AddNoteIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddNoteIntent.swift; sourceTree = "<group>"; };
 		B01276756CBF1F6C45AB7677 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		BA6E078B2F52397F003EC3C4 /* BookmarkOverlayCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkOverlayCard.swift; sourceTree = "<group>"; };
+		BA6E08662F5246C3003EC3C4 /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
 		BA6EFC002F36A954003EC3C4 /* worklog-xcodeassistant-20260206.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "worklog-xcodeassistant-20260206.md"; sourceTree = "<group>"; };
 		BA6EFC032F36D644003EC3C4 /* COMMIT_MESSAGE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = COMMIT_MESSAGE.txt; sourceTree = "<group>"; };
 		BA6EFCD22F4E8CA3003EC3C4 /* EchoNotes.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EchoNotes.entitlements; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 		A30000000000000000000004 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				BA6E08662F5246C3003EC3C4 /* ToastView.swift */,
 				BA6E078B2F52397F003EC3C4 /* BookmarkOverlayCard.swift */,
 				E9C0C11EEA60C007F10FA350 /* CachedAsyncImage.swift */,
 				7D86BD8271F50A31B9BF357F /* DevStatusOverlay.swift */,
@@ -327,6 +330,7 @@
 				A352AE1B30F57053B2F44445 /* ContinueListeningCard.swift in Sources */,
 				0206BDAFA97C63E6C9BE00F5 /* HomeView.swift in Sources */,
 				532B9A89EB7C85DC51BF33E3 /* OPMLImportService.swift in Sources */,
+				BA6E08672F5246C3003EC3C4 /* ToastView.swift in Sources */,
 				66A8CA30EA3542458F5B265D /* PersistenceController.swift in Sources */,
 				4F5B82B4CC98318E28E445C9 /* PlaybackHistoryManager.swift in Sources */,
 				B019C4E07965C65CC57A335A /* PodcastRSSService.swift in Sources */,
