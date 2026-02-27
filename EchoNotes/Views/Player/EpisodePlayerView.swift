@@ -635,11 +635,11 @@ struct EpisodePlayerView: View {
                         } label: {
                             ZStack {
                                 Circle()
-                                    .fill(Color.white.opacity(0.85))
+                                    .fill(Color.mintAccent)
                                     .frame(width: 28, height: 28)
                                 Image(systemName: "bookmark.fill")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.mintAccent)
+                                    .foregroundColor(.white)
                             }
                         }
                         .buttonStyle(.plain)
