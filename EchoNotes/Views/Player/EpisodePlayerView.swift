@@ -344,24 +344,43 @@ struct EpisodePlayerView: View {
     // MARK: - Add Note Button
 
     private var addNoteButton: some View {
-        Button {
-            activeSheet = .noteCapture
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "note.text.badge.plus")
-                    .font(.system(size: 15, weight: .medium))
+        HStack(spacing: 8) {
+            // 80% — Add note button (unchanged)
+            Button {
+                activeSheet = .noteCapture
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "note.text.badge.plus")
+                        .font(.system(size: 15, weight: .medium))
 
-                Text("Add note at current time")
-                    .font(.bodyRoundedMedium())
+                    Text("Add note at current time")
+                        .font(.bodyRoundedMedium())
+                }
+                .foregroundColor(.mintButtonText)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .background(Color.mintButtonBackground)
+                .cornerRadius(12)
             }
-            .foregroundColor(.mintButtonText)
-            .padding(.horizontal, 32)
-            .frame(maxWidth: .infinity)
-            .frame(height: 48)
-            .background(Color.mintButtonBackground)
-            .cornerRadius(12)
+            .buttonStyle(.plain)
+
+            // 20% — Bookmark button
+            Button {
+                addBookmark()
+            } label: {
+                Image(systemName: "bookmark.fill")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.mintButtonText)
+                    .frame(width: 48, height: 48)
+                    .background(Color.mintButtonBackground)
+                    .cornerRadius(12)
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+    }
+
+    private func addBookmark() {
+        // Step 2 implementation
     }
 
     // MARK: - Player Controls
