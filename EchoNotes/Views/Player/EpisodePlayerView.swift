@@ -77,6 +77,12 @@ struct EpisodePlayerView: View {
     @State private var previewNote: NoteEntity? = nil
     @State private var showingNotePreview: Bool = false
 
+    // Bookmark preview overlay state
+    @State private var previewBookmark: BookmarkEntity? = nil
+    @State private var showingBookmarkPreview: Bool = false
+    @State private var recentBookmarkTime: TimeInterval? = nil
+    @State private var bookmarkUndoTimer: Timer? = nil
+
     // Go Back button state
     @State private var showGoBackButton = false
     @State private var previousPlaybackPosition: TimeInterval = 0
@@ -87,6 +93,7 @@ struct EpisodePlayerView: View {
     @Environment(\.managedObjectContext) private var viewContext
 
     @FetchRequest private var notes: FetchedResults<NoteEntity>
+    @FetchRequest private var bookmarks: FetchedResults<BookmarkEntity>
 
     // MARK: - Computed Properties
 
@@ -107,6 +114,15 @@ struct EpisodePlayerView: View {
 
         _notes = FetchRequest<NoteEntity>(
             sortDescriptors: [NSSortDescriptor(keyPath: \NoteEntity.createdAt, ascending: false)],
+            predicate: NSPredicate(
+                format: "episodeTitle ==[c] %@ AND showTitle ==[c] %@",
+                episodeTitle, podcastTitle
+            ),
+            animation: .default
+        )
+
+        _bookmarks = FetchRequest<BookmarkEntity>(
+            sortDescriptors: [NSSortDescriptor(keyPath: \BookmarkEntity.timestamp, ascending: true)],
             predicate: NSPredicate(
                 format: "episodeTitle ==[c] %@ AND showTitle ==[c] %@",
                 episodeTitle, podcastTitle
@@ -380,7 +396,41 @@ struct EpisodePlayerView: View {
     }
 
     private func addBookmark() {
-        // Step 2 implementation
+        let currentTime = player.currentTime
+
+        // If tapped within 10s of the last bookmark → undo (remove it)
+        if let lastTime = recentBookmarkTime, abs(currentTime - lastTime) <= 10 {
+            let fetchRequest: NSFetchRequest<BookmarkEntity> = BookmarkEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(
+                format: "episodeTitle ==[c] %@ AND showTitle ==[c] %@ AND timestamp >= %f AND timestamp <= %f",
+                player.currentEpisode?.title ?? "",
+                player.currentPodcast?.title ?? "",
+                lastTime - 1.0,
+                lastTime + 1.0
+            )
+            if let results = try? viewContext.fetch(fetchRequest) {
+                results.forEach { viewContext.delete($0) }
+                try? viewContext.save()
+            }
+            bookmarkUndoTimer?.invalidate()
+            recentBookmarkTime = nil
+            return
+        }
+
+        // Otherwise create new bookmark
+        let bookmark = BookmarkEntity(context: viewContext)
+        bookmark.id = UUID()
+        bookmark.timestamp = currentTime
+        bookmark.episodeTitle = player.currentEpisode?.title
+        bookmark.showTitle = player.currentPodcast?.title
+        bookmark.createdAt = Date()
+        try? viewContext.save()
+
+        recentBookmarkTime = currentTime
+        bookmarkUndoTimer?.invalidate()
+        bookmarkUndoTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { _ in
+            recentBookmarkTime = nil
+        }
     }
 
     // MARK: - Player Controls
@@ -502,6 +552,31 @@ struct EpisodePlayerView: View {
                         }
                         .buttonStyle(.plain)
                         .position(x: xPos + 14, y: -8)
+                    }
+
+                    // Bookmark markers
+                    ForEach(bookmarks, id: \.id) { bookmark in
+                        let xPos = player.duration > 0
+                            ? (bookmark.timestamp / player.duration) * geo.size.width
+                            : 0
+
+                        Button {
+                            withAnimation(.spring(response: 0.3)) {
+                                previewBookmark = bookmark
+                                showingBookmarkPreview = true
+                            }
+                        } label: {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white.opacity(0.85))
+                                    .frame(width: 28, height: 28)
+                                Image(systemName: "bookmark.fill")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.mintAccent)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .position(x: xPos, y: -8)
                     }
                 }
             }
