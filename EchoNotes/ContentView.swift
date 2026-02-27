@@ -3965,13 +3965,14 @@ struct MiniPlayerBar: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
+            .padding(.horizontal, placement == .expanded ? 8 : 0)
+            .padding(.bottom, placement == .expanded ? 4 : 0)
             .background {
                 // Adaptive Background based on system placement
                 if placement == .expanded {
-                    // Floating capsule with frosted glass and shadow
+                    // Floating capsule with Liquid Glass
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                        .shadow(color: .black.opacity(0.1), radius: 10, y: 5)
+                        .glassEffect(.regular, in: .rect(cornerRadius: 16))
                 } else {
                     // Blends into the Tab Bar when inline/docked
                     Rectangle().fill(.clear)
@@ -3979,9 +3980,6 @@ struct MiniPlayerBar: View {
             }
         }
         .buttonStyle(.plain)
-        // Ensure the capsule doesn't touch the screen edges when expanded
-        .padding(.horizontal, placement == .expanded ? 8 : 0)
-        .padding(.bottom, placement == .expanded ? 4 : 0)
     }
 }
 
