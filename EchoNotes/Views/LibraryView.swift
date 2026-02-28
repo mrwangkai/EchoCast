@@ -236,10 +236,6 @@ struct LibraryView: View {
     
     private var notesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("All Notes")
-                .font(.title2Echo())
-                .foregroundColor(.echoTextPrimary)
-            
             ForEach(viewModel.groupedNotes(), id: \.key) { show, notes in
                 VStack(alignment: .leading, spacing: 12) {
                     // Section header with show title
