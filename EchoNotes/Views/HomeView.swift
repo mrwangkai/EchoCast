@@ -279,11 +279,10 @@ struct HomeView: View {
                             .frame(width: 327)
                         }
                     }
+                    .scrollTargetLayout()
                     .padding(.horizontal, EchoSpacing.screenPadding)
                 }
-                .onAppear {
-                    print("🎧 [HomeView] Showing \(continueListeningEpisodes.count) Continue Listening cards")
-                }
+                .scrollTargetBehavior(.viewAligned)
             } else {
                 Text("No episodes in progress")
                     .font(.bodyEcho())
