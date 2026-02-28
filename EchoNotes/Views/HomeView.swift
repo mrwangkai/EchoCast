@@ -283,6 +283,7 @@ struct HomeView: View {
                     .padding(.horizontal, EchoSpacing.screenPadding)
                 }
                 .scrollTargetBehavior(.viewAligned)
+                .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
             } else {
                 Text("No episodes in progress")
                     .font(.bodyEcho())
