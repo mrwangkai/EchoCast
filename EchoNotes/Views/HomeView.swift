@@ -66,6 +66,46 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
+                    // Header with inline buttons
+                    HStack(alignment: .center) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("EchoCast")
+                                .font(.largeTitleEcho())
+                                .foregroundColor(.echoTextPrimary)
+
+                            Text(greetingText)
+                                .font(.bodyEcho())
+                                .foregroundColor(.echoTextSecondary)
+                        }
+
+                        Spacer()
+
+                        // Buttons inline with header
+                        HStack(spacing: 16) {
+                            Button(action: {
+                                print("🔍 [HomeView] Browse button tapped")
+                                selectedTab = 1
+                            }) {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.body)
+                                    .foregroundColor(.echoTextPrimary)
+                                    .frame(width: 44, height: 44)
+                            }
+
+                            Button(action: {
+                                print("⚙️ [HomeView] Settings button tapped")
+                                showingSettings = true
+                            }) {
+                                Image(systemName: "gearshape")
+                                    .font(.body)
+                                    .foregroundColor(.echoTextPrimary)
+                                    .frame(width: 44, height: 44)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, EchoSpacing.screenPadding)
+                    .padding(.top, EchoSpacing.headerTopPadding)
+
                     // Continue Listening Section
                     if player.currentEpisode != nil || !recentNotes.isEmpty {
                         continueListeningSection
@@ -89,33 +129,7 @@ struct HomeView: View {
                 .padding(.bottom, 100)
             }
             .background(Color.echoBackground)
-            .navigationTitle("EchoCast")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(Color.echoBackground, for: .navigationBar)
-            .preferredColorScheme(.dark)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 16) {
-                        Button(action: {
-                            print("🔍 [HomeView] Browse button tapped")
-                            selectedTab = 1
-                        }) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.body)
-                                .foregroundColor(.echoTextPrimary)
-                        }
-
-                        Button(action: {
-                            print("⚙️ [HomeView] Settings button tapped")
-                            showingSettings = true
-                        }) {
-                            Image(systemName: "gearshape")
-                                .font(.body)
-                                .foregroundColor(.echoTextPrimary)
-                        }
-                    }
-                }
-            }
+            .navigationBarHidden(true)
             .onAppear {
                 print("🏠 [HomeView] View appeared")
                 print("🏠 [HomeView] Recent notes count: \(recentNotes.count)")
@@ -279,11 +293,11 @@ struct HomeView: View {
                             .frame(width: 327)
                         }
                     }
-                    .scrollTargetLayout()
                     .padding(.horizontal, EchoSpacing.screenPadding)
                 }
-                .scrollTargetBehavior(.viewAligned)
-                .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+                .onAppear {
+                    print("🎧 [HomeView] Showing \(continueListeningEpisodes.count) Continue Listening cards")
+                }
             } else {
                 Text("No episodes in progress")
                     .font(.bodyEcho())
