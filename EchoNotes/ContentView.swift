@@ -3905,6 +3905,7 @@ struct MiniPlayerBar: View {
     @Binding var showFullPlayer: Bool
     @ObservedObject private var player = GlobalPlayerManager.shared
     var namespace: Namespace.ID
+    @State private var showingAddNote = false
 
     // Detects if the player is floating (.expanded) or docked with Tab Bar (.inline)
     @Environment(\.tabViewBottomAccessoryPlacement) private var placement
@@ -3953,16 +3954,30 @@ struct MiniPlayerBar: View {
 
                 Spacer()
 
-                // Play/Pause button
-                Button(action: {
-                    player.togglePlayPause()
-                }) {
-                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.mintAccent)
-                        .frame(width: 32, height: 32)
+                // Add Note and Play/Pause buttons
+                HStack(spacing: 16) {
+                    // Add Note button
+                    Button(action: {
+                        showingAddNote = true
+                    }) {
+                        Image(systemName: "note.text.badge.plus")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .frame(width: 32, height: 32)
+                    .buttonStyle(.plain)
+
+                    // Play/Pause button
+                    Button(action: {
+                        player.togglePlayPause()
+                    }) {
+                        Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(.mintAccent)
+                            .frame(width: 32, height: 32)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
@@ -3979,6 +3994,9 @@ struct MiniPlayerBar: View {
                     Rectangle().fill(.clear)
                 }
             }
+        }
+        .sheet(isPresented: $showingAddNote) {
+            NoteCaptureView()
         }
         .buttonStyle(.plain)
     }
@@ -4121,7 +4139,7 @@ struct AppleMusicStyleMiniPlayer: View {
                 }
             }
         )
-        .cornerRadius(12, corners: [.topLeft, .topRight])
+        .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: -2)
         .padding(.bottom, 0) // Sits directly on tab bar
     }
@@ -4129,7 +4147,7 @@ struct AppleMusicStyleMiniPlayer: View {
     private var albumArtwork: some View {
         Group {
             if let imageURL = player.currentEpisode?.imageURL ?? player.currentPodcast?.artworkURL,
-               let url = URL(string: imageURL) {
+               URL(string: imageURL) != nil {
                 CachedAsyncImage(url: imageURL) { image in
                     image
                         .resizable()

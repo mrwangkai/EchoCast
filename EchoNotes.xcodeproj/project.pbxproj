@@ -24,7 +24,6 @@
 		66A8CA30EA3542458F5B265D /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92FA7184CFBE6C3A2C89D11C /* PersistenceController.swift */; };
 		6CABC715C5D5F2F34ADE6D68 /* GlobalPlayerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FD48759719F0A48ACDFE95 /* GlobalPlayerManager.swift */; };
 		7E9F2A3B6C8D0E1F2A3B4C5D /* PodcastBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F0A3B4C7D9E1F2A3B4C5D6E /* PodcastBrowseViewModel.swift */; };
-		952AAB90F04A9BEE60CBD414 /* MiniPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4B4374ACBF2F8DF02D162D8 /* MiniPlayerView.swift */; };
 		99C510E92096FC2D6FD5105A /* NoteViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54D628832EEB20F4375BCF9D /* NoteViewModel.swift */; };
 		A10000000000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000003 /* Assets.xcassets */; };
 		A1000000000000000000000D /* EchoNotes.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000D /* EchoNotes.xcdatamodeld */; };
@@ -79,7 +78,6 @@
 		A00000000000000000000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A0000000000000000000000E /* EchoNotes.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = EchoNotes.xcdatamodel; sourceTree = "<group>"; };
 		A00000000000000000000010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A4B4374ACBF2F8DF02D162D8 /* MiniPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerView.swift; sourceTree = "<group>"; };
 		A889EAE90DD5982B6BF699CC /* EchoCastDesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoCastDesignTokens.swift; sourceTree = "<group>"; };
 		AAC0568ECC00DF51EF175765 /* AddNoteIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddNoteIntent.swift; sourceTree = "<group>"; };
 		B01276756CBF1F6C45AB7677 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -185,7 +183,6 @@
 				64F8F7BFD5C955E7D638CF72 /* ContinueListeningCard.swift */,
 				97B336D73F6E2BC5950A352B /* HomeView.swift */,
 				233F1BE5E4D7277CAE91BD20 /* LibraryView.swift */,
-				A4B4374ACBF2F8DF02D162D8 /* MiniPlayerView.swift */,
 				7B924F6A7F976B983E1F11C4 /* NoteCaptureView.swift */,
 				2E4B2DF356B22A670EED39CD /* OnboardingView.swift */,
 				E4P1AYER78VIEW0FILEREFGHIJKL /* Player/EpisodePlayerView.swift */,
@@ -339,7 +336,6 @@
 				35F1A89D8755CF0C326046EA /* DevStatusOverlay.swift in Sources */,
 				BE245BBE30074AACA289C192 /* EpisodeDetailView.swift in Sources */,
 				40B41DD5A35FDAB9F5DCAD59 /* LibraryView.swift in Sources */,
-				952AAB90F04A9BEE60CBD414 /* MiniPlayerView.swift in Sources */,
 				2EBA34DB950BD2AAAED22196 /* NoteCaptureView.swift in Sources */,
 				484FD5BF9681BAD2BF013891 /* OnboardingView.swift in Sources */,
 				4826A78D2588E06B9758D964 /* PodcastDetailView.swift in Sources */,
