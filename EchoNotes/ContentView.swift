@@ -74,6 +74,7 @@ struct ContentView: View {
                     }
                 .presentationDragIndicator(.visible)
                 .presentationDetents([.large])
+                .preferredColorScheme(.dark)
                 .interactiveDismissDisabled(false)
             } else {
                 VStack(spacing: 16) {

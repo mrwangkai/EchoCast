@@ -17,6 +17,10 @@ struct LibraryView: View {
     @State private var showingSortOptions = false
     @State private var selectedNote: NoteEntity?
     @State private var showingPlayerSheet = false
+    @State private var noteToDelete: NoteEntity?
+    @State private var showingDeleteConfirmation = false
+    @State private var showingShareSheet = false
+    @State private var shareItem: ShareSheetItem?
 
     // Namespace for matched geometry effect with mini player
     @Namespace private var playerAnimation
@@ -69,9 +73,24 @@ struct LibraryView: View {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
                 EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation)
                     .presentationDragIndicator(.visible)
-                    .presentationDetents([.fraction(0.92)])
+                    .presentationDetents([.large])
                     .presentationCornerRadius(20)
+                    .preferredColorScheme(.dark)
             }
+        }
+        .alert("Delete Note", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                if let note = noteToDelete {
+                    viewModel.deleteNote(note)
+                    noteToDelete = nil
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete this note?")
+        }
+        .sheet(item: $shareItem) { item in
+            ShareSheet(activityItems: [item.text])
         }
     }
 
@@ -162,6 +181,27 @@ struct LibraryView: View {
         }
     }
 
+    // MARK: - Share Note
+
+    private func shareNote(_ note: NoteEntity) {
+        guard let noteText = note.noteText,
+              let showTitle = note.showTitle,
+              let episodeTitle = note.episodeTitle,
+              let timestamp = note.timestamp else {
+            return
+        }
+
+        let shareText = """
+        📝 Note from \(showTitle)
+
+        "\(noteText)"
+
+        — \(episodeTitle) @ \(timestamp)
+        """
+
+        shareItem = ShareSheetItem(text: shareText)
+    }
+
     // MARK: - Search and Filter Section
 
     private var searchAndFilterSection: some View {
@@ -189,45 +229,12 @@ struct LibraryView: View {
             .background(Color.searchFieldBackground)
             .cornerRadius(8)
 
-            // Filter and Sort buttons
-            HStack(spacing: 12) {
-                Button(action: {
-                    viewModel.filterPriority.toggle()
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: viewModel.filterPriority ? "star.fill" : "star")
-                            .font(.system(size: 12))
-                        Text("Priority")
-                            .font(.caption2Medium())
-                    }
-                    .foregroundColor(viewModel.filterPriority ? Color.mintAccent : .echoTextSecondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(viewModel.filterPriority ? Color.mintAccent.opacity(0.2) : Color.searchFieldBackground)
-                    .cornerRadius(8)
-                }
-
-                Button(action: {
-                    showingSortOptions = true
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "arrow.up.arrow.down")
-                            .font(.system(size: 12))
-                        Text("Sort")
-                            .font(.caption2Medium())
-                    }
-                    .foregroundColor(.echoTextSecondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color.searchFieldBackground)
-                    .cornerRadius(8)
-                }
-
-                Spacer()
-
+            // Notes count
+            HStack {
                 Text("\(viewModel.notes.count) notes")
                     .font(.caption2Medium())
                     .foregroundColor(.echoTextTertiary)
+                Spacer()
             }
         }
     }
@@ -240,8 +247,8 @@ struct LibraryView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     // Section header with show title
                     Text(show)
-                        .font(.subheadlineRounded())
-                        .foregroundColor(.echoTextSecondary)
+                        .font(.headline)
+                        .foregroundColor(.echoTextPrimary)
                         .padding(.top, 8)
                     
                     // Notes in this show
@@ -252,16 +259,14 @@ struct LibraryView: View {
                             }
                             .contextMenu {
                                 Button(action: {
-                                    viewModel.togglePriority(note)
+                                    shareNote(note)
                                 }) {
-                                    Label(
-                                        note.isPriority ? "Remove Priority" : "Mark as Priority",
-                                        systemImage: note.isPriority ? "star.slash" : "star.fill"
-                                    )
+                                    Label("Share", systemImage: "square.and.arrow.up")
                                 }
-                                
+
                                 Button(role: .destructive, action: {
-                                    viewModel.deleteNote(note)
+                                    noteToDelete = note
+                                    showingDeleteConfirmation = true
                                 }) {
                                     Label("Delete", systemImage: "trash")
                                 }
@@ -320,6 +325,13 @@ struct LibraryView: View {
         }
         .frame(maxWidth: .infinity)
     }
+}
+
+// MARK: - Share Sheet
+
+struct ShareSheetItem: Identifiable {
+    let id = UUID()
+    let text: String
 }
 
 #Preview {

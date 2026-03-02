@@ -74,6 +74,9 @@ struct PodcastDiscoveryView: View {
                 selectedPodcast = nil
             }) { podcast in
                 PodcastDetailView(podcast: podcast)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.hidden)
+                    .preferredColorScheme(.dark)
                     .onAppear {
                         print("✅ [Browse] Sheet opened successfully with podcast: \(podcast.title ?? "nil")")
                         print("✅ [Browse] This proves sheet received non-nil podcast")

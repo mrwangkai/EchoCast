@@ -144,8 +144,9 @@ struct PodcastDetailView: View {
         }
         .sheet(item: $selectedEpisode) { episode in
             EpisodePlayerView(episode: episode, podcast: podcast, namespace: namespace)
-                .presentationDetents([.fraction(0.92)])
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
+                .preferredColorScheme(.dark)
         }
     }
 

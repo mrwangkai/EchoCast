@@ -142,6 +142,9 @@ struct HomeView: View {
         }
         .sheet(item: $selectedPodcast) { podcast in
             PodcastDetailView(podcast: podcast)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.hidden)
+                .preferredColorScheme(.dark)
                 .onAppear {
                     print("✅ [Home] Sheet opened successfully with podcast: \(podcast.title ?? "nil")")
                 }
@@ -157,6 +160,7 @@ struct HomeView: View {
                     .presentationDragIndicator(.visible)
                     .presentationDetents([.large])
                     .presentationCornerRadius(20)
+                    .preferredColorScheme(.dark)
             }
         }
     }
