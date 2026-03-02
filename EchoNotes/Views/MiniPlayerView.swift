@@ -15,7 +15,7 @@ struct MiniPlayerView: View {
 
     var body: some View {
         if let episode = player.currentEpisode {
-            // STATE: Episode playing
+            // STATE: Episode playing - Floating pill with elevation
             HStack(spacing: 12) {
                 artworkView(for: episode)
                 episodeInfoView(for: episode)
@@ -26,13 +26,12 @@ struct MiniPlayerView: View {
                 }
             }
             .padding(12)
-            .background(Color(red: 0.2, green: 0.2, blue: 0.2))
-            .cornerRadius(12, corners: [.topLeft, .topRight])
-            .overlay {
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
-            }
-            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: -2)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
+            .background(.ultraThinMaterial)
+            .background(Color.black.opacity(0.35))
+            .cornerRadius(28)
+            .shadow(color: Color.black.opacity(0.4), radius: 30, x: 0, y: 10)
             .onTapGesture {
                 // Play/pause on tap, then show full player
                 if player.isPlaying {
