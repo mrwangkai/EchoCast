@@ -96,10 +96,10 @@ struct MiniPlayerView: View {
             showingAddNote = true
         }) {
             Image(systemName: "note.text.badge.plus")
-                .font(.system(size: 20))
-                .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702)) // Mint #00c8b3
+                .font(.system(size: 22, weight: .medium))
+                .foregroundColor(.white.opacity(0.7))
         }
-        .frame(width: 40, height: 40)
+        .frame(width: 44, height: 44)
         .buttonStyle(.plain)
     }
 
@@ -112,10 +112,10 @@ struct MiniPlayerView: View {
             }
         }) {
             Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                .font(.system(size: 20))
+                .font(.system(size: 26, weight: .semibold))
                 .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702)) // Mint #00c8b3
         }
-        .frame(width: 40, height: 40)
+        .frame(width: 44, height: 44)
         .buttonStyle(.plain)
     }
 }
