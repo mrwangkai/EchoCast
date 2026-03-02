@@ -95,6 +95,11 @@ struct EchoSpacing {
     static let noteCardCornerRadius: CGFloat = 12
     static let buttonCornerRadius: CGFloat = 8
     static let smallCornerRadius: CGFloat = 6
+
+    // HomeView spacing constants
+    static let homeSectionSpacing: CGFloat = 24
+    static let homeSidePadding: CGFloat = 20
+    static let sectionHeaderToContentSpacing: CGFloat = 12
 }
 
 // MARK: - Spacing Standard Values

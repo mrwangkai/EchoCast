@@ -65,7 +65,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 32) {
+                VStack(alignment: .leading, spacing: EchoSpacing.homeSectionSpacing) {
                     // Header with inline buttons
                     HStack(alignment: .center) {
                         VStack(alignment: .leading, spacing: 8) {
@@ -103,7 +103,6 @@ struct HomeView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, EchoSpacing.screenPadding)
                     .padding(.top, EchoSpacing.headerTopPadding)
 
                     // Continue Listening Section
@@ -126,6 +125,7 @@ struct HomeView: View {
                         emptyStateView
                     }
                 }
+                .padding(.horizontal, EchoSpacing.homeSidePadding)
                 .padding(.bottom, 100)
             }
             .background(Color.echoBackground)
@@ -267,11 +267,10 @@ struct HomeView: View {
     // MARK: - Continue Listening Section
 
     private var continueListeningSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: EchoSpacing.sectionHeaderToContentSpacing) {
             Text("Continue Listening")
                 .font(.title2Echo())
                 .foregroundColor(.echoTextPrimary)
-                .padding(.horizontal, EchoSpacing.screenPadding)
 
             if !continueListeningEpisodes.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -293,7 +292,6 @@ struct HomeView: View {
                             .frame(width: 327)
                         }
                     }
-                    .padding(.horizontal, EchoSpacing.screenPadding)
                 }
                 .onAppear {
                     print("🎧 [HomeView] Showing \(continueListeningEpisodes.count) Continue Listening cards")
@@ -302,7 +300,6 @@ struct HomeView: View {
                 Text("No episodes in progress")
                     .font(.bodyEcho())
                     .foregroundColor(.echoTextTertiary)
-                    .padding(.horizontal, EchoSpacing.screenPadding)
             }
         }
     }
@@ -310,7 +307,7 @@ struct HomeView: View {
     // MARK: - Following Section
 
     private var followingSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: EchoSpacing.sectionHeaderToContentSpacing) {
             HStack {
                 Text("Podcasts")
                     .font(.title2Echo())
@@ -327,7 +324,6 @@ struct HomeView: View {
                         .foregroundColor(.mintAccent)
                 }
             }
-            .padding(.horizontal, EchoSpacing.screenPadding)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
@@ -340,7 +336,6 @@ struct HomeView: View {
                             }
                     }
                 }
-                .padding(.horizontal, EchoSpacing.screenPadding)
             }
         }
         .onAppear {
@@ -427,15 +422,13 @@ struct HomeView: View {
     // MARK: - Recent Notes Section
 
     private var recentNotesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: EchoSpacing.sectionHeaderToContentSpacing) {
             Text("Recent Notes")
                 .font(.title2Echo())
                 .foregroundColor(.echoTextPrimary)
-                .padding(.horizontal, EchoSpacing.screenPadding)
 
             ForEach(recentNotes.prefix(5)) { note in
                 NoteCardView(note: note)
-                    .padding(.horizontal, EchoSpacing.screenPadding)
                     .onTapGesture {
                         print("📝 [HomeView] Note tapped: \(note.noteText?.prefix(50) ?? "No text")...")
                         selectedNote = note
