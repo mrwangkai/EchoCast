@@ -3961,10 +3961,10 @@ struct MiniPlayerBar: View {
                         showingAddNote = true
                     }) {
                         Image(systemName: "note.text.badge.plus")
-                            .font(.system(size: 20, weight: .medium))
+                            .font(.system(size: 22, weight: .medium))
                             .foregroundColor(.white.opacity(0.7))
                     }
-                    .frame(width: 32, height: 32)
+                    .frame(width: 44, height: 44)
                     .buttonStyle(.plain)
 
                     // Play/Pause button
@@ -3972,9 +3972,9 @@ struct MiniPlayerBar: View {
                         player.togglePlayPause()
                     }) {
                         Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.system(size: 24, weight: .semibold))
+                            .font(.system(size: 26, weight: .semibold))
                             .foregroundColor(.mintAccent)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)
                 }
