@@ -3955,16 +3955,17 @@ struct MiniPlayerBar: View {
                 Spacer()
 
                 // Add Note and Play/Pause buttons
-                HStack(spacing: 16) {
+                HStack(alignment: .center, spacing: 12) {
                     // Add Note button
                     Button(action: {
                         showingAddNote = true
                     }) {
                         Image(systemName: "note.text.badge.plus")
                             .font(.system(size: 22, weight: .medium))
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702))
                     }
                     .frame(width: 44, height: 44)
+                    .fixedSize()
                     .buttonStyle(.plain)
 
                     // Play/Pause button
@@ -3973,9 +3974,10 @@ struct MiniPlayerBar: View {
                     }) {
                         Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                             .font(.system(size: 26, weight: .semibold))
-                            .foregroundColor(.mintAccent)
+                            .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702))
                             .frame(width: 44, height: 44)
                     }
+                    .fixedSize()
                     .buttonStyle(.plain)
                 }
             }
@@ -3996,7 +3998,11 @@ struct MiniPlayerBar: View {
             }
         }
         .sheet(isPresented: $showingAddNote) {
-            NoteCaptureView()
+            NoteCaptureSheetWrapper(
+                episode: episode,
+                podcast: podcast,
+                currentTime: player.currentTime
+            )
         }
         .buttonStyle(.plain)
     }
