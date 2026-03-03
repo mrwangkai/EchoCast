@@ -329,15 +329,46 @@ struct HomeView: View {
                 }
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(followedPodcasts) { podcast in
-                        PodcastFollowingCard(podcast: podcast)
-                            .onTapGesture {
-                                print("🎙️ [HomeView] Podcast tapped: \(podcast.title ?? "Unknown")")
-                                print("🔓 [HomeView] Opening podcast detail sheet")
-                                selectedPodcast = podcast  // Sheet opens automatically
-                            }
+            if followedPodcasts.count == 1 {
+                // Single podcast: show card + nudge text
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(followedPodcasts) { podcast in
+                            PodcastFollowingCard(podcast: podcast)
+                                .onTapGesture {
+                                    print("🎙️ [HomeView] Podcast tapped: \(podcast.title ?? "Unknown")")
+                                    print("🔓 [HomeView] Opening podcast detail sheet")
+                                    selectedPodcast = podcast  // Sheet opens automatically
+                                }
+                        }
+
+                        Spacer()
+                            .frame(minWidth: 12)
+
+                        HStack(spacing: 4) {
+                            Text("Follow more")
+                                .font(.system(size: 12, weight: .regular))
+                                .foregroundColor(Color.white.opacity(0.28))
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 11, weight: .regular))
+                                .foregroundColor(Color.white.opacity(0.28))
+                        }
+
+                        Spacer()
+                    }
+                }
+            } else {
+                // Multiple podcasts: show standard carousel
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(followedPodcasts) { podcast in
+                            PodcastFollowingCard(podcast: podcast)
+                                .onTapGesture {
+                                    print("🎙️ [HomeView] Podcast tapped: \(podcast.title ?? "Unknown")")
+                                    print("🔓 [HomeView] Opening podcast detail sheet")
+                                    selectedPodcast = podcast  // Sheet opens automatically
+                                }
+                        }
                     }
                 }
             }
