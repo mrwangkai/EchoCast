@@ -13,7 +13,7 @@ Instruction:
 - [ ] T03 (P1): Siri "add note to EchoCast" is not working — tablestake
 - [ ] T04 (P1): What happens when a podcast or episode is deleted? Retain notes?
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished)
-- [ ] T06 (P1): Mini player — visual alignment
+
 
 ## 🧭 Backlog
 
@@ -32,10 +32,12 @@ Instruction:
 
 ## ✅ Done
 
+- [x] T06: Mini player — visual alignment (9ba80a2, 47a09ce, 9c3e297, 4ee9f7f)
 - [x] T15: Inconsistent sheets
 - [x] T16: Modernize mini player with floating pill
 - [x] T17: Add "Add Note" button on mini player
 - [x] T18: Play/pause button size audit
+- [x] T19: "Add note" sheet auto-dismiss fix (5b60839)
 
 ## 🧬 Possible Duplicates
 
