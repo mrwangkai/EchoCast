@@ -3973,7 +3973,9 @@ struct MiniPlayerBar: View {
                     Button(action: {
                         wasPlayingBeforeNote = player.isPlaying
                         if player.isPlaying { player.pause() }
-                        activeSheet = .addNote
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            activeSheet = .addNote
+                        }
                     }) {
                         Image(systemName: "note.text.badge.plus")
                             .font(.system(size: 22, weight: .medium))
