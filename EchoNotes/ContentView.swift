@@ -3971,6 +3971,8 @@ struct MiniPlayerBar: View {
                 HStack(alignment: .center, spacing: 12) {
                     // Add Note button
                     Button(action: {
+                        wasPlayingBeforeNote = player.isPlaying
+                        if player.isPlaying { player.pause() }
                         activeSheet = .addNote
                     }) {
                         Image(systemName: "note.text.badge.plus")
@@ -4013,10 +4015,6 @@ struct MiniPlayerBar: View {
                 podcast: podcast,
                 currentTime: player.currentTime
             )
-            .onAppear {
-                wasPlayingBeforeNote = player.isPlaying
-                if player.isPlaying { player.pause() }
-            }
             .onDisappear {
                 if wasPlayingBeforeNote { player.play() }
             }
