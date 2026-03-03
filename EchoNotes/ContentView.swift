@@ -3971,11 +3971,7 @@ struct MiniPlayerBar: View {
                 HStack(alignment: .center, spacing: 12) {
                     // Add Note button
                     Button(action: {
-                        wasPlayingBeforeNote = player.isPlaying
-                        if player.isPlaying { player.pause() }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                            activeSheet = .addNote
-                        }
+                        activeSheet = .addNote
                     }) {
                         Image(systemName: "note.text.badge.plus")
                             .font(.system(size: 22, weight: .medium))
@@ -4017,6 +4013,13 @@ struct MiniPlayerBar: View {
                 podcast: podcast,
                 currentTime: player.currentTime
             )
+            .onAppear {
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s
+                    wasPlayingBeforeNote = player.isPlaying
+                    if player.isPlaying { player.pause() }
+                }
+            }
             .onDisappear {
                 if wasPlayingBeforeNote { player.play() }
             }
