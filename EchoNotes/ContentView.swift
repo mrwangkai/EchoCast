@@ -59,6 +59,7 @@ struct ContentView: View {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
                 MiniPlayerBar(episode: episode, podcast: podcast, showFullPlayer: $showFullPlayer, namespace: playerAnimation)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .id("miniPlayerBar")
             }
         }
         .tabBarMinimizeBehavior(.onScrollDown)

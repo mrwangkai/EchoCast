@@ -3,6 +3,8 @@
 Instruction: 
 - please automatically assign ID (e.g. T{xx}) for any item that a) does not have an assigned ID, or if it is moved from Inbox.
 - please move any item into 🧬 Possible Duplicates if you identify it as such
+- for any issue that has been marked as or moved to Done, please also attach the corresponding commit ID. 
+- If a task you are working on does not exist in this file, create it in "Currently working on" section with the next available T-ID before starting work.
 
 ## 🔥 Currently working on
 
