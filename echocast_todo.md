@@ -13,6 +13,7 @@ Instruction:
 - [ ] T03 (P1): Siri "add note to EchoCast" is not working — tablestake
 - [ ] T04 (P1): What happens when a podcast or episode is deleted? Retain notes?
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished)
+- [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12)
 
 
 ## 🧭 Backlog
