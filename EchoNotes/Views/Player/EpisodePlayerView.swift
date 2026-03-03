@@ -167,7 +167,7 @@ struct EpisodePlayerView: View {
                                 episode: episode,
                                 podcast: podcast,
                                 namespace: namespace,
-                                addNoteAction: { activeSheet = .noteCapture }
+                                addNoteAction: { openNoteCapture() }
                             )
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .padding(.top, 8)
@@ -177,7 +177,7 @@ struct EpisodePlayerView: View {
                             ScrollView {
                                 NotesSegmentView(
                                     notes: Array(notes),
-                                    addNoteAction: { activeSheet = .noteCapture },
+                                    addNoteAction: { openNoteCapture() },
                                     player: player,
                                     selectedSegment: $selectedSegment,
                                     onNoteTap: { note in
@@ -346,25 +346,24 @@ struct EpisodePlayerView: View {
                     podcast: podcast,
                     currentTime: player.currentTime
                 )
-                .onAppear {
-                    // Save current playback state and pause if playing
-                    wasPlayingBeforeNote = player.isPlaying
-                    if player.isPlaying {
-                        player.pause()
-                    }
-                }
                 .onDisappear {
-                    // Resume playback if it was playing before
-                    if wasPlayingBeforeNote {
-                        player.play()
-                    }
-                    // Note toast — fires after sheet dismisses so it's always visible
+                    if wasPlayingBeforeNote { player.play() }
                     showToast("Note at \(formatTime(player.currentTime)) added", icon: "note.text")
                 }
             }
         }
         .onDisappear {
             goBackTimer?.invalidate()
+        }
+    }
+
+    // MARK: - Helper Functions
+
+    private func openNoteCapture() {
+        wasPlayingBeforeNote = player.isPlaying
+        if player.isPlaying { player.pause() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            activeSheet = .noteCapture
         }
     }
 
@@ -426,7 +425,7 @@ struct EpisodePlayerView: View {
         HStack(spacing: 8) {
             // 80% — Add note button (unchanged)
             Button {
-                activeSheet = .noteCapture
+                openNoteCapture()
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "note.text.badge.plus")
