@@ -3906,6 +3906,7 @@ struct MiniPlayerBar: View {
     @ObservedObject private var player = GlobalPlayerManager.shared
     var namespace: Namespace.ID
     @State private var showingAddNote = false
+    @State private var wasPlayingBeforeNote = false
 
     // Detects if the player is floating (.expanded) or docked with Tab Bar (.inline)
     @Environment(\.tabViewBottomAccessoryPlacement) private var placement
@@ -3965,7 +3966,6 @@ struct MiniPlayerBar: View {
                             .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702))
                     }
                     .frame(width: 44, height: 44)
-                    .fixedSize()
                     .buttonStyle(.plain)
 
                     // Play/Pause button
@@ -3977,7 +3977,6 @@ struct MiniPlayerBar: View {
                             .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702))
                             .frame(width: 44, height: 44)
                     }
-                    .fixedSize()
                     .buttonStyle(.plain)
                 }
             }
@@ -4003,6 +4002,13 @@ struct MiniPlayerBar: View {
                 podcast: podcast,
                 currentTime: player.currentTime
             )
+            .onAppear {
+                wasPlayingBeforeNote = player.isPlaying
+                if player.isPlaying { player.pause() }
+            }
+            .onDisappear {
+                if wasPlayingBeforeNote { player.play() }
+            }
         }
         .buttonStyle(.plain)
     }
