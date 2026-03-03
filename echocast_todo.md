@@ -13,6 +13,7 @@ Instruction:
 - [ ] T03 (P1): Siri "add note to EchoCast" is not working — tablestake
 - [ ] T04 (P1): What happens when a podcast or episode is deleted? Retain notes?
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished)
+- [ ] T13 (P2): Balanced single-item "Following Podcast" section layout — inline nudge when count == 1
 - [ ] T19 (P0): "Add note" sheet automatically dismisses itself when tapping on "add note" icon on the mini player while an episode is playing (commit history: 0e52239, 5b60839)
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12)
 
@@ -25,7 +26,6 @@ Instruction:
 - [ ] T10 (P2): Download section — where does this live?
 - [ ] T11 (P2): "View all" for Continue Listening — sheet or new screen?
 - [ ] T12 (P2): "View all" for Following Podcasts — sheet or new screen?
-- [ ] T13 (P2): Balanced single-item "Following Podcast" section layout
 - [ ] T14 (P2): Hide Browse tab — reduces redundant ingress point into browse
 
 ## 📨 Inbox (raw ideas)
