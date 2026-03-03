@@ -57,7 +57,13 @@ struct ContentView: View {
         .tabViewBottomAccessory(isEnabled: player.currentEpisode != nil) {
             // Mini player bar above tab bar (Liquid Glass style)
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                MiniPlayerBar(episode: episode, podcast: podcast, showFullPlayer: $showFullPlayer, namespace: playerAnimation)
+                MiniPlayerBar(
+                    episode: episode,
+                    podcast: podcast,
+                    showFullPlayer: $showFullPlayer,
+                    player: player,
+                    namespace: playerAnimation
+                )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .id("miniPlayerBar")
             }
@@ -3904,7 +3910,7 @@ struct MiniPlayerBar: View {
     let episode: RSSEpisode
     let podcast: PodcastEntity
     @Binding var showFullPlayer: Bool
-    @ObservedObject private var player = GlobalPlayerManager.shared
+    @ObservedObject var player: GlobalPlayerManager
     var namespace: Namespace.ID
 
     enum MiniPlayerSheet: Identifiable {
