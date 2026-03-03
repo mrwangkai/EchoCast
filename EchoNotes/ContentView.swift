@@ -3919,6 +3919,7 @@ struct MiniPlayerBar: View {
     }
     @State private var activeSheet: MiniPlayerSheet? = nil
     @State private var wasPlayingBeforeNote = false
+    @State private var sheetFullyPresented = false
 
     // Detects if the player is floating (.expanded) or docked with Tab Bar (.inline)
     @Environment(\.tabViewBottomAccessoryPlacement) private var placement
@@ -4015,12 +4016,15 @@ struct MiniPlayerBar: View {
             )
             .onAppear {
                 Task { @MainActor in
-                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s
+                    try? await Task.sleep(nanoseconds: 300_000_000) // 0.3s
                     wasPlayingBeforeNote = player.isPlaying
                     if player.isPlaying { player.pause() }
+                    sheetFullyPresented = true
                 }
             }
             .onDisappear {
+                guard sheetFullyPresented else { return }
+                sheetFullyPresented = false
                 if wasPlayingBeforeNote { player.play() }
             }
         }
