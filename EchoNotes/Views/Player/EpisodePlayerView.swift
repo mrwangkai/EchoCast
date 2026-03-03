@@ -662,7 +662,7 @@ struct EpisodePlayerView: View {
                     }
                 }
             }
-            .frame(height: 36)
+            .frame(height: 28)
             .padding(.horizontal, 24)
 
             HStack {
