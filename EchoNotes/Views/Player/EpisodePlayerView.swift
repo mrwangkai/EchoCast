@@ -92,6 +92,10 @@ struct EpisodePlayerView: View {
     // Toast notification state
     @State private var toastMessage: ToastMessage? = nil
 
+    // Scrubber drag state
+    @State private var isDragging = false
+    @State private var dragTime: TimeInterval = 0
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
 
@@ -103,6 +107,11 @@ struct EpisodePlayerView: View {
     /// Check if player has loaded enough data to display
     private var isPlayerReady: Bool {
         player.duration > 0
+    }
+
+    /// Display time for scrubber visual - uses dragTime when dragging, otherwise actual player time
+    private var displayTime: TimeInterval {
+        isDragging ? dragTime : player.currentTime
     }
 
     // MARK: - Initialization
@@ -540,7 +549,7 @@ struct EpisodePlayerView: View {
                             .frame(
                                 width: geo.size.width * CGFloat(
                                     player.duration > 0
-                                        ? min(player.currentTime / player.duration, 1.0)
+                                        ? min(displayTime / player.duration, 1.0)
                                         : 0
                                 ),
                                 height: 4
@@ -553,7 +562,7 @@ struct EpisodePlayerView: View {
                             .frame(width: 14, height: 14)
                             .offset(
                                 x: geo.size.width * CGFloat(player.duration > 0
-                                    ? min(player.currentTime / player.duration, 1.0)
+                                    ? min(displayTime / player.duration, 1.0)
                                     : 0) - 7,
                                 y: 0
                             )
@@ -567,10 +576,16 @@ struct EpisodePlayerView: View {
                                 if !showGoBackButton && previousPlaybackPosition == 0 {
                                     previousPlaybackPosition = player.currentTime
                                 }
-                                let pct = min(max(0, value.location.x / geo.size.width), 1.0)
-                                player.seek(to: pct * player.duration)
+                                isDragging = true
+                                let fraction = max(0, min(value.location.x / geo.size.width, 1))
+                                dragTime = fraction * player.duration
                             }
-                            .onEnded { _ in
+                            .onEnded { value in
+                                // Perform actual seek on drag end
+                                let fraction = max(0, min(value.location.x / geo.size.width, 1))
+                                player.seek(to: fraction * player.duration)
+                                isDragging = false
+
                                 // Show go back button when scrub ends
                                 showGoBackButton = true
                                 goBackCountdown = 8.0
@@ -651,13 +666,13 @@ struct EpisodePlayerView: View {
             .padding(.horizontal, 24)
 
             HStack {
-                Text(formatTime(player.currentTime))
+                Text(formatTime(displayTime))
                     .font(.system(size: 12, weight: .regular))
                     .foregroundColor(.white)
 
                 Spacer()
 
-                Text("-\(formatTime(player.duration - player.currentTime))")
+                Text("-\(formatTime(player.duration - displayTime))")
                     .font(.system(size: 12, weight: .regular))
                     .foregroundColor(.white)
             }
