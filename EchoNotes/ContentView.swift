@@ -3906,7 +3906,12 @@ struct MiniPlayerBar: View {
     @Binding var showFullPlayer: Bool
     @ObservedObject private var player = GlobalPlayerManager.shared
     var namespace: Namespace.ID
-    @State private var showingAddNote = false
+
+    enum MiniPlayerSheet: Identifiable {
+        case addNote
+        var id: String { "addNote" }
+    }
+    @State private var activeSheet: MiniPlayerSheet? = nil
     @State private var wasPlayingBeforeNote = false
 
     // Detects if the player is floating (.expanded) or docked with Tab Bar (.inline)
@@ -3960,7 +3965,7 @@ struct MiniPlayerBar: View {
                 HStack(alignment: .center, spacing: 12) {
                     // Add Note button
                     Button(action: {
-                        showingAddNote = true
+                        activeSheet = .addNote
                     }) {
                         Image(systemName: "note.text.badge.plus")
                             .font(.system(size: 22, weight: .medium))
@@ -3996,7 +4001,7 @@ struct MiniPlayerBar: View {
                 }
             }
         }
-        .sheet(isPresented: $showingAddNote) {
+        .sheet(item: $activeSheet) { _ in
             NoteCaptureSheetWrapper(
                 episode: episode,
                 podcast: podcast,

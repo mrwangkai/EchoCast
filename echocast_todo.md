@@ -13,6 +13,7 @@ Instruction:
 - [ ] T03 (P1): Siri "add note to EchoCast" is not working — tablestake
 - [ ] T04 (P1): What happens when a podcast or episode is deleted? Retain notes?
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished)
+- [ ] T19 (P0): "Add note" sheet automatically dismisses itself when tapping on "add note" icon on the mini player while an episode is playing
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12)
 
 
@@ -38,7 +39,6 @@ Instruction:
 - [x] T16: Modernize mini player with floating pill
 - [x] T17: Add "Add Note" button on mini player
 - [x] T18: Play/pause button size audit
-- [x] T19: "Add note" sheet auto-dismiss fix (5b60839)
 
 ## 🧬 Possible Duplicates
 
