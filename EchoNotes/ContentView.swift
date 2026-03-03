@@ -3983,7 +3983,6 @@ struct MiniPlayerBar: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .padding(.horizontal, placement == .expanded ? 8 : 0)
-            .padding(.bottom, placement == .expanded ? 4 : 0)
             .background {
                 // Adaptive Background based on system placement
                 if placement == .expanded {

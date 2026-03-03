@@ -1,0 +1,39 @@
+# EchoCast TODO
+
+Instruction: 
+- please automatically assign ID (e.g. T{xx}) for any item that a) does not have an assigned ID, or if it is moved from Inbox.
+- please move any item into 🧬 Possible Duplicates if you identify it as such
+
+## 🔥 Currently working on
+
+- [ ] T01 (P0): Scrubber — not smooth on drag, may be related to non-downloaded audio
+- [ ] T02 (P0): Scrubber appears too small (hitbox / visual size)
+- [ ] T03 (P1): Siri "add note to EchoCast" is not working — tablestake
+- [ ] T04 (P1): What happens when a podcast or episode is deleted? Retain notes?
+- [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished)
+- [ ] T06 (P1): Mini player — visual alignment
+
+## 🧭 Backlog
+
+- [ ] T07 (P2): Add Note sheet — series, episode, timestamp should read as body text, not input fields
+- [ ] T08 (P2): Spacing between Play/Pause and control buttons too close
+- [ ] T09 (P2): Add Note sheet is rendering in light mode
+- [ ] T10 (P2): Download section — where does this live?
+- [ ] T11 (P2): "View all" for Continue Listening — sheet or new screen?
+- [ ] T12 (P2): "View all" for Following Podcasts — sheet or new screen?
+- [ ] T13 (P2): Balanced single-item "Following Podcast" section layout
+- [ ] T14 (P2): Hide Browse tab — reduces redundant ingress point into browse
+
+## 📨 Inbox (raw ideas)
+- [ ] (P2): 
+- [ ] (P2): 
+
+## ✅ Done
+
+- [x] T15: Inconsistent sheets
+- [x] T16: Modernize mini player with floating pill
+- [x] T17: Add "Add Note" button on mini player
+- [x] T18: Play/pause button size audit
+
+## 🧬 Possible Duplicates
+
