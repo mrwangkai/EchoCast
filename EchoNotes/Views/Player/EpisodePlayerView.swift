@@ -64,7 +64,7 @@ struct EpisodePlayerView: View {
     let podcast: PodcastEntity
     var namespace: Namespace.ID
 
-    @ObservedObject private var player = GlobalPlayerManager.shared
+    @ObservedObject var player: GlobalPlayerManager
     @State private var selectedSegment = 0
 
     // Unified sheet state
@@ -116,10 +116,11 @@ struct EpisodePlayerView: View {
 
     // MARK: - Initialization
 
-    init(episode: RSSEpisode, podcast: PodcastEntity, namespace: Namespace.ID) {
+    init(episode: RSSEpisode, podcast: PodcastEntity, namespace: Namespace.ID, player: GlobalPlayerManager) {
         self.episode = episode
         self.podcast = podcast
         self.namespace = namespace
+        self.player = player
 
         let episodeTitle = episode.title
         let podcastTitle = podcast.title ?? ""

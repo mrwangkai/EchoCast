@@ -72,7 +72,7 @@ struct ContentView: View {
         // FULL PLAYER SHEET - Bottom sheet that slides up from mini player
         .sheet(isPresented: $showFullPlayer) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation)
+                EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation, player: GlobalPlayerManager.shared)
                     .onAppear {
                         print("👁️ [ContentView Full Player] EpisodePlayerView appeared")
                     }
@@ -2196,7 +2196,7 @@ struct PlayerSheetWrapper: View {
                     .padding(.bottom, 8)
 
                 NavigationStack {
-                    EpisodePlayerView(episode: episode, podcast: podcast, namespace: namespace)
+                    EpisodePlayerView(episode: episode, podcast: podcast, namespace: namespace, player: GlobalPlayerManager.shared)
                         .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {

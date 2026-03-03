@@ -156,7 +156,7 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingPlayerSheet) {
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
-                EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation)
+                EpisodePlayerView(episode: episode, podcast: podcast, namespace: playerAnimation, player: GlobalPlayerManager.shared)
                     .presentationDragIndicator(.visible)
                     .presentationDetents([.large])
                     .presentationCornerRadius(20)

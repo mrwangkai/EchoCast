@@ -143,7 +143,7 @@ struct PodcastDetailView: View {
             print("✅ [PodcastDetail] Task completed")
         }
         .sheet(item: $selectedEpisode) { episode in
-            EpisodePlayerView(episode: episode, podcast: podcast, namespace: namespace)
+            EpisodePlayerView(episode: episode, podcast: podcast, namespace: namespace, player: GlobalPlayerManager.shared)
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
                 .preferredColorScheme(.dark)
