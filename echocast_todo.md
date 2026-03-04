@@ -26,7 +26,6 @@ Instruction:
 - [ ] T14 (P2): Hide Browse tab — reduces redundant ingress point into browse
 - [ ] T21 (P2): What does "Following" mean? download the latest episode? if so, should there be series level control similar to overcast? We need something like that but hopefully not overly complicating things.
 - [] T22 (P1): add a "Add note at current time" on CarPlay. This will support, alongside, Siri input, more ways to add notes to the app
-- [] T23 (P1): on home screen, the "Continue Listening" and "Podcasts" section has its left and right sides cropped. They should run through the edge of the screen to have a carousel effect
 
 
 
@@ -44,6 +43,7 @@ Instruction:
 - [x] T17: Add "Add Note" button on mini player
 - [x] T18: Play/pause button size audit
 - [x] T19: Mini player "Add note" sheet auto-dismiss fix — lifted sheet to ContentView level, removed pause/resume logic (0e52239, 5b60839, 61f4bb8, 710ba88, f3ebdf9, bd6e025, 9cf258a, bde5278, a0ec89b, b3a5935, d25ba68, 48e9ca1)
+- [x] T23: Fix home screen carousel padding regression — removed outer VStack horizontal padding, applied padding to section headers instead, added .scrollClipDisabled() and .padding(.leading) to horizontal ScrollViews for edge-to-edge carousel effect (4cbc42d)
 
 ## 🧬 Possible Duplicates
 
