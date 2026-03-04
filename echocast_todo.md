@@ -10,7 +10,6 @@ Instructions:
 
 ## 🔥 Currently working on
 
-- [ ] T02 (P0): Scrubber appears too small (hitbox / visual size). Hitbox addressed (33469b5) - increased to 28pt. Smooth drag addressed (1dc4e0d). Visual size addressed (01a41dc) - increased knob from 14pt to 20pt. Ready for merge.
 - [ ] T04 (P1): What happens when a podcast or episode is deleted? Retain notes? Currently PodcastEntity.notes uses Cascade deletion — notes are lost when podcast deleted. Desired: keep notes even if user unfollows/deletes podcast or episode.
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished)
 - [ ] T27 (P1): Individual player sheet styling — give bottom section more spacing/breathing room. Current: VStack spacing 16pt, top pad 12pt, bottom pad 48pt, horizontal pad 16pt.
@@ -54,6 +53,7 @@ Instructions:
 - [x] T07: Refactored NoteCaptureSheetWrapper — replaced Form with ScrollView+VStack, removed "Mark as Important" toggle, updated podcast metadata to static text with proper typography, added labels to Note/Tags fields, and hardened saveNote() with do/catch error handling and save-failure toast (06da238)
 - [x] T28: Individual player sheet AI audit completed — gathered feedback on layout, spacing, and usability. See worklog_20260304.md for summary. Some recommendations acted on (T29-T31), others declined per product strategy.
 - [x] T03: Siri "add note to EchoCast" working — phrases like "Hey Siri, add a note in EchoCast" or "Hey Siri, note this in EchoCast" successfully trigger AddNoteIntent. Note capture via Siri functional.
+- [x] T02: Scrubber visual size increased — knob from 14pt to 20pt, track height from 4pt to 6pt for better visibility against 28pt markers. Aligns with Overcast standards. (4ba22fe, ed28456)
 
 ## 🧬 Possible Duplicates
 
