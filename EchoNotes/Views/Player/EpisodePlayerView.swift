@@ -1205,7 +1205,7 @@ struct NoteCaptureSheetWrapper: View {
                                     .scrollContentBackground(.hidden)
                             }
                             .padding(12)
-                            .background(Color(uiColor: .systemBackground))
+                            .background(Color(red: 0.2, green: 0.2, blue: 0.2))
                             .cornerRadius(12)
                         }
 
@@ -1217,7 +1217,7 @@ struct NoteCaptureSheetWrapper: View {
                             TextField("interesting, quote...", text: $tags)
                                 .font(.system(size: 15))
                                 .padding(12)
-                                .background(Color(uiColor: .systemBackground))
+                                .background(Color(red: 0.2, green: 0.2, blue: 0.2))
                                 .cornerRadius(12)
                             Text("Separate tags with commas")
                                 .font(.system(size: 12))
@@ -1232,14 +1232,14 @@ struct NoteCaptureSheetWrapper: View {
                                 .foregroundStyle(Color.mintAccent)
                                 .frame(maxWidth: .infinity)
                                 .padding(14)
-                                .background(Color(uiColor: .systemBackground))
+                                .background(Color(red: 0.2, green: 0.2, blue: 0.2))
                                 .cornerRadius(12)
                         }
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 24)
                 }
-                .background(Color(uiColor: .systemGroupedBackground))
+                .background(Color(red: 0.149, green: 0.149, blue: 0.149))
                 .navigationTitle("Add Note")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -1270,6 +1270,7 @@ struct NoteCaptureSheetWrapper: View {
                 .animation(.easeInOut, value: showSaveError)
             }
         }
+        .preferredColorScheme(.dark)
     }
 
     private func formatTime(_ seconds: TimeInterval) -> String {
