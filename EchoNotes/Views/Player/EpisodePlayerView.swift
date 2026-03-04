@@ -70,9 +70,6 @@ struct EpisodePlayerView: View {
     // Unified sheet state
     @State private var activeSheet: PlayerSheet? = nil
 
-    // Track if player was playing before opening note sheet
-    @State private var wasPlayingBeforeNote: Bool = false
-
     // Note preview overlay state
     @State private var previewNote: NoteEntity? = nil
     @State private var showingNotePreview: Bool = false
@@ -347,10 +344,6 @@ struct EpisodePlayerView: View {
                     podcast: podcast,
                     currentTime: player.currentTime
                 )
-                .onDisappear {
-                    if wasPlayingBeforeNote { player.play() }
-                    showToast("Note at \(formatTime(player.currentTime)) added", icon: "note.text")
-                }
             }
         }
         .onDisappear {
@@ -361,11 +354,7 @@ struct EpisodePlayerView: View {
     // MARK: - Helper Functions
 
     private func openNoteCapture() {
-        wasPlayingBeforeNote = player.isPlaying
-        if player.isPlaying { player.pause() }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            activeSheet = .noteCapture
-        }
+        activeSheet = .noteCapture
     }
 
     // MARK: - Segmented Control
