@@ -229,6 +229,7 @@ struct EpisodePlayerView: View {
 
                     // Playback controls
                     playbackControlButtons
+                        .padding(.bottom, 8)
 
                     // Add Note CTA (Always visible with player controls)
                     addNoteButton
