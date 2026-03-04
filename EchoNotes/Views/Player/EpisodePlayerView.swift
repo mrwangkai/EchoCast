@@ -1248,6 +1248,7 @@ struct NoteCaptureSheetWrapper: View {
                     }
                 }
             }
+            .preferredColorScheme(nil)
 
             if showSaveError, let message = saveErrorMessage {
                 VStack {
