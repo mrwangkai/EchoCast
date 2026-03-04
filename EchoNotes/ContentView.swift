@@ -66,6 +66,7 @@ struct ContentView: View {
                 )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .id("miniPlayerBar")
+                    .environment(\.managedObjectContext, viewContext)
             }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
@@ -3970,7 +3971,9 @@ struct MiniPlayerBar: View {
                 HStack(alignment: .center, spacing: 12) {
                     // Add Note button
                     Button(action: {
+                        print("🔵 [MiniPlayer] Setting activeSheet = .addNote")
                         activeSheet = .addNote
+                        print("🔵 [MiniPlayer] activeSheet is now: \(String(describing: activeSheet))")
                     }) {
                         Image(systemName: "note.text.badge.plus")
                             .font(.system(size: 22, weight: .medium))
@@ -4012,6 +4015,9 @@ struct MiniPlayerBar: View {
                 podcast: podcast,
                 currentTime: player.currentTime
             )
+        }
+        .onChange(of: activeSheet == nil) { isNil in
+            print("🔴 [MiniPlayer] activeSheet changed to nil: \(isNil)")
         }
         .buttonStyle(.plain)
     }
