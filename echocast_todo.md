@@ -19,7 +19,6 @@ Instructions:
 
 ## 🧭 Backlog
 
-- [ ] T07 (P2): Add Note sheet — series, episode, timestamp should read as body text, not input fields. On Add Note and Edit Note sheet, update the podcast metadata (e.g. series name, episode name, and timestamp) to look more like a static body of text vs. in an input field which can errenonously afford that they are clickable.
 - [ ] T08 (P2): Spacing between Play/Pause and control buttons too close
 - [ ] T09 (P2): Add Note sheet is rendering in light mode
 - [ ] T10 (P2): Download section — where does this live?
@@ -29,6 +28,7 @@ Instructions:
 - [ ] T21 (P2): What does "Following" mean? download the latest episode? if so, should there be series level control similar to overcast? We need something like that but hopefully not overly complicating things.
 - [] T22 (P1): add a "Add note at current time" on CarPlay. This will support, alongside, Siri input, more ways to add notes to the app
 - [] T25 (P1) Note Sheet Text Field Activation Lag — Keyboard Cursor Delayed on First Tap During Active Playback
+- [ ] T26 (P2): Refine NoteCaptureSheetWrapper styling — fix light mode rendering, review and update label font sizes for consistency
 
 
 
@@ -48,6 +48,7 @@ Instructions:
 - [x] T18: Play/pause button size audit
 - [x] T19: Mini player "Add note" sheet auto-dismiss fix — lifted sheet to ContentView level, removed pause/resume logic (0e52239, 5b60839, 61f4bb8, 710ba88, f3ebdf9, bd6e025, 9cf258a, bde5278, a0ec89b, b3a5935, d25ba68, 48e9ca1)
 - [x] T23: Fix home screen carousel padding regression — removed outer VStack horizontal padding, applied padding to section headers instead, added .scrollClipDisabled() and .padding(.leading) to horizontal ScrollViews for edge-to-edge carousel effect (4cbc42d)
+- [x] T07: Refactored NoteCaptureSheetWrapper — replaced Form with ScrollView+VStack, removed "Mark as Important" toggle, updated podcast metadata to static text with proper typography, added labels to Note/Tags fields, and hardened saveNote() with do/catch error handling and save-failure toast (06da238)
 
 ## 🧬 Possible Duplicates
 
