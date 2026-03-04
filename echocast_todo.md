@@ -10,11 +10,14 @@ Instructions:
 
 ## 🔥 Currently working on
 
-- [ ] T02 (P0): Scrubber appears too small (hitbox / visual size). Hitbox addressed (33469b5) - increased to 28pt. Visual size may still need review.
-- [ ] T03 (P1): Siri "add note to EchoCast" is not working — tablestake
-- [ ] T04 (P1): What happens when a podcast or episode is deleted? Retain notes?
+- [ ] T02 (P0): Scrubber appears too small (hitbox / visual size). Hitbox addressed (33469b5) - increased to 28pt. Smooth drag addressed (1dc4e0d). Visual size addressed (01a41dc) - increased knob from 14pt to 20pt. Ready for merge.
+- [ ] T04 (P1): What happens when a podcast or episode is deleted? Retain notes? Currently PodcastEntity.notes uses Cascade deletion — notes are lost when podcast deleted. Desired: keep notes even if user unfollows/deletes podcast or episode.
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished)
+- [ ] T27 (P1): Individual player sheet styling — give bottom section more spacing/breathing room. Current: VStack spacing 16pt, top pad 12pt, bottom pad 48pt, horizontal pad 16pt.
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12)
+- [ ] T29 (P1): Timeline markers must use distinct shapes to differentiate notes (filled circle ●) from bookmarks (diamond ◆) — currently all solid teal circles, which breaks the core note-vs-bookmark distinction that is fundamental to EchoCast's value prop. Target timeProgressWithMarkers in EpisodePlayerView.swift only; bookmark markers already have a diamond spec from prior work that needs to be enforced here. (LOE: S)
+- [ ] T30 (P2): The "Bookmark added" undo toast appears at the top of the sheet, far from the bottom-right bookmark button that triggers it — move the toast anchor to just above the bottom action bar so the user sees it without scanning the full screen. This is especially important given the 10-second undo window; proximity to the action directly affects whether users catch it in time. (LOE: XS)
+- [ ] T31 (P1): Verify what data the circular progress ring on the "Go Back" chip is bound to — if it mirrors global playback progress it is redundant with the scrubber and should be removed; if it represents a contextual buffer window (e.g. how far back the action will seek) it should be reframed with a tooltip or label to clarify intent. This needs a diagnostic read of GlobalPlayerManager state before any implementation change. (LOE: XS diagnostic, S if change needed)
 
 
 ## 🧭 Backlog
@@ -49,8 +52,15 @@ Instructions:
 - [x] T19: Mini player "Add note" sheet auto-dismiss fix — lifted sheet to ContentView level, removed pause/resume logic (0e52239, 5b60839, 61f4bb8, 710ba88, f3ebdf9, bd6e025, 9cf258a, bde5278, a0ec89b, b3a5935, d25ba68, 48e9ca1)
 - [x] T23: Fix home screen carousel padding regression — removed outer VStack horizontal padding, applied padding to section headers instead, added .scrollClipDisabled() and .padding(.leading) to horizontal ScrollViews for edge-to-edge carousel effect (4cbc42d)
 - [x] T07: Refactored NoteCaptureSheetWrapper — replaced Form with ScrollView+VStack, removed "Mark as Important" toggle, updated podcast metadata to static text with proper typography, added labels to Note/Tags fields, and hardened saveNote() with do/catch error handling and save-failure toast (06da238)
+- [x] T28: Individual player sheet AI audit completed — gathered feedback on layout, spacing, and usability. See worklog_20260304.md for summary. Some recommendations acted on (T29-T31), others declined per product strategy.
+- [x] T03: Siri "add note to EchoCast" working — phrases like "Hey Siri, add a note in EchoCast" or "Hey Siri, note this in EchoCast" successfully trigger AddNoteIntent. Note capture via Siri functional.
 
 ## 🧬 Possible Duplicates
 
 - T24 → T07: Note sheet metadata styling (combined into T07 with more detailed requirements)
+
+## 🚫 Audit recommendations but does not agree
+
+- (P2): Gemini recommends increasing Play/Pause button visual prominence by applying mint/teal color to make it the focal point of the player. EchoCast intentionally weights the "Add note" action as the primary CTA since timestamped capture is the app's differentiator — rebalancing toward Play/Pause would undermine the product's positioning and should not be acted on. (LOE: N/A)
+- (P3): Gemini flags secondary text contrast (podcast name, timestamps) as a potential WCAG failure. The design tokens echoTextSecondary (white 85%) and echoTextTertiary (white 65%) on #262626 background pass WCAG AA at normal text sizes — this is an intentional tiered hierarchy, not an oversight, and should be validated against actual contrast ratios before any change is considered. (LOE: N/A now; revisit post-beta with real device testing)
 
