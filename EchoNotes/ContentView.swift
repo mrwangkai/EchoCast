@@ -24,6 +24,7 @@ struct ContentView: View {
     @State private var showSiriNoteCaptureSheet = false
     @State private var siriNoteTimestamp = ""
     @State private var showFullPlayer = false  // Manage full player sheet at root level
+    @State private var showMiniPlayerNoteSheet = false
     @Environment(\.managedObjectContext) private var viewContext
     @Namespace private var playerAnimation  // Namespace for matched geometry effect
     // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
@@ -61,6 +62,7 @@ struct ContentView: View {
                     episode: episode,
                     podcast: podcast,
                     showFullPlayer: $showFullPlayer,
+                    showNoteSheet: $showMiniPlayerNoteSheet,
                     player: player,
                     namespace: playerAnimation
                 )
@@ -100,6 +102,16 @@ struct ContentView: View {
                         }
                     }
                 }
+            }
+        }
+        .sheet(isPresented: $showMiniPlayerNoteSheet) {
+            if let episode = player.currentEpisode, let podcast = player.currentPodcast {
+                NoteCaptureSheetWrapper(
+                    episode: episode,
+                    podcast: podcast,
+                    currentTime: player.currentTime
+                )
+                .environment(\.managedObjectContext, viewContext)
             }
         }
         .onAppear {
@@ -3911,14 +3923,9 @@ struct MiniPlayerBar: View {
     let episode: RSSEpisode
     let podcast: PodcastEntity
     @Binding var showFullPlayer: Bool
+    @Binding var showNoteSheet: Bool
     @ObservedObject var player: GlobalPlayerManager
     var namespace: Namespace.ID
-
-    enum MiniPlayerSheet: Identifiable {
-        case addNote
-        var id: String { "addNote" }
-    }
-    @State private var activeSheet: MiniPlayerSheet? = nil
 
     // Detects if the player is floating (.expanded) or docked with Tab Bar (.inline)
     @Environment(\.tabViewBottomAccessoryPlacement) private var placement
@@ -3971,9 +3978,7 @@ struct MiniPlayerBar: View {
                 HStack(alignment: .center, spacing: 12) {
                     // Add Note button
                     Button(action: {
-                        print("🔵 [MiniPlayer] Setting activeSheet = .addNote")
-                        activeSheet = .addNote
-                        print("🔵 [MiniPlayer] activeSheet is now: \(String(describing: activeSheet))")
+                        showNoteSheet = true
                     }) {
                         Image(systemName: "note.text.badge.plus")
                             .font(.system(size: 22, weight: .medium))
@@ -4008,16 +4013,6 @@ struct MiniPlayerBar: View {
                     Rectangle().fill(.clear)
                 }
             }
-        }
-        .sheet(item: $activeSheet) { _ in
-            NoteCaptureSheetWrapper(
-                episode: episode,
-                podcast: podcast,
-                currentTime: player.currentTime
-            )
-        }
-        .onChange(of: activeSheet == nil) { isNil in
-            print("🔴 [MiniPlayer] activeSheet changed to nil: \(isNil)")
         }
         .buttonStyle(.plain)
     }
