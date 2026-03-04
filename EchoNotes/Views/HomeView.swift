@@ -103,6 +103,7 @@ struct HomeView: View {
                             }
                         }
                     }
+                    .padding(.horizontal, EchoSpacing.homeSidePadding)
                     .padding(.top, EchoSpacing.headerTopPadding)
 
                     // Continue Listening Section
@@ -125,7 +126,6 @@ struct HomeView: View {
                         emptyStateView
                     }
                 }
-                .padding(.horizontal, EchoSpacing.homeSidePadding)
                 .padding(.bottom, 100)
             }
             .background(Color.echoBackground)
@@ -275,6 +275,7 @@ struct HomeView: View {
             Text("Continue Listening")
                 .font(.title2Echo())
                 .foregroundColor(.echoTextPrimary)
+                .padding(.horizontal, EchoSpacing.homeSidePadding)
 
             if !continueListeningEpisodes.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -296,7 +297,9 @@ struct HomeView: View {
                             .frame(width: 327)
                         }
                     }
+                    .padding(.leading, EchoSpacing.homeSidePadding)
                 }
+                .scrollClipDisabled()
                 .onAppear {
                     print("🎧 [HomeView] Showing \(continueListeningEpisodes.count) Continue Listening cards")
                 }
@@ -328,6 +331,7 @@ struct HomeView: View {
                         .foregroundColor(.mintAccent)
                 }
             }
+            .padding(.horizontal, EchoSpacing.homeSidePadding)
 
             if followedPodcasts.count == 1 {
                 // Single podcast: show card + nudge text
@@ -356,7 +360,9 @@ struct HomeView: View {
 
                         Spacer()
                     }
+                    .padding(.leading, EchoSpacing.homeSidePadding)
                 }
+                .scrollClipDisabled()
             } else {
                 // Multiple podcasts: show standard carousel
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -370,7 +376,9 @@ struct HomeView: View {
                                 }
                         }
                     }
+                    .padding(.leading, EchoSpacing.homeSidePadding)
                 }
+                .scrollClipDisabled()
             }
         }
         .onAppear {
@@ -470,6 +478,7 @@ struct HomeView: View {
                     }
             }
         }
+        .padding(.horizontal, EchoSpacing.homeSidePadding)
         .onAppear {
             print("📝 [HomeView] Showing Recent Notes section (\(recentNotes.count) notes)")
         }
@@ -521,6 +530,7 @@ struct HomeView: View {
             Spacer()
                 .frame(height: 32)
         }
+        .padding(.horizontal, EchoSpacing.homeSidePadding)
         .frame(maxWidth: .infinity)
         .onAppear {
             print("🏠 [HomeView] Showing empty state")
