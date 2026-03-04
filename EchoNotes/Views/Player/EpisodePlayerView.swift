@@ -529,7 +529,7 @@ struct EpisodePlayerView: View {
                         // Inactive track
                         Capsule()
                             .fill(Color.white.opacity(0.2))
-                            .frame(height: 4)
+                            .frame(height: 6)
                             .frame(maxHeight: .infinity, alignment: .center)
 
                         // Active track
@@ -541,18 +541,18 @@ struct EpisodePlayerView: View {
                                         ? min(displayTime / player.duration, 1.0)
                                         : 0
                                 ),
-                                height: 4
+                                height: 6
                             )
                             .frame(maxHeight: .infinity, alignment: .center)
 
                         // Scrubber knob
                         Circle()
                             .fill(Color.white)
-                            .frame(width: 14, height: 14)
+                            .frame(width: 20, height: 20)
                             .offset(
                                 x: geo.size.width * CGFloat(player.duration > 0
                                     ? min(displayTime / player.duration, 1.0)
-                                    : 0) - 7,
+                                    : 0) - 10,
                                 y: 0
                             )
                             .frame(maxHeight: .infinity, alignment: .center)
