@@ -1156,65 +1156,118 @@ struct NoteCaptureSheetWrapper: View {
     @Environment(\.managedObjectContext) private var viewContext
 
     @State private var noteText: String = ""
-    @State private var isPriority: Bool = false
     @State private var tags: String = ""
+    @State private var saveErrorMessage: String? = nil
+    @State private var showSaveError: Bool = false
 
     var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Podcast Info")) {
-                    Text(podcast.title ?? "Unknown Podcast")
-                        .foregroundColor(.echoTextSecondary)
-                    Text(episode.title)
-                        .foregroundColor(.echoTextSecondary)
-                    Text(formatTime(currentTime))
-                        .foregroundColor(.mintAccent)
-                }
-
-                Section(header: Text("Note")) {
-                    ZStack(alignment: .topLeading) {
-                        if noteText.isEmpty {
-                            Text("Enter your note...")
-                                .foregroundColor(.echoTextSecondary)
-                                .padding(.top, 8)
-                                .padding(.leading, 4)
+        ZStack {
+            NavigationView {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        // Static context — no label
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(podcast.title ?? "Unknown Podcast")
+                                .font(.system(size: 13, weight: .regular))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                            Text(episode.title)
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(.primary)
+                                .lineLimit(2)
+                            HStack(spacing: 5) {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 11))
+                                Text(formatTime(currentTime))
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 4)
                         }
-                        TextEditor(text: $noteText)
-                            .frame(minHeight: 100)
-                    }
-                }
+                        .padding(.top, 8)
 
-                Section {
-                    Toggle(isOn: $isPriority) {
-                        HStack {
-                            Image(systemName: "star.fill")
-                                .foregroundColor(.yellow)
-                            Text("Mark as Important")
+                        // Note input — label + field
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Note")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(.primary)
+                            ZStack(alignment: .topLeading) {
+                                if noteText.isEmpty {
+                                    Text("What's on your mind?")
+                                        .font(.system(size: 15))
+                                        .foregroundStyle(.tertiary)
+                                        .padding(.top, 8)
+                                        .padding(.leading, 4)
+                                }
+                                TextEditor(text: $noteText)
+                                    .font(.system(size: 15))
+                                    .frame(minHeight: 110)
+                                    .scrollContentBackground(.hidden)
+                            }
+                            .padding(12)
+                            .background(Color(uiColor: .systemBackground))
+                            .cornerRadius(12)
                         }
-                    }
-                }
 
-                Section(header: Text("Tags (comma separated)")) {
-                    TextField("e.g., interesting, funny, quote", text: $tags)
-                }
+                        // Tags input — label + field + persistent hint
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Tags")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(.primary)
+                            TextField("interesting, quote...", text: $tags)
+                                .font(.system(size: 15))
+                                .padding(12)
+                                .background(Color(uiColor: .systemBackground))
+                                .cornerRadius(12)
+                            Text("Separate tags with commas")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 2)
+                        }
 
-                Section {
-                    Button(action: saveNote) {
-                        HStack {
-                            Spacer()
+                        // Save button
+                        Button(action: saveNote) {
                             Text("Save Note")
-                                .fontWeight(.semibold)
-                            Spacer()
+                                .font(.system(size: 17, weight: .medium))
+                                .foregroundStyle(Color.mintAccent)
+                                .frame(maxWidth: .infinity)
+                                .padding(14)
+                                .background(Color(uiColor: .systemBackground))
+                                .cornerRadius(12)
                         }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 24)
+                }
+                .background(Color(uiColor: .systemGroupedBackground))
+                .navigationTitle("Add Note")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { dismiss() }
                     }
                 }
             }
-            .navigationTitle("Add Note")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+
+            if showSaveError, let message = saveErrorMessage {
+                VStack {
+                    Spacer()
+                    Text(message)
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(Color.red.opacity(0.85))
+                        .cornerRadius(10)
+                        .padding(.bottom, 24)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                withAnimation { showSaveError = false }
+                            }
+                        }
                 }
+                .animation(.easeInOut, value: showSaveError)
             }
         }
     }
@@ -1235,16 +1288,19 @@ struct NoteCaptureSheetWrapper: View {
         newNote.episodeTitle = episode.title
         newNote.timestamp = formatTime(currentTime)
         newNote.noteText = noteText
-        newNote.isPriority = isPriority
         newNote.createdAt = Date()
         newNote.podcast = podcast
-
-        // Save tags
         let tagList = tags.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
         newNote.tags = tagList.joined(separator: ",")
 
-        try? viewContext.save()
-        dismiss()
+        do {
+            try viewContext.save()
+            dismiss()
+        } catch {
+            print("[EchoCast] saveNote() failed: \(error)")
+            saveErrorMessage = "Couldn't save note. Please try again."
+            showSaveError = true
+        }
     }
 }
 

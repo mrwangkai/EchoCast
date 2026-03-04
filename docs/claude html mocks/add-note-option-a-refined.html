@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Note — Option A Refined</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1a1e;
+    font-family: -apple-system, 'SF Pro Text', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 80px;
+    gap: 56px;
+  }
+
+  .option-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #00c8b3;
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+
+  .option-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.42);
+    margin-bottom: 18px;
+    padding-left: 2px;
+    line-height: 1.6;
+    max-width: 340px;
+  }
+
+  /* ── Phone shell ── */
+  .phone {
+    width: 320px;
+    background: #1c1c1e;
+    border-radius: 44px;
+    padding: 14px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.08);
+  }
+
+  .phone-inner {
+    background: #f2f2f7;
+    border-radius: 32px;
+    overflow: hidden;
+  }
+
+  /* ── Sheet chrome ── */
+  .sheet-handle {
+    width: 36px; height: 5px;
+    background: rgba(0,0,0,0.18);
+    border-radius: 3px;
+    margin: 10px auto 0;
+  }
+
+  .sheet-header {
+    padding: 14px 16px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sheet-cancel {
+    background: rgba(0,0,0,0.07);
+    color: #00c8b3;
+    font-size: 15px;
+    font-weight: 400;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: none;
+    cursor: default;
+  }
+
+  .sheet-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #000;
+  }
+
+  .sheet-body {
+    padding: 20px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* ── Shared section label ── */
+  .section-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6d6d72;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+  }
+
+  /* ── Shared form elements ── */
+  .input-field {
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 15px;
+    color: #3c3c43;
+    min-height: 90px;
+  }
+
+  .placeholder { color: #c7c7cc; }
+
+  .toggle-row {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 15px;
+    color: #000;
+  }
+
+  .toggle-left { display: flex; align-items: center; gap: 8px; }
+
+  .toggle {
+    width: 51px; height: 31px;
+    background: #e5e5ea;
+    border-radius: 16px;
+    flex-shrink: 0;
+  }
+
+  .tags-input {
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 15px;
+  }
+
+  .save-btn {
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    color: #00c8b3;
+    font-size: 17px;
+    font-weight: 500;
+  }
+
+  /* ══════════════════════════════════
+     VARIANT 1
+     Plain text hierarchy — reuses note
+     card's caption patterns verbatim.
+     Series = caption (13pt, 65% white)
+     Episode = subheadline medium (15pt, 85% white)
+     — but here in light mode context:
+     Series = 13pt regular, #8e8e93
+     Episode = 15pt medium, #1c1c1e
+     Timestamp = 12pt medium, #8e8e93
+  ══════════════════════════════════ */
+
+  .v1-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .v1-series {
+    /* Caption 2 — matches note card "podcast name" */
+    font-size: 13px;
+    font-weight: 400;
+    color: #8e8e93;
+    line-height: 1.4;
+  }
+
+  .v1-episode {
+    /* Subheadline Medium — matches note card "episode title" */
+    font-size: 15px;
+    font-weight: 500;
+    color: #1c1c1e;
+    line-height: 1.35;
+    margin-top: 1px;
+  }
+
+  .v1-timestamp {
+    /* Caption — matches note card footer timestamp treatment */
+    font-size: 12px;
+    font-weight: 500;
+    color: #8e8e93;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .v1-timestamp svg {
+    opacity: 0.6;
+  }
+
+  /* ══════════════════════════════════
+     VARIANT 2
+     Same hierarchy + a hairline divider
+     between the info and the Note field.
+     Gives more breathing room / separation.
+  ══════════════════════════════════ */
+
+  .v2-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .v2-series {
+    font-size: 13px;
+    font-weight: 400;
+    color: #8e8e93;
+    line-height: 1.4;
+  }
+
+  .v2-episode {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1c1c1e;
+    line-height: 1.35;
+    margin-top: 1px;
+  }
+
+  .v2-timestamp {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8e8e93;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* hairline */
+  .hairline {
+    height: 0.5px;
+    background: rgba(0,0,0,0.12);
+    margin: 0 0;
+  }
+
+  /* ══════════════════════════════════
+     VARIANT 3
+     Artwork thumbnail (32×32) alongside
+     the text — same pattern as the note
+     card's bottom section which uses
+     artwork + episode/series text.
+     Still completely non-interactive.
+  ══════════════════════════════════ */
+
+  .v3-block {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .v3-artwork {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #1a3c34, #00c8b3);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.7);
+    font-size: 16px;
+  }
+
+  .v3-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .v3-series {
+    font-size: 13px;
+    font-weight: 400;
+    color: #8e8e93;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .v3-episode {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1c1c1e;
+    line-height: 1.35;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .v3-timestamp {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8e8e93;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .option-wrap { width: 100%; max-width: 380px; }
+
+  /* Reference note card for comparison */
+  .ref-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
+
+  .note-card {
+    background: #323232;
+    border-radius: 12px;
+    padding: 16px;
+    width: 100%;
+    max-width: 340px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  .nc-note-text {
+    font-size: 17px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.95);
+    line-height: 1.4;
+    margin-bottom: 12px;
+    font-family: -apple-system, 'SF Pro Rounded', sans-serif;
+  }
+
+  .nc-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .nc-timestamp {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.7);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .nc-tags {
+    display: flex;
+    gap: 4px;
+  }
+
+  .nc-tag {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.7);
+    background: rgba(36,36,36,0.65);
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  .nc-divider {
+    height: 0.5px;
+    background: rgba(255,255,255,0.1);
+    margin-bottom: 12px;
+  }
+
+  .nc-bottom {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .nc-artwork {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1a3c34, #00c8b3);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.7);
+    font-size: 20px;
+  }
+
+  .nc-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 2px;
+  }
+
+  .nc-episode {
+    font-size: 13px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .nc-series {
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.55);
+  }
+
+  /* annotation arrows */
+  .annotation {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    margin-top: -12px;
+    margin-bottom: 4px;
+    padding-left: 4px;
+  }
+  .arrow { font-size: 14px; color: #00c8b3; opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<!-- Reference note card -->
+<div class="option-wrap">
+  <div class="ref-label">Reference — Existing Note Card (dark, Home screen)</div>
+  <div class="note-card">
+    <div class="nc-note-text">The juxtaposition of celebrating while mourning — how do societies process conflicting emotions simultaneously?</div>
+    <div class="nc-footer">
+      <span class="nc-timestamp">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4.5" stroke="rgba(255,255,255,0.7)" stroke-width="1"/><path d="M5 3v2.2l1.4 1.4" stroke="rgba(255,255,255,0.7)" stroke-width="1" stroke-linecap="round"/></svg>
+        28:48
+      </span>
+      <div class="nc-tags">
+        <span class="nc-tag">reflection</span>
+        <span class="nc-tag">war</span>
+      </div>
+    </div>
+    <div class="nc-divider"></div>
+    <div class="nc-bottom">
+      <div class="nc-artwork">🎙</div>
+      <div class="nc-meta">
+        <span class="nc-episode">Celebration and Mourning: Inside an Iran at War</span>
+        <span class="nc-series">The Daily</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- VARIANT 1 -->
+<div class="option-wrap">
+  <div class="option-label">Option A1 — Pure text hierarchy (closest match)</div>
+  <div class="option-desc">Directly mirrors the note card's bottom section typography: series in caption/secondary, episode in subheadline medium, timestamp in caption medium. The same visual weight signals the same "read-only metadata" role — no new pattern to learn. Light mode equivalents of the dark card colors.</div>
+  <div class="phone">
+    <div class="phone-inner">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <button class="sheet-cancel">Cancel</button>
+        <span class="sheet-title">Add Note</span>
+        <div style="width:68px"></div>
+      </div>
+      <div class="sheet-body">
+        <div>
+          <div class="section-label">Context</div>
+          <div class="v1-block">
+            <span class="v1-series">The Daily</span>
+            <span class="v1-episode">Celebration and Mourning: Inside an Iran at War</span>
+            <span class="v1-timestamp">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.8" stroke="#8e8e93" stroke-width="1.1"/><path d="M5.5 3.2v2.5l1.6 1.6" stroke="#8e8e93" stroke-width="1.1" stroke-linecap="round"/></svg>
+              0:28:48
+            </span>
+          </div>
+        </div>
+        <div>
+          <div class="section-label">Note</div>
+          <div class="input-field"><span class="placeholder">Enter your note...</span></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-left"><span>⭐</span><span>Mark as Important</span></div>
+          <div class="toggle"></div>
+        </div>
+        <div>
+          <div class="section-label">Tags (comma separated)</div>
+          <div class="tags-input"><span class="placeholder">e.g., interesting, funny, quote</span></div>
+        </div>
+        <div class="save-btn">Save Note</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT 2 -->
+<div class="option-wrap">
+  <div class="option-label">Option A2 — Text hierarchy + section divider</div>
+  <div class="option-desc">Same as A1 but a hairline separates the static podcast info from the editable note field below it. Gives visual breathing room and makes the boundary between "context" and "input" even more legible — useful if the form feels dense.</div>
+  <div class="phone">
+    <div class="phone-inner">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <button class="sheet-cancel">Cancel</button>
+        <span class="sheet-title">Add Note</span>
+        <div style="width:68px"></div>
+      </div>
+      <div class="sheet-body" style="gap:0; padding-bottom:16px;">
+        <div style="padding-bottom:16px;">
+          <div class="section-label">Context</div>
+          <div class="v2-block">
+            <span class="v2-series">The Daily</span>
+            <span class="v2-episode">Celebration and Mourning: Inside an Iran at War</span>
+            <span class="v2-timestamp">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.8" stroke="#8e8e93" stroke-width="1.1"/><path d="M5.5 3.2v2.5l1.6 1.6" stroke="#8e8e93" stroke-width="1.1" stroke-linecap="round"/></svg>
+              0:28:48
+            </span>
+          </div>
+        </div>
+        <div class="hairline" style="margin-bottom:16px;"></div>
+        <div style="margin-bottom:20px;">
+          <div class="section-label">Note</div>
+          <div class="input-field"><span class="placeholder">Enter your note...</span></div>
+        </div>
+        <div class="toggle-row" style="margin-bottom:20px;">
+          <div class="toggle-left"><span>⭐</span><span>Mark as Important</span></div>
+          <div class="toggle"></div>
+        </div>
+        <div style="margin-bottom:20px;">
+          <div class="section-label">Tags (comma separated)</div>
+          <div class="tags-input"><span class="placeholder">e.g., interesting, funny, quote</span></div>
+        </div>
+        <div class="save-btn">Save Note</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT 3 -->
+<div class="option-wrap">
+  <div class="option-label">Option A3 — Artwork + text (mirrors note card bottom section exactly)</div>
+  <div class="option-desc">The note card's bottom section is literally artwork + episode + series. This variant reuses that identical component in the sheet. Strongest visual consistency — a user who sees both surfaces will immediately recognise the pattern. Artwork is already loaded from the player context so there's no extra fetch needed.</div>
+  <div class="phone">
+    <div class="phone-inner">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <button class="sheet-cancel">Cancel</button>
+        <span class="sheet-title">Add Note</span>
+        <div style="width:68px"></div>
+      </div>
+      <div class="sheet-body">
+        <div>
+          <div class="section-label">Context</div>
+          <div class="v3-block">
+            <div class="v3-artwork">🎙</div>
+            <div class="v3-text">
+              <span class="v3-series">The Daily</span>
+              <span class="v3-episode">Celebration and Mourning: Inside an Iran at War</span>
+              <span class="v3-timestamp">
+                <svg width="10" height="10" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.8" stroke="#8e8e93" stroke-width="1.1"/><path d="M5.5 3.2v2.5l1.6 1.6" stroke="#8e8e93" stroke-width="1.1" stroke-linecap="round"/></svg>
+                0:28:48
+              </span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="section-label">Note</div>
+          <div class="input-field"><span class="placeholder">Enter your note...</span></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-left"><span>⭐</span><span>Mark as Important</span></div>
+          <div class="toggle"></div>
+        </div>
+        <div>
+          <div class="section-label">Tags (comma separated)</div>
+          <div class="tags-input"><span class="placeholder">e.g., interesting, funny, quote</span></div>
+        </div>
+        <div class="save-btn">Save Note</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
