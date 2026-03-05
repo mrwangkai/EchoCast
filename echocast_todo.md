@@ -1,7 +1,7 @@
 # EchoCast TODO
 
 Instructions: 
-- At the beginning of the day, with "start the day" command, please do the following: a) assess all open items in all sections and identify top priority tasks, and b) cross reference with estimated level of effort (LOE), and c) propose the top 1~3 task(s) to be focused on based on the combination above. For any tasks that has an estimate, please append to the task the estimated LOE
+- At the beginning of the day, with "start the day" command, please do the following: a) assess all open items in all sections and identify top priority tasks, and b) cross reference with estimated level of effort (LOE), and c) propose the top 1~3 task(s) to be focused on based on the combination above. For any tasks that has an estimate, please append to the task the estimated LOE. And for any task that does not have a task ID attached, please add it sequentially.
 - please automatically assign ID (e.g. T{xx}) for any item that a) does not have an assigned ID, or b) if it is moved from Inbox.
 - please move any item into 🧬 Possible Duplicates if you identify it as such
 - for any issue that has been marked as or moved to Done, please also attach the corresponding commit ID. 
@@ -31,6 +31,9 @@ Instructions:
 - [ ] T32 (P3): UX investigation — Home tab re-tap behavior when Browse is in navigation stack. Currently tapping Home tab while on Library returns user to Browse (last navigation state) rather than Home root. Investigate iOS convention: should tab re-tap always pop to root, or preserve navigation state? Reference: Apple Music, Overcast, Podcasts app behavior. If pop-to-root is preferred, implement navigationPath.removeLast() or .removeAll() on tab re-selection. (LOE: S)
 - [ ] T33: Add paywall options — number of notes, number of times you can use advice option(s) such as ai summary/synthesis
 - [ ] T34: Think through AI use cases: select podcast episode or individual notes (including after filtered) and ask AI to take pre-defined actions such as summarize, generate action items, etc
+- [ ] Update individual notes row on episode sheet
+- [ ] Add/update interaction with individual episodes on podcast series sheet (e.g. swipe to delete)
+- [ ] Refactor the top section of home screen to have the search and settings button be similar to library tab. this was previously changed to reduce space at the top. can probably find more info from previous commits.
 
 
 
@@ -38,6 +41,11 @@ Instructions:
 ## 📨 Inbox (raw ideas)
 - [ ] (P2): 
 - [ ] (P2): 
+- [ ] (P1) Notes listing on notes tab feel … improvement needed
+- [ ] (P1) increase spacing between the markers and the timeline. right now the scrubber is touching the markers
+- [ ] (P1) different style for the marker? right now its circle and circle with bookmark. i don’t want it to be overwhelming with lots of small symbols
+- [ ] (P1) update the button style for play: maybe more rounded
+- [ ] (P1) update button style for “add note at current time” and “bookmark”. right now there are two primary buttons?? would the two liner button be too small to read
 
 ## ✅ Done
 

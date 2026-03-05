@@ -220,7 +220,7 @@ struct EpisodePlayerView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 // --- SECTION 3: FOOTER (FIXED HEIGHT: ~290px) ---
-                VStack(spacing: 16) {
+                VStack(spacing: 24) {
                     // Metadata (Always visible, 2 lines max)
                     episodeMetadataView
 
@@ -239,7 +239,7 @@ struct EpisodePlayerView: View {
                 .padding(.horizontal, EchoSpacing.screenPadding)
                 .padding(.top, 12)
                 .background(Color.echoBackground)
-                .padding(.bottom, 48)
+                .padding(.bottom, 32)
             }
 
             // Skeleton loading overlay (shown when player is loading)
@@ -623,6 +623,7 @@ struct EpisodePlayerView: View {
                             }
                         }
                         .buttonStyle(.plain)
+                        .padding(.bottom, 8)
                         .position(x: xPos + 14, y: -8)
                     }
 
@@ -648,6 +649,7 @@ struct EpisodePlayerView: View {
                             }
                         }
                         .buttonStyle(.plain)
+                        .padding(.bottom, 8)
                         .position(x: xPos, y: -8)
                     }
                 }
@@ -916,7 +918,7 @@ struct ListeningSegmentView: View {
                         .foregroundColor(.white.opacity(0.3))
                 }
             }
-            .frame(width: 280, height: 280)
+            .frame(width: 240, height: 240)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .matchedGeometryEffect(id: "artwork", in: namespace, isSource: true)
             .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
