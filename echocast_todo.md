@@ -10,7 +10,6 @@ Instructions:
 
 ## 🔥 Currently working on
 
-- [ ] T04 (P1): What happens when a podcast or episode is deleted? Retain notes? Currently PodcastEntity.notes uses Cascade deletion — notes are lost when podcast deleted. Desired: keep notes even if user unfollows/deletes podcast or episode. (LOE: M)
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished). (LOE: M)
 - [ ] T27 (P1): Individual player sheet styling — give bottom section more spacing/breathing room. Current: VStack spacing 16pt, top pad 12pt, bottom pad 48pt, horizontal pad 16pt. (LOE: S)
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12). (LOE: S)
@@ -53,6 +52,7 @@ Instructions:
 - [x] T28: Individual player sheet AI audit completed — gathered feedback on layout, spacing, and usability. See worklog_20260304.md for summary. Some recommendations acted on (T29-T31), others declined per product strategy.
 - [x] T03: Siri "add note to EchoCast" working — phrases like "Hey Siri, add a note in EchoCast" or "Hey Siri, note this in EchoCast" successfully trigger AddNoteIntent. Note capture via Siri functional.
 - [x] T02: Scrubber visual size increased — knob from 14pt to 20pt, track height from 4pt to 6pt for better visibility against 28pt markers. Aligns with Overcast standards. (4ba22fe, ed28456)
+- [x] T04: Note persistence fix — changed PodcastEntity.notes deletionRule from Cascade to Nullify so notes survive podcast unfollow. Created new Core Data model version "EchoNotes 2.xcdatamodel" for lightweight migration. (32979e0)
 - [x] T09: Add Note sheet light mode fix — forced dark mode with explicit colors. Moved .preferredColorScheme(.dark) to outermost ZStack, replaced system colors with dark RGB values (background: 0.149, fields: 0.2). Sheet now consistently renders in dark mode. (c76f69f, 4b6b54c)
 
 ## 🧬 Possible Duplicates
