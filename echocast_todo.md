@@ -29,8 +29,8 @@ Instructions:
 - [] T25 (P1) Note Sheet Text Field Activation Lag — Keyboard Cursor Delayed on First Tap During Active Playback. (LOE: M - performance investigation)
 - [ ] T26 (P2): Refine NoteCaptureSheetWrapper styling — fix light mode rendering, review and update label font sizes for consistency. (LOE: S)
 - [ ] T32 (P3): UX investigation — Home tab re-tap behavior when Browse is in navigation stack. Currently tapping Home tab while on Library returns user to Browse (last navigation state) rather than Home root. Investigate iOS convention: should tab re-tap always pop to root, or preserve navigation state? Reference: Apple Music, Overcast, Podcasts app behavior. If pop-to-root is preferred, implement navigationPath.removeLast() or .removeAll() on tab re-selection. (LOE: S)
-- [ ] {Txx} Add paywall options -- number of notes, number of times you can use advice option(s) such as ai summary/synthesis
-- [ ] {Txx} think through ai use cases: select podcast episode or individual notes (including after filtered) and ask ai to take pre-defined actions such as summarize, generate action items, etc
+- [ ] T33: Add paywall options — number of notes, number of times you can use advice option(s) such as ai summary/synthesis
+- [ ] T34: Think through AI use cases: select podcast episode or individual notes (including after filtered) and ask AI to take pre-defined actions such as summarize, generate action items, etc
 
 
 
