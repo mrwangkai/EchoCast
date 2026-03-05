@@ -24,8 +24,7 @@ struct PodcastDiscoveryView: View {
     @State private var selectedPodcast: PodcastEntity? = nil  // Single source of truth
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 0) {
                     // Search bar
                     searchBar
@@ -82,7 +81,6 @@ struct PodcastDiscoveryView: View {
                         print("✅ [Browse] This proves sheet received non-nil podcast")
                     }
             }
-        }
     }
 
     // MARK: - Search Bar
