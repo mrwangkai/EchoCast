@@ -128,6 +128,11 @@ struct HomeView: View {
                 }
                 .padding(.bottom, 100)
             }
+            .navigationDestination(for: String.self) { destination in
+                if destination == "browse" {
+                    PodcastDiscoveryView()
+                }
+            }
             .background(Color.echoBackground)
             .navigationBarHidden(true)
             .onAppear {
@@ -135,11 +140,6 @@ struct HomeView: View {
                 print("🏠 [HomeView] Recent notes count: \(recentNotes.count)")
                 print("🏠 [HomeView] Followed podcasts count: \(followedPodcasts.count)")
                 print("🏠 [HomeView] Player episode loaded: \(player.currentEpisode != nil)")
-            }
-            .navigationDestination(for: String.self) { destination in
-                if destination == "browse" {
-                    PodcastDiscoveryView()
-                }
             }
         }
         .sheet(isPresented: $showingSettings) {
