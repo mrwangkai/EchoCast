@@ -9,7 +9,6 @@ import SwiftUI
 import CoreData
 
 struct LibraryView: View {
-    @Binding var selectedTab: Int
     @Environment(\.managedObjectContext) private var viewContext
     @StateObject private var viewModel = NoteViewModel()
     @ObservedObject private var player = GlobalPlayerManager.shared
@@ -21,12 +20,13 @@ struct LibraryView: View {
     @State private var showingDeleteConfirmation = false
     @State private var showingShareSheet = false
     @State private var shareItem: ShareSheetItem?
+    @State private var navigationPath = NavigationPath()
 
     // Namespace for matched geometry effect with mini player
     @Namespace private var playerAnimation
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
                     // Search and Filter Section
@@ -62,6 +62,11 @@ struct LibraryView: View {
                     viewModel.sortOrder = .timestamp
                 }
                 Button("Cancel", role: .cancel) {}
+            }
+            .navigationDestination(for: String.self) { destination in
+                if destination == "browse" {
+                    PodcastDiscoveryView()
+                }
             }
         }
         .sheet(item: $selectedNote) { note in
@@ -302,7 +307,7 @@ struct LibraryView: View {
 
             // Find a podcast CTA
             Button(action: {
-                selectedTab = 1  // Switch to Browse tab
+                navigationPath.append("browse")
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
@@ -335,6 +340,6 @@ struct ShareSheetItem: Identifiable {
 }
 
 #Preview {
-    LibraryView(selectedTab: .constant(0))
+    LibraryView()
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 }
