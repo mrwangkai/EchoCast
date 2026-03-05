@@ -35,23 +35,17 @@ struct ContentView: View {
     var body: some View {
         // Root TabView - manages layout insets natively
         TabView(selection: $selectedTab) {
-            HomeView(selectedTab: $selectedTab)
+            HomeView()
                 .tabItem {
                     Label("Home", systemImage: "house.fill")
                 }
                 .tag(0)
 
-            PodcastDiscoveryView()
-                .tabItem {
-                    Label("Browse", systemImage: "magnifyingglass")
-                }
-                .tag(1)
-
             LibraryView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Library", systemImage: "books.vertical.fill")
                 }
-                .tag(2)
+                .tag(1)
         }
         .tint(.mintAccent)
         .tabViewStyle(.tabBarOnly)

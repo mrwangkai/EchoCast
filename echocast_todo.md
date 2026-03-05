@@ -24,7 +24,7 @@ Instructions:
 - [ ] T10 (P2): Download section — where does this live? (LOE: M - requires product decision)
 - [ ] T11 (P2): add a "View all" for Continue Listening — sheet or new screen? (LOE: M - requires product decision)
 - [ ] T12 (P2): add a "View all" for Following Podcasts — sheet or new screen? (LOE: M - requires product decision)
-- [ ] T14 (P2): Hide Browse tab — reduces redundant ingress point into browse. (LOE: XS)
+- [ ] T14 (P2): Remove Browse tab — convert Browse from a standalone tab to a pushed navigation page. Search icon in Home header becomes the sole ingress point (push navigation, not sheet).  "Find more" under Following Podcasts section remains as secondary ingress. Side effect: may resolve .tabViewBottomAccessory inconsistency since Browse will no longer be its own tab context. Also lays groundwork for Option B (NavigationLink push for podcast series detail).  (LOE: S -- bumped LOE from XS to S since it's a nav pattern change, not just hiding a tab)
 - [ ] T21 (P2): What does "Following" mean? download the latest episode? if so, should there be series level control similar to overcast? We need something like that but hopefully not overly complicating things. (LOE: M - product + feature work)
 - [] T22 (P1): add a "Add note at current time" on CarPlay. This will support, alongside, Siri input, more ways to add notes to the app. (LOE: M - CarPlay UI work)
 - [] T25 (P1) Note Sheet Text Field Activation Lag — Keyboard Cursor Delayed on First Tap During Active Playback. (LOE: M - performance investigation)

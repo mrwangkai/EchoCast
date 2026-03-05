@@ -9,7 +9,6 @@ import SwiftUI
 import CoreData
 
 struct HomeView: View {
-    @Binding var selectedTab: Int
     @Environment(\.managedObjectContext) private var viewContext
 
     // Fetch recent notes
@@ -42,6 +41,7 @@ struct HomeView: View {
     @State private var showingSettings = false
     @State private var selectedPodcast: PodcastEntity?
     @State private var selectedNote: NoteEntity?
+    @State private var navigationPath = NavigationPath()
 
     // Namespace for matched geometry effect with mini player
     @Namespace private var playerAnimation
@@ -63,7 +63,7 @@ struct HomeView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: EchoSpacing.homeSectionSpacing) {
                     // Header with inline buttons
@@ -84,7 +84,7 @@ struct HomeView: View {
                         HStack(spacing: 16) {
                             Button(action: {
                                 print("🔍 [HomeView] Browse button tapped")
-                                selectedTab = 1
+                                navigationPath.append("browse")
                             }) {
                                 Image(systemName: "magnifyingglass")
                                     .font(.body)
@@ -135,6 +135,11 @@ struct HomeView: View {
                 print("🏠 [HomeView] Recent notes count: \(recentNotes.count)")
                 print("🏠 [HomeView] Followed podcasts count: \(followedPodcasts.count)")
                 print("🏠 [HomeView] Player episode loaded: \(player.currentEpisode != nil)")
+            }
+            .navigationDestination(for: String.self) { destination in
+                if destination == "browse" {
+                    PodcastDiscoveryView()
+                }
             }
         }
         .sheet(isPresented: $showingSettings) {
@@ -324,7 +329,7 @@ struct HomeView: View {
 
                 Button(action: {
                     print("🔍 [HomeView] Find more tapped")
-                    selectedTab = 1
+                    navigationPath.append("browse")
                 }) {
                     Text("Find more")
                         .font(.bodyEcho())
@@ -509,7 +514,7 @@ struct HomeView: View {
 
             // Find a podcast CTA
             Button(action: {
-                selectedTab = 1  // Switch to Browse tab
+                navigationPath.append("browse")
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
