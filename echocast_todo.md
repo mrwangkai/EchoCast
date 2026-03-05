@@ -24,11 +24,11 @@ Instructions:
 - [ ] T10 (P2): Download section — where does this live? (LOE: M - requires product decision)
 - [ ] T11 (P2): add a "View all" for Continue Listening — sheet or new screen? (LOE: M - requires product decision)
 - [ ] T12 (P2): add a "View all" for Following Podcasts — sheet or new screen? (LOE: M - requires product decision)
-- [ ] T14 (P2): Remove Browse tab — convert Browse from a standalone tab to a pushed navigation page. Search icon in Home header becomes the sole ingress point (push navigation, not sheet).  "Find more" under Following Podcasts section remains as secondary ingress. Side effect: may resolve .tabViewBottomAccessory inconsistency since Browse will no longer be its own tab context. Also lays groundwork for Option B (NavigationLink push for podcast series detail).  (LOE: S -- bumped LOE from XS to S since it's a nav pattern change, not just hiding a tab)
 - [ ] T21 (P2): What does "Following" mean? download the latest episode? if so, should there be series level control similar to overcast? We need something like that but hopefully not overly complicating things. (LOE: M - product + feature work)
 - [] T22 (P1): add a "Add note at current time" on CarPlay. This will support, alongside, Siri input, more ways to add notes to the app. (LOE: M - CarPlay UI work)
 - [] T25 (P1) Note Sheet Text Field Activation Lag — Keyboard Cursor Delayed on First Tap During Active Playback. (LOE: M - performance investigation)
 - [ ] T26 (P2): Refine NoteCaptureSheetWrapper styling — fix light mode rendering, review and update label font sizes for consistency. (LOE: S)
+- [ ] T32 (P3): UX investigation — Home tab re-tap behavior when Browse is in navigation stack. Currently tapping Home tab while on Library returns user to Browse (last navigation state) rather than Home root. Investigate iOS convention: should tab re-tap always pop to root, or preserve navigation state? Reference: Apple Music, Overcast, Podcasts app behavior. If pop-to-root is preferred, implement navigationPath.removeLast() or .removeAll() on tab re-selection. (LOE: S)
 - [ ] {Txx} Add paywall options -- number of notes, number of times you can use advice option(s) such as ai summary/synthesis
 - [ ] {Txx} think through ai use cases: select podcast episode or individual notes (including after filtered) and ask ai to take pre-defined actions such as summarize, generate action items, etc
 
@@ -56,6 +56,7 @@ Instructions:
 - [x] T02: Scrubber visual size increased — knob from 14pt to 20pt, track height from 4pt to 6pt for better visibility against 28pt markers. Aligns with Overcast standards. (4ba22fe, ed28456)
 - [x] T04: Note persistence fix — changed PodcastEntity.notes deletionRule from Cascade to Nullify so notes survive podcast unfollow. Created new Core Data model version "EchoNotes 2.xcdatamodel" for lightweight migration. (32979e0)
 - [x] T09: Add Note sheet light mode fix — forced dark mode with explicit colors. Moved .preferredColorScheme(.dark) to outermost ZStack, replaced system colors with dark RGB values (background: 0.149, fields: 0.2). Sheet now consistently renders in dark mode. (c76f69f, 4b6b54c)
+- [x] T14: Remove Browse tab — converted Browse from standalone tab to pushed navigation page. Search icon + "Find more" + empty state CTAs on Home and Library now push PodcastDiscoveryView via NavigationPath. Removed inner NavigationStack from PodcastDiscoveryView, fixed inline title flash. commits: 2a6f186, 5b75454, 72d973c, 30bde23, 4519612 | branch: browse-flow-update
 
 ## 🧬 Possible Duplicates
 
