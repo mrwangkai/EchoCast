@@ -41,7 +41,7 @@ struct PodcastDiscoveryView: View {
             }
             .background(Color.echoBackground)
             .navigationTitle("Browse")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
             .tint(.mintAccent)
             .preferredColorScheme(.dark)

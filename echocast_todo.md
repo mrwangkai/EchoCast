@@ -29,6 +29,8 @@ Instructions:
 - [] T22 (P1): add a "Add note at current time" on CarPlay. This will support, alongside, Siri input, more ways to add notes to the app. (LOE: M - CarPlay UI work)
 - [] T25 (P1) Note Sheet Text Field Activation Lag — Keyboard Cursor Delayed on First Tap During Active Playback. (LOE: M - performance investigation)
 - [ ] T26 (P2): Refine NoteCaptureSheetWrapper styling — fix light mode rendering, review and update label font sizes for consistency. (LOE: S)
+- [ ] {Txx} Add paywall options -- number of notes, number of times you can use advice option(s) such as ai summary/synthesis
+- [ ] {Txx} think through ai use cases: select podcast episode or individual notes (including after filtered) and ask ai to take pre-defined actions such as summarize, generate action items, etc
 
 
 
