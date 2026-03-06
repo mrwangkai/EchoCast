@@ -421,14 +421,15 @@ struct EpisodePlayerView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "note.text.badge.plus")
                         .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(Color(red: 0.647, green: 0.898, blue: 0.847))
 
                     Text("Add note at current time")
                         .font(.bodyRoundedMedium())
+                        .foregroundColor(.white)
                 }
-                .foregroundColor(.mintButtonText)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
-                .background(Color.mintButtonBackground)
+                .background(Color(red: 0.231, green: 0.306, blue: 0.290))
                 .cornerRadius(12)
             }
             .buttonStyle(.plain)
@@ -441,7 +442,7 @@ struct EpisodePlayerView: View {
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.white)
                     .frame(width: 48, height: 48)
-                    .background(Color.white.opacity(0.08))
+                    .background(Color(red: 0.231, green: 0.306, blue: 0.290))
                     .cornerRadius(12)
             }
             .buttonStyle(.plain)
