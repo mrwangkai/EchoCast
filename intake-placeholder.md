@@ -1,11 +1,10 @@
-SMALL FIX: NoteRowView rows in the episode player Notes tab have no 
-horizontal padding — the timestamp is flush against the screen edge.
+SMALL FIX: In the player's notes tab, increase the bottom spacing between 
+the notes list and the podcast metadata footer.
 
-Find the ForEach container (or its enclosing VStack/ScrollView content block) 
-that renders NoteRowView inside the player's notesTabContent.
+Find the Spacer(minLength: 0) at the bottom of the VStack inside 
+NotesSegmentView (or notesTabContent). Change it to:
 
-Add .padding(.horizontal, EchoSpacing.screenPadding) to that container.
-This matches the horizontal padding used by other elements in the player view.
+Spacer(minLength: 24)
 
-Do not touch NoteRowView itself or any other view.
-Commit: "t37: fix horizontal padding on player notes list"
+Do not touch anything else.
+Commit: "t37: increase bottom spacing in notes tab above footer"

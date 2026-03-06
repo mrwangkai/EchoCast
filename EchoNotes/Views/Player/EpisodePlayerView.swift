@@ -940,7 +940,7 @@ struct NotesSegmentView: View {
                 notesListView
             }
 
-            Spacer(minLength: 0)
+            Spacer(minLength: 24)
         }
         .padding(.top, 8)
     }
