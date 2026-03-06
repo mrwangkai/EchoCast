@@ -940,7 +940,7 @@ struct NotesSegmentView: View {
                 notesListView
             }
 
-            Spacer(minLength: 32)
+            Spacer(minLength: 16)
         }
         .padding(.top, 8)
     }
@@ -993,7 +993,7 @@ struct NotesSegmentView: View {
                 }
             }
         }
-        .padding(.horizontal, EchoSpacing.screenPadding)
+        .padding(.horizontal, 24)
     }
 
     private func deleteNote(_ note: NoteEntity) {
