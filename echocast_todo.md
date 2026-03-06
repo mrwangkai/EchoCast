@@ -64,6 +64,7 @@ Instructions:
 - [x] T26: Refine NoteCaptureSheetWrapper styling — addressed by T07 refactoring (labels, typography) and T09 light mode fix. No further work needed.
 - [x] T41: Fix bottom tab bar glass appearance — added .toolbarBackground(Color(red: 0.149, green: 0.149, blue: 0.149), for: .tabBar), .toolbarBackground(.visible, for: .tabBar), .toolbarColorScheme(.dark, for: .tabBar), and .preferredColorScheme(.dark) to TabView. Fixed washed-out white/gray appearance on first app launch. Tab bar now uses dark translucent glass matching app theme immediately. (0f5d1ec)
 - [x] T40: Fix player action button visual hierarchy — Add note button remains primary (mint fill), Bookmark button now secondary (white opacity 0.08 background with white icon). Creates clear visual hierarchy between primary and secondary actions. (909ea9d, 9025859, d9e9160, a3019b8)
+- [x] T42: Unify button icon color to mintAccent token — replaced hardcoded Color(red: 0.647, green: 0.898, blue: 0.847) with .mintAccent for both "Add note at current time" and Bookmark button icons. Ensures consistent use of design token across all action buttons. (3a0d1c1)
 
 ## 🧬 Possible Duplicates
 
