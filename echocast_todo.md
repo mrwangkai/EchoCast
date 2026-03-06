@@ -30,6 +30,7 @@ Instructions:
 - [ ] T34 (P2): Think through AI use cases: select podcast episode or individual notes (including after filtered) and ask AI to take pre-defined actions such as summarize, generate action items, etc
 - [ ] T36 (P2): Add/update interaction with individual episodes on podcast series sheet (e.g. swipe to delete)
 - [ ] T37 (P1): Refactor the top section of home screen to have the search and settings button be similar to library tab. This was previously changed to reduce space at the top. Can probably find more info from previous commits.
+- [ ] T42 (P3) Update color of link -- the green color is inconsistent in different context: in mini player, the add note and playback buttons have a brighter green; in the individual player sheet, the "add note..." and "bookmark" buttons have a darker green
 
 
 
@@ -37,6 +38,7 @@ Instructions:
 ## 📨 Inbox (raw ideas)
 - [ ] T38 (P1): Notes listing on notes tab feel … improvement needed
 - [ ] T39 (P1): Update button style for play — maybe more rounded
+- [ ] Update animation for how the markers show up. Right now its flying in from the left, which feels a bit buggy. And this is happening after the skeleton loading screen. Would it be possible to showing
 
 ## ✅ Done
 
@@ -61,7 +63,7 @@ Instructions:
 - [x] T14: Remove Browse tab — converted Browse from standalone tab to pushed navigation page. Search icon + "Find more" + empty state CTAs on Home and Library now push PodcastDiscoveryView via NavigationPath. Removed inner NavigationStack from PodcastDiscoveryView, fixed inline title flash. commits: 2a6f186, 5b75454, 72d973c, 30bde23, 4519612 | branch: browse-flow-update
 - [x] T26: Refine NoteCaptureSheetWrapper styling — addressed by T07 refactoring (labels, typography) and T09 light mode fix. No further work needed.
 - [x] T41: Fix bottom tab bar glass appearance — added .toolbarBackground(Color(red: 0.149, green: 0.149, blue: 0.149), for: .tabBar), .toolbarBackground(.visible, for: .tabBar), .toolbarColorScheme(.dark, for: .tabBar), and .preferredColorScheme(.dark) to TabView. Fixed washed-out white/gray appearance on first app launch. Tab bar now uses dark translucent glass matching app theme immediately. (0f5d1ec)
-- [x] T40: Fix player action button visual hierarchy — Add note button remains primary (mint fill), Bookmark button now secondary (white opacity 0.08 background with white icon). Creates clear visual hierarchy between primary and secondary actions. (909ea9d, 9025859)
+- [x] T40: Fix player action button visual hierarchy — Add note button remains primary (mint fill), Bookmark button now secondary (white opacity 0.08 background with white icon). Creates clear visual hierarchy between primary and secondary actions. (909ea9d, 9025859, d9e9160, a3019b8)
 
 ## 🧬 Possible Duplicates
 
