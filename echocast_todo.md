@@ -10,7 +10,6 @@ Instructions:
 
 ## 🔥 Currently working on
 
-- [ ] T41 (P2): ensure the bottom nav have the right styling (Commit history: f7f808b) — NOTE: This is only happening when the app first loads; when you tap away from Home (via the bottom nav), the background is no longer in light mode
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished). (LOE: M)
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12). (LOE: S)
 - [ ] T30 (P2): The "Bookmark added" undo toast appears at the top of the sheet, far from the bottom-right bookmark button that triggers it — move the toast anchor to just above the bottom action bar so the user sees it without scanning the full screen. This is especially important given the 10-second undo window; proximity to the action directly affects whether users catch it in time. (LOE: XS)
@@ -26,7 +25,6 @@ Instructions:
 - [ ] T21 (P2): What does "Following" mean? download the latest episode? if so, should there be series level control similar to overcast? We need something like that but hopefully not overly complicating things. (LOE: M - product + feature work)
 - [] T22 (P1): add a "Add note at current time" on CarPlay. This will support, alongside, Siri input, more ways to add notes to the app. (LOE: M - CarPlay UI work)
 - [] T25 (P1) Note Sheet Text Field Activation Lag — Keyboard Cursor Delayed on First Tap During Active Playback. (LOE: M - performance investigation)
-- [ ] T26 (P2): Refine NoteCaptureSheetWrapper styling — fix light mode rendering, review and update label font sizes for consistency. (LOE: S)
 - [ ] T32 (P3): UX investigation — Home tab re-tap behavior when Browse is in navigation stack. Currently tapping Home tab while on Library returns user to Browse (last navigation state) rather than Home root. Investigate iOS convention: should tab re-tap always pop to root, or preserve navigation state? Reference: Apple Music, Overcast, Podcasts app behavior. If pop-to-root is preferred, implement navigationPath.removeLast() or .removeAll() on tab re-selection. (LOE: S)
 - [ ] T33 (P2): Add paywall options — number of notes, number of times you can use advice option(s) such as ai summary/synthesis
 - [ ] T34 (P2): Think through AI use cases: select podcast episode or individual notes (including after filtered) and ask AI to take pre-defined actions such as summarize, generate action items, etc
@@ -39,7 +37,6 @@ Instructions:
 ## 📨 Inbox (raw ideas)
 - [ ] T38 (P1): Notes listing on notes tab feel … improvement needed
 - [ ] T39 (P1): Update button style for play — maybe more rounded
-- [ ] T40 (P1): Update button style for "add note at current time" and "bookmark" — currently two primary buttons, would two-line button be too small to read?
 
 ## ✅ Done
 
@@ -62,10 +59,14 @@ Instructions:
 - [x] T04: Note persistence fix — changed PodcastEntity.notes deletionRule from Cascade to Nullify so notes survive podcast unfollow. Created new Core Data model version "EchoNotes 2.xcdatamodel" for lightweight migration. (32979e0)
 - [x] T09: Add Note sheet light mode fix — forced dark mode with explicit colors. Moved .preferredColorScheme(.dark) to outermost ZStack, replaced system colors with dark RGB values (background: 0.149, fields: 0.2). Sheet now consistently renders in dark mode. (c76f69f, 4b6b54c)
 - [x] T14: Remove Browse tab — converted Browse from standalone tab to pushed navigation page. Search icon + "Find more" + empty state CTAs on Home and Library now push PodcastDiscoveryView via NavigationPath. Removed inner NavigationStack from PodcastDiscoveryView, fixed inline title flash. commits: 2a6f186, 5b75454, 72d973c, 30bde23, 4519612 | branch: browse-flow-update
+- [x] T26: Refine NoteCaptureSheetWrapper styling — addressed by T07 refactoring (labels, typography) and T09 light mode fix. No further work needed.
+- [x] T41: Fix bottom tab bar glass appearance — added .toolbarBackground(Color(red: 0.149, green: 0.149, blue: 0.149), for: .tabBar), .toolbarBackground(.visible, for: .tabBar), .toolbarColorScheme(.dark, for: .tabBar), and .preferredColorScheme(.dark) to TabView. Fixed washed-out white/gray appearance on first app launch. Tab bar now uses dark translucent glass matching app theme immediately. (0f5d1ec)
+- [x] T40: Fix player action button visual hierarchy — Add note button remains primary (mint fill), Bookmark button now secondary (white opacity 0.08 background with white icon). Creates clear visual hierarchy between primary and secondary actions. (909ea9d)
 
 ## 🧬 Possible Duplicates
 
 - T24 → T07: Note sheet metadata styling (combined into T07 with more detailed requirements)
+- T26 → T07/T09: NoteCaptureSheetWrapper styling refinements — addressed by T07 refactoring and T09 light mode fix
 
 ## 🚫 Audit recommendations but does not agree
 
