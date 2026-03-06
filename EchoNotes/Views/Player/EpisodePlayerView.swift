@@ -418,9 +418,9 @@ struct EpisodePlayerView: View {
             Button {
                 openNoteCapture()
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: 12) {
                     Image(systemName: "note.text.badge.plus")
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.system(size: 20, weight: .medium))
                         .foregroundColor(Color(red: 0.647, green: 0.898, blue: 0.847))
 
                     Text("Add note at current time")
@@ -428,7 +428,7 @@ struct EpisodePlayerView: View {
                         .foregroundColor(.white)
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 48)
+                .frame(height: 56)
                 .background(Color(red: 0.231, green: 0.306, blue: 0.290))
                 .cornerRadius(12)
             }
@@ -440,8 +440,8 @@ struct EpisodePlayerView: View {
             } label: {
                 Image(systemName: "bookmark.fill")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white)
-                    .frame(width: 48, height: 48)
+                    .foregroundColor(Color(red: 0.647, green: 0.898, blue: 0.847))
+                    .frame(width: 56, height: 56)
                     .background(Color(red: 0.231, green: 0.306, blue: 0.290))
                     .cornerRadius(12)
             }
