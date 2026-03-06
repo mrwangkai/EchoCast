@@ -27,11 +27,10 @@ Instructions:
 - [] T25 (P1) Note Sheet Text Field Activation Lag — Keyboard Cursor Delayed on First Tap During Active Playback. (LOE: M - performance investigation)
 - [ ] T26 (P2): Refine NoteCaptureSheetWrapper styling — fix light mode rendering, review and update label font sizes for consistency. (LOE: S)
 - [ ] T32 (P3): UX investigation — Home tab re-tap behavior when Browse is in navigation stack. Currently tapping Home tab while on Library returns user to Browse (last navigation state) rather than Home root. Investigate iOS convention: should tab re-tap always pop to root, or preserve navigation state? Reference: Apple Music, Overcast, Podcasts app behavior. If pop-to-root is preferred, implement navigationPath.removeLast() or .removeAll() on tab re-selection. (LOE: S)
-- [ ] T33: Add paywall options — number of notes, number of times you can use advice option(s) such as ai summary/synthesis
-- [ ] T34: Think through AI use cases: select podcast episode or individual notes (including after filtered) and ask AI to take pre-defined actions such as summarize, generate action items, etc
-- [ ] T35: Update individual notes row on episode sheet
-- [ ] T36: Add/update interaction with individual episodes on podcast series sheet (e.g. swipe to delete)
-- [ ] T37: Refactor the top section of home screen to have the search and settings button be similar to library tab. This was previously changed to reduce space at the top. Can probably find more info from previous commits.
+- [ ] T33 (P2): Add paywall options — number of notes, number of times you can use advice option(s) such as ai summary/synthesis
+- [ ] T34 (P2): Think through AI use cases: select podcast episode or individual notes (including after filtered) and ask AI to take pre-defined actions such as summarize, generate action items, etc
+- [ ] T36 (P2): Add/update interaction with individual episodes on podcast series sheet (e.g. swipe to delete)
+- [ ] T37 (P1): Refactor the top section of home screen to have the search and settings button be similar to library tab. This was previously changed to reduce space at the top. Can probably find more info from previous commits.
 
 
 
@@ -56,6 +55,7 @@ Instructions:
 - [x] T28: Individual player sheet AI audit completed — gathered feedback on layout, spacing, and usability. See worklog_20260304.md for summary. Some recommendations acted on (T29-T31), others declined per product strategy. (8f97d8e)
 - [x] T27: Individual player sheet spacing — album artwork 240pt, marker→timeline gap 6pt, scrubber→controls spacing 24pt, footer bottom 24pt. (431c845)
 - [x] T29: Timeline marker shapes — note markers as filled circles (●), bookmark markers as diamonds (◆). Fixed bookmark x-position offset. (9dff2a7)
+- [x] T35: Update individual notes row on episode sheet — redesigned NoteCardView to two-column timestamp/note layout with expand toggle. Timestamp on left (54pt, .footnote.semibold), note text + More/Less toggle on right (243pt). (ceeb944)
 - [x] T03: Siri "add note to EchoCast" working — phrases like "Hey Siri, add a note in EchoCast" or "Hey Siri, note this in EchoCast" successfully trigger AddNoteIntent. Note capture via Siri functional. (12a0a7b, 73e248b, ab048fa, fcef116, 3d95db1)
 - [x] T02: Scrubber visual size increased — knob from 14pt to 20pt, track height from 4pt to 6pt for better visibility against 28pt markers. Aligns with Overcast standards. (4ba22fe, ed28456)
 - [x] T04: Note persistence fix — changed PodcastEntity.notes deletionRule from Cascade to Nullify so notes survive podcast unfollow. Created new Core Data model version "EchoNotes 2.xcdatamodel" for lightweight migration. (32979e0)
