@@ -237,7 +237,7 @@ struct EpisodePlayerView: View {
                         .sensoryFeedback(.impact, trigger: activeSheet == .noteCapture)
                 }
                 .padding(.horizontal, EchoSpacing.screenPadding)
-                .padding(.top, 12)
+                .padding(.top, 24)
                 .background(Color.echoBackground)
                 .padding(.bottom, 24)
             }
