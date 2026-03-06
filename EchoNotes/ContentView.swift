@@ -49,6 +49,8 @@ struct ContentView: View {
         }
         .tint(.mintAccent)
         .tabViewStyle(.tabBarOnly)
+        .toolbarBackground(Color.echoBackground, for: .tabBar)
+        .toolbarColorScheme(.dark, for: .tabBar)
         .tabViewBottomAccessory(isEnabled: player.currentEpisode != nil) {
             // Mini player bar above tab bar (Liquid Glass style)
             if let episode = player.currentEpisode, let podcast = player.currentPodcast {
