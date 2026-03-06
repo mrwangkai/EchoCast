@@ -12,7 +12,6 @@ Instructions:
 
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished). (LOE: M)
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12). (LOE: S)
-- [ ] T29 (P1): Timeline markers must use distinct shapes to differentiate notes (filled circle ●) from bookmarks (diamond ◆) — currently all solid teal circles, which breaks the core note-vs-bookmark distinction that is fundamental to EchoCast's value prop. Target timeProgressWithMarkers in EpisodePlayerView.swift only; bookmark markers already have a diamond spec from prior work that needs to be enforced here. (LOE: S)
 - [ ] T30 (P2): The "Bookmark added" undo toast appears at the top of the sheet, far from the bottom-right bookmark button that triggers it — move the toast anchor to just above the bottom action bar so the user sees it without scanning the full screen. This is especially important given the 10-second undo window; proximity to the action directly affects whether users catch it in time. (LOE: XS)
 - [ ] T31 (P1): Verify what data the circular progress ring on the "Go Back" chip is bound to — if it mirrors global playback progress it is redundant with the scrubber and should be removed; if it represents a contextual buffer window (e.g. how far back the action will seek) it should be reframed with a tooltip or label to clarify intent. This needs a diagnostic read of GlobalPlayerManager state before any implementation change. (LOE: XS diagnostic, S if change needed)
 
@@ -56,6 +55,7 @@ Instructions:
 - [x] T07: Refactored NoteCaptureSheetWrapper — replaced Form with ScrollView+VStack, removed "Mark as Important" toggle, updated podcast metadata to static text with proper typography, added labels to Note/Tags fields, and hardened saveNote() with do/catch error handling and save-failure toast (06da238)
 - [x] T28: Individual player sheet AI audit completed — gathered feedback on layout, spacing, and usability. See worklog_20260304.md for summary. Some recommendations acted on (T29-T31), others declined per product strategy. (8f97d8e)
 - [x] T27: Individual player sheet spacing — album artwork 240pt, marker→timeline gap 6pt, scrubber→controls spacing 24pt, footer bottom 24pt. (431c845)
+- [x] T29: Timeline marker shapes — note markers as filled circles (●), bookmark markers as diamonds (◆). Fixed bookmark x-position offset. (9dff2a7)
 - [x] T03: Siri "add note to EchoCast" working — phrases like "Hey Siri, add a note in EchoCast" or "Hey Siri, note this in EchoCast" successfully trigger AddNoteIntent. Note capture via Siri functional. (12a0a7b, 73e248b, ab048fa, fcef116, 3d95db1)
 - [x] T02: Scrubber visual size increased — knob from 14pt to 20pt, track height from 4pt to 6pt for better visibility against 28pt markers. Aligns with Overcast standards. (4ba22fe, ed28456)
 - [x] T04: Note persistence fix — changed PodcastEntity.notes deletionRule from Cascade to Nullify so notes survive podcast unfollow. Created new Core Data model version "EchoNotes 2.xcdatamodel" for lightweight migration. (32979e0)
