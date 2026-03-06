@@ -993,6 +993,7 @@ struct NotesSegmentView: View {
                 }
             }
         }
+        .padding(.horizontal, EchoSpacing.screenPadding)
     }
 
     private func deleteNote(_ note: NoteEntity) {
