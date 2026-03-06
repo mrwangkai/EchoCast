@@ -439,9 +439,9 @@ struct EpisodePlayerView: View {
             } label: {
                 Image(systemName: "bookmark.fill")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.mintButtonText)
+                    .foregroundColor(.white)
                     .frame(width: 48, height: 48)
-                    .background(Color.mintButtonBackground)
+                    .background(Color.white.opacity(0.08))
                     .cornerRadius(12)
             }
             .buttonStyle(.plain)
