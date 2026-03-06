@@ -61,7 +61,7 @@ Instructions:
 - [x] T14: Remove Browse tab — converted Browse from standalone tab to pushed navigation page. Search icon + "Find more" + empty state CTAs on Home and Library now push PodcastDiscoveryView via NavigationPath. Removed inner NavigationStack from PodcastDiscoveryView, fixed inline title flash. commits: 2a6f186, 5b75454, 72d973c, 30bde23, 4519612 | branch: browse-flow-update
 - [x] T26: Refine NoteCaptureSheetWrapper styling — addressed by T07 refactoring (labels, typography) and T09 light mode fix. No further work needed.
 - [x] T41: Fix bottom tab bar glass appearance — added .toolbarBackground(Color(red: 0.149, green: 0.149, blue: 0.149), for: .tabBar), .toolbarBackground(.visible, for: .tabBar), .toolbarColorScheme(.dark, for: .tabBar), and .preferredColorScheme(.dark) to TabView. Fixed washed-out white/gray appearance on first app launch. Tab bar now uses dark translucent glass matching app theme immediately. (0f5d1ec)
-- [x] T40: Fix player action button visual hierarchy — Add note button remains primary (mint fill), Bookmark button now secondary (white opacity 0.08 background with white icon). Creates clear visual hierarchy between primary and secondary actions. (909ea9d)
+- [x] T40: Fix player action button visual hierarchy — Add note button remains primary (mint fill), Bookmark button now secondary (white opacity 0.08 background with white icon). Creates clear visual hierarchy between primary and secondary actions. (909ea9d, 9025859)
 
 ## 🧬 Possible Duplicates
 
