@@ -421,7 +421,7 @@ struct EpisodePlayerView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "note.text.badge.plus")
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(Color(red: 0.647, green: 0.898, blue: 0.847))
+                        .foregroundColor(.mintAccent)
 
                     Text("Add note at current time")
                         .font(.bodyRoundedMedium())
@@ -440,7 +440,7 @@ struct EpisodePlayerView: View {
             } label: {
                 Image(systemName: "bookmark.fill")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(Color(red: 0.647, green: 0.898, blue: 0.847))
+                    .foregroundColor(.mintAccent)
                     .frame(width: 56, height: 56)
                     .background(Color(red: 0.231, green: 0.306, blue: 0.290))
                     .cornerRadius(12)
