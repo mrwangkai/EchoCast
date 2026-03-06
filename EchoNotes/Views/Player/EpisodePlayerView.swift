@@ -646,7 +646,7 @@ struct EpisodePlayerView: View {
                         }
                         .buttonStyle(.plain)
                         .padding(.bottom, 8)
-                        .position(x: xPos, y: -11)
+                        .position(x: xPos + 14, y: -11)
                     }
                 }
             }
