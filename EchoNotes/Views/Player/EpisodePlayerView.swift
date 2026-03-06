@@ -239,7 +239,7 @@ struct EpisodePlayerView: View {
                 .padding(.horizontal, EchoSpacing.screenPadding)
                 .padding(.top, 12)
                 .background(Color.echoBackground)
-                .padding(.bottom, 32)
+                .padding(.bottom, 24)
             }
 
             // Skeleton loading overlay (shown when player is loading)
@@ -624,7 +624,7 @@ struct EpisodePlayerView: View {
                         }
                         .buttonStyle(.plain)
                         .padding(.bottom, 8)
-                        .position(x: xPos + 14, y: -8)
+                        .position(x: xPos + 14, y: -11)
                     }
 
                     // Bookmark markers
@@ -650,7 +650,7 @@ struct EpisodePlayerView: View {
                         }
                         .buttonStyle(.plain)
                         .padding(.bottom, 8)
-                        .position(x: xPos, y: -8)
+                        .position(x: xPos, y: -11)
                     }
                 }
             }
