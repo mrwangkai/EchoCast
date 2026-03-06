@@ -30,37 +30,33 @@ Instructions:
 - [ ] T32 (P3): UX investigation — Home tab re-tap behavior when Browse is in navigation stack. Currently tapping Home tab while on Library returns user to Browse (last navigation state) rather than Home root. Investigate iOS convention: should tab re-tap always pop to root, or preserve navigation state? Reference: Apple Music, Overcast, Podcasts app behavior. If pop-to-root is preferred, implement navigationPath.removeLast() or .removeAll() on tab re-selection. (LOE: S)
 - [ ] T33: Add paywall options — number of notes, number of times you can use advice option(s) such as ai summary/synthesis
 - [ ] T34: Think through AI use cases: select podcast episode or individual notes (including after filtered) and ask AI to take pre-defined actions such as summarize, generate action items, etc
-- [ ] Update individual notes row on episode sheet
-- [ ] Add/update interaction with individual episodes on podcast series sheet (e.g. swipe to delete)
-- [ ] Refactor the top section of home screen to have the search and settings button be similar to library tab. this was previously changed to reduce space at the top. can probably find more info from previous commits.
+- [ ] T35: Update individual notes row on episode sheet
+- [ ] T36: Add/update interaction with individual episodes on podcast series sheet (e.g. swipe to delete)
+- [ ] T37: Refactor the top section of home screen to have the search and settings button be similar to library tab. This was previously changed to reduce space at the top. Can probably find more info from previous commits.
 
 
 
 
 ## 📨 Inbox (raw ideas)
-- [ ] (P2): 
-- [ ] (P2): 
-- [ ] (P1) Notes listing on notes tab feel … improvement needed
-- [ ] (P1) increase spacing between the markers and the timeline. right now the scrubber is touching the markers
-- [ ] (P1) different style for the marker? right now its circle and circle with bookmark. i don’t want it to be overwhelming with lots of small symbols
-- [ ] (P1) update the button style for play: maybe more rounded
-- [ ] (P1) update button style for “add note at current time” and “bookmark”. right now there are two primary buttons?? would the two liner button be too small to read
+- [ ] T38 (P1): Notes listing on notes tab feel … improvement needed
+- [ ] T39 (P1): Update button style for play — maybe more rounded
+- [ ] T40 (P1): Update button style for "add note at current time" and "bookmark" — currently two primary buttons, would two-line button be too small to read?
 
 ## ✅ Done
 
 - [x] T01: Scrubber — make drag smooth by decoupling visual position from seek (1dc4e0d, 33469b5)
 - [x] T06: Mini player — visual alignment (9ba80a2, 47a09ce, 9c3e297, 4ee9f7f)
 - [x] T13: Balanced single-item "Following Podcast" section layout — inline nudge when count == 1 (e105072)
-- [x] T15: Inconsistent sheets
-- [x] T16: Modernize mini player with floating pill
-- [x] T17: Add "Add Note" button on mini player
-- [x] T18: Play/pause button size audit
+- [x] T15: Inconsistent sheets (completed as part of T19 mini player work)
+- [x] T16: Modernize mini player with floating pill (8680711, 9c3e297, 9ba80a2)
+- [x] T17: Add "Add Note" button on mini player (699e8d1, 47a09ce)
+- [x] T18: Play/pause button size audit (4ee9f7f, ed896a8)
 - [x] T19: Mini player "Add note" sheet auto-dismiss fix — lifted sheet to ContentView level, removed pause/resume logic (0e52239, 5b60839, 61f4bb8, 710ba88, f3ebdf9, bd6e025, 9cf258a, bde5278, a0ec89b, b3a5935, d25ba68, 48e9ca1)
 - [x] T23: Fix home screen carousel padding regression — removed outer VStack horizontal padding, applied padding to section headers instead, added .scrollClipDisabled() and .padding(.leading) to horizontal ScrollViews for edge-to-edge carousel effect (4cbc42d)
 - [x] T07: Refactored NoteCaptureSheetWrapper — replaced Form with ScrollView+VStack, removed "Mark as Important" toggle, updated podcast metadata to static text with proper typography, added labels to Note/Tags fields, and hardened saveNote() with do/catch error handling and save-failure toast (06da238)
-- [x] T28: Individual player sheet AI audit completed — gathered feedback on layout, spacing, and usability. See worklog_20260304.md for summary. Some recommendations acted on (T29-T31), others declined per product strategy.
+- [x] T28: Individual player sheet AI audit completed — gathered feedback on layout, spacing, and usability. See worklog_20260304.md for summary. Some recommendations acted on (T29-T31), others declined per product strategy. (8f97d8e)
 - [x] T27: Individual player sheet spacing — album artwork 240pt, marker→timeline gap 6pt, scrubber→controls spacing 24pt, footer bottom 24pt. (431c845)
-- [x] T03: Siri "add note to EchoCast" working — phrases like "Hey Siri, add a note in EchoCast" or "Hey Siri, note this in EchoCast" successfully trigger AddNoteIntent. Note capture via Siri functional.
+- [x] T03: Siri "add note to EchoCast" working — phrases like "Hey Siri, add a note in EchoCast" or "Hey Siri, note this in EchoCast" successfully trigger AddNoteIntent. Note capture via Siri functional. (12a0a7b, 73e248b, ab048fa, fcef116, 3d95db1)
 - [x] T02: Scrubber visual size increased — knob from 14pt to 20pt, track height from 4pt to 6pt for better visibility against 28pt markers. Aligns with Overcast standards. (4ba22fe, ed28456)
 - [x] T04: Note persistence fix — changed PodcastEntity.notes deletionRule from Cascade to Nullify so notes survive podcast unfollow. Created new Core Data model version "EchoNotes 2.xcdatamodel" for lightweight migration. (32979e0)
 - [x] T09: Add Note sheet light mode fix — forced dark mode with explicit colors. Moved .preferredColorScheme(.dark) to outermost ZStack, replaced system colors with dark RGB values (background: 0.149, fields: 0.2). Sheet now consistently renders in dark mode. (c76f69f, 4b6b54c)
