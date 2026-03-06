@@ -1,14 +1,109 @@
-Branch: create and checkout t27-player-spacing-adjustments before making any changes.
-File: EpisodePlayerView.swift
-Task: Four surgical spacing updates to the Listening tab player controls section. Make only these four changes — do not modify anything else.
+TASK: Create NoteRowView and use it in the episode player Notes tab.
+Do NOT modify NoteCardView.
 
-Change 1 — Album artwork size
-In albumArtworkView, find the .frame that sets the artwork square size. Change the width and height from 280 to 240.
-Change 2 — Note/bookmark marker bottom padding
-In timeProgressWithMarkers (or wherever note and bookmark markers are rendered above the scrubber track), find the .padding(.bottom) applied to the marker view. Change it to 8. This controls the gap between the bottom of the marker circles and the top of the scrubber track.
-Change 3 — Scrubber → playback controls spacing
-In the footer VStack that contains timeProgressWithMarkers and playbackControlButtons, find the spacing between those two elements. This may be a VStack(spacing:) value or a .padding(.top) on playbackControlButtons. Change the effective gap to 24pt.
-Change 4 — Footer bottom padding
-In the footer VStack, find .padding(.bottom, 48). Change it to .padding(.bottom, 32).
+── STEP 1: Create NoteRowView ──────────────────────────────────────
 
-After all four changes, build the project and confirm there are no errors. Then commit with message: t27: artwork 240pt, marker gap 8pt, scrubber→controls 24pt, footer bottom 32pt
+Add a new struct NoteRowView in ContentView.swift, placed just above NoteCardView.
+
+struct NoteRowView: View {
+    let note: NoteEntity
+    var onTap: (() -> Void)? = nil
+    @State private var isExpanded: Bool = false
+
+    private var hasMoreContent: Bool {
+        (note.noteText?.count ?? 0) > 120
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 32) {
+                // LEFT: timestamp
+                Text(note.timestamp ?? "")
+                    .font(.system(.footnote).weight(.semibold))
+                    .foregroundColor(.mintAccent)
+                    .frame(width: 54, alignment: .leading)
+
+                // RIGHT: note text + More/Less
+                VStack(alignment: .leading, spacing: 4) {
+                    if let noteText = note.noteText, !noteText.isEmpty {
+                        Text(noteText)
+                            .font(.system(.footnote))
+                            .foregroundColor(.echoTextPrimary)
+                            .lineLimit(isExpanded ? nil : 4)
+                            .lineSpacing(3)
+                            .animation(.easeInOut(duration: 0.2), value: isExpanded)
+                    }
+                    if hasMoreContent {
+                        Button(action: { isExpanded.toggle() }) {
+                            Text(isExpanded ? "Less" : "More")
+                                .font(.system(.footnote))
+                                .foregroundColor(.mintAccent)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+            .onTapGesture { onTap?() }
+
+            // Tags (if any)
+            if !note.tagsArray.isEmpty {
+                let visibleTags = Array(note.tagsArray.prefix(3))
+                let extra = max(0, note.tagsArray.count - 3)
+                HStack(spacing: 6) {
+                    ForEach(visibleTags, id: \.self) { tag in
+                        Text(tag)
+                            .font(.caption2Medium())
+                            .foregroundColor(.echoTextSecondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.white.opacity(0.08))
+                            .cornerRadius(6)
+                            .lineLimit(1)
+                    }
+                    if extra > 0 {
+                        Text("+\(extra)")
+                            .font(.caption2Medium())
+                            .foregroundColor(.echoTextSecondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.white.opacity(0.08))
+                            .cornerRadius(6)
+                    }
+                }
+                .padding(.bottom, 12)
+            }
+
+            // Divider
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(height: 1)
+        }
+    }
+}
+
+── STEP 2: Use NoteRowView in the episode player Notes tab ──────────
+
+Find the notesListView or notesTabContent in the episode player section
+of ContentView.swift (the ForEach that renders notes inside the player sheet).
+
+Replace NoteCardView with NoteRowView there, passing the onTap seek closure:
+
+NoteRowView(note: note) {
+    // existing seek + tab switch logic, unchanged
+}
+
+The VStack spacing around this ForEach should be 0 (dividers handle separation).
+Remove any .padding(.horizontal) on the ForEach container — 
+horizontal padding should come from the parent ScrollView or enclosing VStack only.
+
+── STEP 3: Do NOT change ────────────────────────────────────────────
+
+- NoteCardView — untouched
+- HomeView NoteCardView usage — untouched  
+- LibraryView NoteCardView usage — untouched
+
+After changes, do NOT run. Commit:
+"t37: add NoteRowView for episode player notes tab"

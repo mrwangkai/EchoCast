@@ -970,9 +970,9 @@ struct NotesSegmentView: View {
     }
 
     private var notesListView: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 0) {
             ForEach(notes, id: \.id) { note in
-                NoteRow(note: note) {
+                NoteRowView(note: note) {
                     // Show preview popover via callback
                     onNoteTap(note)
                 }
@@ -993,7 +993,6 @@ struct NotesSegmentView: View {
                 }
             }
         }
-        .padding(.horizontal, EchoSpacing.screenPadding)
     }
 
     private func deleteNote(_ note: NoteEntity) {
