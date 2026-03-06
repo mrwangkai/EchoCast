@@ -3070,6 +3070,7 @@ struct FlowLayout: Layout {
 
 struct NoteCardView: View {
     let note: NoteEntity
+    @State private var isExpanded: Bool = false
 
     // MARK: - Computed Properties
 
@@ -3084,65 +3085,74 @@ struct NoteCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // TOP: Note content + metadata
-            VStack(alignment: .leading, spacing: 12) {
-                // Note text
-                if let noteText = note.noteText, !noteText.isEmpty {
-                    Text(noteText)
-                        .font(.system(size: 17, weight: .regular, design: .serif))
-                        .foregroundColor(.echoTextPrimary)
-                        .lineLimit(4)
-                        .lineSpacing(4)
-                }
-
-                // Timestamp (left) + Tags (right, max 225px)
-                HStack(alignment: .top) {
-                    // Timestamp badge (fixed left)
-                    if let timestamp = note.timestamp {
-                        HStack(spacing: 4) {
-                            Image(systemName: "clock.fill")
-                                .font(.system(size: 10))
-                            Text(timestamp)
-                                .font(.caption2Medium())
-                        }
+            // TOP: Two-column layout (timestamp + note text)
+            HStack(alignment: .top, spacing: 32) {
+                // LEFT COLUMN: timestamp
+                if let timestamp = note.timestamp {
+                    Text(timestamp)
+                        .font(.system(.footnote).weight(.semibold))
                         .foregroundColor(.mintAccent)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.mintAccent.opacity(0.15))
-                        .cornerRadius(6)
+                        .frame(width: 54, alignment: .leading)
+                } else {
+                    Spacer()
+                        .frame(width: 54)
+                }
+
+                // RIGHT COLUMN: note text + expand/collapse
+                VStack(alignment: .leading, spacing: 4) {
+                    if let noteText = note.noteText, !noteText.isEmpty {
+                        Text(noteText)
+                            .font(.system(.footnote))
+                            .foregroundColor(.echoTextPrimary)
+                            .lineLimit(isExpanded ? nil : 4)
+                            .lineSpacing(3)
+                            .animation(.easeInOut(duration: 0.2), value: isExpanded)
                     }
 
-                    Spacer()
-
-                    // Tags (fixed right, max 225px)
-                    if !note.tagsArray.isEmpty {
-                        HStack(spacing: 6) {
-                            ForEach(visibleTags, id: \.self) { tag in
-                                Text(tag)
-                                    .font(.caption2Medium())
-                                    .foregroundColor(.echoTextSecondary)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(Color.noteCardBackground)
-                                    .cornerRadius(6)
-                                    .lineLimit(1)
-                            }
-
-                            if additionalTagsCount > 0 {
-                                Text("+\(additionalTagsCount)")
-                                    .font(.caption2Medium())
-                                    .foregroundColor(.echoTextSecondary)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(Color.noteCardBackground)
-                                    .cornerRadius(6)
-                            }
+                    // More/Less toggle — only show if text exceeds 120 chars
+                    if let noteText = note.noteText, noteText.count > 120 {
+                        Button(action: { isExpanded.toggle() }) {
+                            Text(isExpanded ? "Less" : "More")
+                                .font(.system(.footnote))
+                                .foregroundColor(.mintAccent)
                         }
-                        .frame(maxWidth: 225)  // Max width constraint
+                        .buttonStyle(.plain)
                     }
                 }
+                .frame(width: 243, alignment: .leading)
             }
             .padding(16)
+
+            // Tags row (between two-column layout and separator)
+            if !note.tagsArray.isEmpty {
+                HStack(spacing: 6) {
+                    ForEach(visibleTags, id: \.self) { tag in
+                        Text(tag)
+                            .font(.caption2Medium())
+                            .foregroundColor(.echoTextSecondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.noteCardBackground)
+                            .cornerRadius(6)
+                            .lineLimit(1)
+                    }
+
+                    if additionalTagsCount > 0 {
+                        Text("+\(additionalTagsCount)")
+                            .font(.caption2Medium())
+                            .foregroundColor(.echoTextSecondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.noteCardBackground)
+                            .cornerRadius(6)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
+            } else {
+                Spacer()
+                    .frame(height: 12)
+            }
 
             // SEPARATOR
             Rectangle()
