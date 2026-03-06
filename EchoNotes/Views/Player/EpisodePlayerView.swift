@@ -630,7 +630,7 @@ struct EpisodePlayerView: View {
                     // Bookmark markers
                     ForEach(bookmarks, id: \.id) { bookmark in
                         let xPos = player.duration > 0
-                            ? (bookmark.timestamp / player.duration) * geo.size.width
+                            ? (bookmark.timestamp / player.duration) * geo.size.width - 14
                             : 0
 
                         Button {
@@ -639,14 +639,10 @@ struct EpisodePlayerView: View {
                                 showingBookmarkPreview = true
                             }
                         } label: {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.mintAccent)
-                                    .frame(width: 28, height: 28)
-                                Image(systemName: "bookmark.fill")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(Color(red: 26/255, green: 60/255, blue: 52/255))
-                            }
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(Color.mintAccent)
+                                .frame(width: 20, height: 20)
+                                .rotationEffect(.degrees(45))
                         }
                         .buttonStyle(.plain)
                         .padding(.bottom, 8)
