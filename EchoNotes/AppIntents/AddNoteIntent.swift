@@ -16,7 +16,7 @@ struct AddNoteIntent: AppIntent {
     static var description = IntentDescription(
         "Adds a timestamped note to the currently playing podcast episode in EchoCast."
     )
-    static var openAppWhenRun: Bool = false
+    static var openAppWhenRun: Bool = true
 
     @Parameter(
         title: "Note",
