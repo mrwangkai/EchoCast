@@ -10,6 +10,8 @@ Instructions:
 
 ## 🔥 Currently working on
 
+- [ ] T42 (P2): Unify button icon color to mintAccent token — Commit history: 3a0d1c1, 84ce1a1. PENDING VISUAL TEST.
+- [ ] T22 (P1): Add a "Add note at current time" on CarPlay. (LOE: M - CarPlay UI work) (Commit history: 83e24d6)
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished). (LOE: M)
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12). (LOE: S)
 - [ ] T30 (P2): The "Bookmark added" undo toast appears at the top of the sheet, far from the bottom-right bookmark button that triggers it — move the toast anchor to just above the bottom action bar so the user sees it without scanning the full screen. This is especially important given the 10-second undo window; proximity to the action directly affects whether users catch it in time. (LOE: XS)
@@ -64,7 +66,9 @@ Instructions:
 - [x] T26: Refine NoteCaptureSheetWrapper styling — addressed by T07 refactoring (labels, typography) and T09 light mode fix. No further work needed.
 - [x] T41: Fix bottom tab bar glass appearance — added .toolbarBackground(Color(red: 0.149, green: 0.149, blue: 0.149), for: .tabBar), .toolbarBackground(.visible, for: .tabBar), .toolbarColorScheme(.dark, for: .tabBar), and .preferredColorScheme(.dark) to TabView. Fixed washed-out white/gray appearance on first app launch. Tab bar now uses dark translucent glass matching app theme immediately. (0f5d1ec)
 - [x] T40: Fix player action button visual hierarchy — Add note button remains primary (mint fill), Bookmark button now secondary (white opacity 0.08 background with white icon). Creates clear visual hierarchy between primary and secondary actions. (909ea9d, 9025859, d9e9160, a3019b8)
-- [x] T42: Unify button icon color to mintAccent token — replaced hardcoded Color(red: 0.647, green: 0.898, blue: 0.847) with .mintAccent for both "Add note at current time" and Bookmark button icons. Ensures consistent use of design token across all action buttons. (3a0d1c1, 84ce1a1)
+
+## Reported bug 🐞
+- There doesn’t appear to be a way to get back to the episodes list when you start an episode 
 
 ## 🧬 Possible Duplicates
 
