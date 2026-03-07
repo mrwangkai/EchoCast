@@ -4061,7 +4061,7 @@ struct MiniPlayerBar: View {
                     }) {
                         Image(systemName: "note.text.badge.plus")
                             .font(.system(size: 22, weight: .medium))
-                            .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702))
+                            .foregroundColor(.mintAccent)
                     }
                     .frame(width: 44, height: 44)
                     .buttonStyle(.plain)
@@ -4072,7 +4072,7 @@ struct MiniPlayerBar: View {
                     }) {
                         Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                             .font(.system(size: 26, weight: .semibold))
-                            .foregroundColor(Color(red: 0.0, green: 0.784, blue: 0.702))
+                            .foregroundColor(.mintAccent)
                             .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)
