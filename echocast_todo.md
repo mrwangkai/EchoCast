@@ -10,6 +10,7 @@ Instructions:
 
 ## 🔥 Currently working on
 
+- [ ] T22 (P1): CarPlay "Add note" feature — Pending device validation: awaiting Apple CarPlay Audio entitlement approval for com.kai.echocast. Implementation complete with commits 83e24d6, c8affbf, 6530df3.
 - [ ] T42 (P2): Unify button icon color to mintAccent token — Commit history: 3a0d1c1, 84ce1a1. PENDING VISUAL TEST.
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished). (LOE: M)
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12). (LOE: S)
@@ -66,7 +67,6 @@ Instructions:
 - [x] T26: Refine NoteCaptureSheetWrapper styling — addressed by T07 refactoring (labels, typography) and T09 light mode fix. No further work needed.
 - [x] T41: Fix bottom tab bar glass appearance — added .toolbarBackground(Color(red: 0.149, green: 0.149, blue: 0.149), for: .tabBar), .toolbarBackground(.visible, for: .tabBar), .toolbarColorScheme(.dark, for: .tabBar), and .preferredColorScheme(.dark) to TabView. Fixed washed-out white/gray appearance on first app launch. Tab bar now uses dark translucent glass matching app theme immediately. (0f5d1ec)
 - [x] T40: Fix player action button visual hierarchy — Add note button remains primary (mint fill), Bookmark button now secondary (white opacity 0.08 background with white icon). Creates clear visual hierarchy between primary and secondary actions. (909ea9d, 9025859, d9e9160, a3019b8)
-- [x] T22: Add "Add note at current time" on CarPlay — CarPlayNowPlayingImageButton on Now Playing template triggers AddNoteIntent. Added handle for already-playing episode on connect. Pending device validation: awaiting Apple CarPlay Audio entitlement approval for com.kai.echocast. (83e24d6, c8affbf, 6530df3)
 
 ## Reported bug 🐞
 - There doesn’t appear to be a way to get back to the episodes list when you start an episode 
