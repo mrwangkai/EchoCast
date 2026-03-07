@@ -11,7 +11,6 @@ Instructions:
 ## 🔥 Currently working on
 
 - [ ] T42 (P2): Unify button icon color to mintAccent token — Commit history: 3a0d1c1, 84ce1a1. PENDING VISUAL TEST.
-- [ ] T22 (P1): Add a "Add note at current time" on CarPlay. (LOE: M - CarPlay UI work) (Commit history: 83e24d6)
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished). (LOE: M)
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12). (LOE: S)
 - [ ] T30 (P2): The "Bookmark added" undo toast appears at the top of the sheet, far from the bottom-right bookmark button that triggers it — move the toast anchor to just above the bottom action bar so the user sees it without scanning the full screen. This is especially important given the 10-second undo window; proximity to the action directly affects whether users catch it in time. (LOE: XS)
@@ -25,7 +24,6 @@ Instructions:
 - [ ] T11 (P2): add a "View all" for Continue Listening — sheet or new screen? (LOE: M - requires product decision)
 - [ ] T12 (P2): add a "View all" for Following Podcasts — sheet or new screen? (LOE: M - requires product decision)
 - [ ] T21 (P2): What does "Following" mean? download the latest episode? if so, should there be series level control similar to overcast? We need something like that but hopefully not overly complicating things. (LOE: M - product + feature work)
-- [] T22 (P1): add a "Add note at current time" on CarPlay. This will support, alongside, Siri input, more ways to add notes to the app. (LOE: M - CarPlay UI work)
 - [] T25 (P1) Note Sheet Text Field Activation Lag — Keyboard Cursor Delayed on First Tap During Active Playback. (LOE: M - performance investigation)
 - [ ] T32 (P3): UX investigation — Home tab re-tap behavior when Browse is in navigation stack. Currently tapping Home tab while on Library returns user to Browse (last navigation state) rather than Home root. Investigate iOS convention: should tab re-tap always pop to root, or preserve navigation state? Reference: Apple Music, Overcast, Podcasts app behavior. If pop-to-root is preferred, implement navigationPath.removeLast() or .removeAll() on tab re-selection. (LOE: S)
 - [ ] T33 (P2): Add paywall options — number of notes, number of times you can use advice option(s) such as ai summary/synthesis
@@ -40,7 +38,9 @@ Instructions:
 ## 📨 Inbox (raw ideas)
 - [ ] T38 (P1): Notes listing on notes tab feel … improvement needed
 - [ ] T39 (P1): Update button style for play — maybe more rounded
-- [ ] Update animation for how the markers show up. Right now its flying in from the left, which feels a bit buggy. And this is happening after the skeleton loading screen. Would it be possible to showing
+- [ ] Update animation for how the markers show up. Right now its flying in from the left, which feels a bit buggy. And this is happening after the skeleton loading screen. Would it be possible to 
+- [ ] (P2) Timer in the bottom right of new notes keeps ticking up for some reason -- this is the time since added. we can remove it for now. there's no strong reason to have a timestamp for when the note was added.
+- [ ] "Search is weird". when typing fast, "Con" does not have "Conan" as a top choice; when typing "Co", "Conan" shows up as a top choice. Possible need to evaluate common search behavior.
 
 ## ✅ Done
 
@@ -66,6 +66,7 @@ Instructions:
 - [x] T26: Refine NoteCaptureSheetWrapper styling — addressed by T07 refactoring (labels, typography) and T09 light mode fix. No further work needed.
 - [x] T41: Fix bottom tab bar glass appearance — added .toolbarBackground(Color(red: 0.149, green: 0.149, blue: 0.149), for: .tabBar), .toolbarBackground(.visible, for: .tabBar), .toolbarColorScheme(.dark, for: .tabBar), and .preferredColorScheme(.dark) to TabView. Fixed washed-out white/gray appearance on first app launch. Tab bar now uses dark translucent glass matching app theme immediately. (0f5d1ec)
 - [x] T40: Fix player action button visual hierarchy — Add note button remains primary (mint fill), Bookmark button now secondary (white opacity 0.08 background with white icon). Creates clear visual hierarchy between primary and secondary actions. (909ea9d, 9025859, d9e9160, a3019b8)
+- [x] T22: Add "Add note at current time" on CarPlay — CarPlayNowPlayingImageButton on Now Playing template triggers AddNoteIntent. Added handle for already-playing episode on connect. Pending device validation: awaiting Apple CarPlay Audio entitlement approval for com.kai.echocast. (83e24d6, c8affbf, 6530df3)
 
 ## Reported bug 🐞
 - There doesn’t appear to be a way to get back to the episodes list when you start an episode 
