@@ -74,6 +74,11 @@ class CarPlayNowPlayingController {
                 self?.pushNowPlayingIfNeeded()
             }
             .store(in: &cancellables)
+
+        // Handle already-playing case: if episode is loaded before CarPlay connects
+        if GlobalPlayerManager.shared.currentEpisode != nil {
+            pushNowPlayingIfNeeded()
+        }
     }
 
     private func pushNowPlayingIfNeeded() {
