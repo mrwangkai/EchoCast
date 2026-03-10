@@ -174,10 +174,10 @@ struct HomeView: View {
             }
         }
         .sheet(isPresented: $showingContinueListeningSheet) {
-            ContinueListeningSheetView()
+            ContinueListeningSheetView(showingPlayerSheet: $showingPlayerSheet)
         }
         .sheet(isPresented: $showingYourShowsSheet) {
-            YourShowsSheetView()
+            YourShowsSheetView(selectedPodcast: $selectedPodcast)
         }
     }
 
@@ -566,6 +566,7 @@ private struct ContinueListeningSheetView: View {
     @ObservedObject private var historyManager = PlaybackHistoryManager.shared
     @ObservedObject private var player = GlobalPlayerManager.shared
     @Environment(\.managedObjectContext) private var viewContext
+    @Binding var showingPlayerSheet: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -601,7 +602,7 @@ private struct ContinueListeningSheetView: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(historyManager.recentlyPlayed) { item in
-                        ContinueListeningSheetRow(item: item)
+                        ContinueListeningSheetRow(item: item, showingPlayerSheet: $showingPlayerSheet)
 
                         if item.id != historyManager.recentlyPlayed.last?.id {
                             Rectangle()
@@ -624,6 +625,7 @@ private struct ContinueListeningSheetRow: View {
     let item: PlaybackHistoryItem
     @ObservedObject private var player = GlobalPlayerManager.shared
     @Environment(\.managedObjectContext) private var viewContext
+    @Binding var showingPlayerSheet: Bool
 
     // Fetch podcast for this item to get artwork URL
     private var podcast: PodcastEntity? {
@@ -772,6 +774,8 @@ private struct ContinueListeningSheetRow: View {
             imageURL: podcast.artworkURL
         )
         GlobalPlayerManager.shared.loadEpisodeAndPlay(episode, podcast: podcast, seekTo: item.currentTime)
+        // Show the player sheet after resuming playback
+        showingPlayerSheet = true
     }
 
     private func formatDuration(_ seconds: TimeInterval) -> String {
@@ -793,6 +797,7 @@ private struct YourShowsSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
     @State private var followedShows: [PodcastEntity] = []
+    @Binding var selectedPodcast: PodcastEntity?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -850,7 +855,7 @@ private struct YourShowsSheetView: View {
 
                     // Show rows
                     ForEach(followedShows) { show in
-                        YourShowsSheetRow(show: show)
+                        YourShowsSheetRow(show: show, selectedPodcast: $selectedPodcast)
 
                         if show.id != followedShows.last?.id {
                             Rectangle()
@@ -913,6 +918,8 @@ private struct YourShowsSheetRow: View {
     let show: PodcastEntity
     @ObservedObject private var player = GlobalPlayerManager.shared
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedPodcast: PodcastEntity?
 
     var body: some View {
         HStack(spacing: 12) {
@@ -951,6 +958,11 @@ private struct YourShowsSheetRow: View {
             } label: {
                 Label("Remove", systemImage: "minus.circle")
             }
+        }
+        .onTapGesture {
+            // Set selected podcast and dismiss to open series detail
+            selectedPodcast = show
+            dismiss()
         }
     }
 
