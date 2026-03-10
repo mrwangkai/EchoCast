@@ -16,7 +16,7 @@ Instructions:
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12). (LOE: S)
 - [ ] T30 (P3): The "Bookmark added" undo toast appears at the top of the sheet, far from the bottom-right bookmark button that triggers it — move the toast anchor to just above the bottom action bar so the user sees it without scanning the full screen. This is especially important given the 10-second undo window; proximity to the action directly affects whether users catch it in time. (LOE: XS)
 - [ ] T31 (P3): Verify what data the circular progress ring on the "Go Back" chip is bound to — if it mirrors global playback progress it is redundant with the scrubber and should be removed; if it represents a contextual buffer window (e.g. how far back the action will seek) it should be reframed with a tooltip or label to clarify intent. This needs a diagnostic read of GlobalPlayerManager state before any implementation change. (LOE: XS diagnostic, S if change needed)
-- [ ] T43 (P2): "View all" sheets for Continue Listening and Your Shows sections on homescreen — Continue Listening sheet shows vertical list of in-progress episodes with progress bars and note pips. Your Shows sheet shows followed podcasts with context blurb and "Add a show" row. (LOE: M)
+- [ ] T43 (P2): "View all" sheets for Continue Listening and Your Shows sections on homescreen — Continue Listening sheet shows vertical list of in-progress episodes with progress bars and note pips. Your Shows sheet shows followed podcasts with context blurb and "Add a show" row. (LOE: M) — Implementation complete. Commit: 029f265
 
 
 ## 🧭 Backlog
