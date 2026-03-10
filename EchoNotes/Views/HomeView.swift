@@ -42,6 +42,8 @@ struct HomeView: View {
     @State private var selectedPodcast: PodcastEntity?
     @State private var selectedNote: NoteEntity?
     @State private var navigationPath = NavigationPath()
+    @State private var showingContinueListeningSheet = false
+    @State private var showingYourShowsSheet = false
 
     // Namespace for matched geometry effect with mini player
     @Namespace private var playerAnimation
@@ -141,6 +143,9 @@ struct HomeView: View {
                 print("🏠 [HomeView] Followed podcasts count: \(followedPodcasts.count)")
                 print("🏠 [HomeView] Player episode loaded: \(player.currentEpisode != nil)")
             }
+            .onReceive(NotificationCenter.default.publisher(for: .openSearch)) { _ in
+                navigationPath.append("browse")
+            }
         }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
@@ -167,6 +172,12 @@ struct HomeView: View {
                     .presentationCornerRadius(20)
                     .preferredColorScheme(.dark)
             }
+        }
+        .sheet(isPresented: $showingContinueListeningSheet) {
+            ContinueListeningSheetView()
+        }
+        .sheet(isPresented: $showingYourShowsSheet) {
+            YourShowsSheetView()
         }
     }
 
@@ -277,10 +288,26 @@ struct HomeView: View {
 
     private var continueListeningSection: some View {
         VStack(alignment: .leading, spacing: EchoSpacing.sectionHeaderToContentSpacing) {
-            Text("Continue Listening")
-                .font(.title2Echo())
-                .foregroundColor(.echoTextPrimary)
-                .padding(.horizontal, EchoSpacing.homeSidePadding)
+            HStack(alignment: .firstTextBaseline) {
+                Text("Continue Listening")
+                    .font(.title2Echo())
+                    .foregroundColor(.echoTextPrimary)
+                Spacer()
+                Button {
+                    showingContinueListeningSheet = true
+                } label: {
+                    HStack(spacing: 3) {
+                        Text("View all")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Color.mintAccent.opacity(0.85))
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(Color.mintAccent.opacity(0.85))
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 20)
 
             if !continueListeningEpisodes.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -316,30 +343,33 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Following Section
+    // MARK: - Your Shows Section
 
     private var followingSection: some View {
         VStack(alignment: .leading, spacing: EchoSpacing.sectionHeaderToContentSpacing) {
-            HStack {
-                Text("Podcasts")
+            HStack(alignment: .firstTextBaseline) {
+                Text("Your Podcasts")
                     .font(.title2Echo())
                     .foregroundColor(.echoTextPrimary)
-
                 Spacer()
-
-                Button(action: {
-                    print("🔍 [HomeView] Find more tapped")
-                    navigationPath.append("browse")
-                }) {
-                    Text("Find more")
-                        .font(.bodyEcho())
-                        .foregroundColor(.mintAccent)
+                Button {
+                    showingYourShowsSheet = true
+                } label: {
+                    HStack(spacing: 3) {
+                        Text("View all")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Color.mintAccent.opacity(0.85))
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(Color.mintAccent.opacity(0.85))
+                    }
                 }
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal, EchoSpacing.homeSidePadding)
+            .padding(.horizontal, 20)
 
             if followedPodcasts.count == 1 {
-                // Single podcast: show card + nudge text
+                // Single podcast: show card
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(followedPodcasts) { podcast in
@@ -350,22 +380,8 @@ struct HomeView: View {
                                     selectedPodcast = podcast  // Sheet opens automatically
                                 }
                         }
-
-                        Spacer()
-                            .frame(minWidth: 12)
-
-                        HStack(spacing: 4) {
-                            Text("Follow more")
-                                .font(.system(size: 12, weight: .regular))
-                                .foregroundColor(Color.white.opacity(0.28))
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: 11, weight: .regular))
-                                .foregroundColor(Color.white.opacity(0.28))
-                        }
-
-                        Spacer()
                     }
-                    .padding(.leading, EchoSpacing.homeSidePadding)
+                    .padding(.leading, 20)
                 }
                 .scrollClipDisabled()
             } else {
@@ -381,13 +397,13 @@ struct HomeView: View {
                                 }
                         }
                     }
-                    .padding(.leading, EchoSpacing.homeSidePadding)
+                    .padding(.leading, 20)
                 }
                 .scrollClipDisabled()
             }
         }
         .onAppear {
-            print("🎙️ [HomeView] Showing Following section (\(followedPodcasts.count) podcasts)")
+            print("🎙️ [HomeView] Showing Your Shows section (\(followedPodcasts.count) podcasts)")
         }
     }
 
@@ -541,6 +557,418 @@ struct HomeView: View {
             print("🏠 [HomeView] Showing empty state")
         }
     }
+}
+
+// MARK: - Continue Listening Sheet
+
+private struct ContinueListeningSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var historyManager = PlaybackHistoryManager.shared
+    @ObservedObject private var player = GlobalPlayerManager.shared
+    @Environment(\.managedObjectContext) private var viewContext
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Handle
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color.white.opacity(0.15))
+                .frame(width: 36, height: 4)
+                .padding(.top, 10)
+
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Continue Listening")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.echoTextPrimary)
+                    Text("\(historyManager.recentlyPlayed.count) episodes in progress")
+                        .font(.system(size: 12))
+                        .foregroundColor(.echoTextTertiary)
+                }
+                Spacer()
+                Button("Done") { dismiss() }
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(Color.mintAccent)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+
+            Rectangle()
+                .fill(Color.white.opacity(0.07))
+                .frame(height: 1)
+
+            // List
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(historyManager.recentlyPlayed) { item in
+                        ContinueListeningSheetRow(item: item)
+
+                        if item.id != historyManager.recentlyPlayed.last?.id {
+                            Rectangle()
+                                .fill(Color.white.opacity(0.07))
+                                .frame(height: 1)
+                                .padding(.horizontal, 20)
+                        }
+                    }
+                }
+                .padding(.bottom, 32)
+            }
+        }
+        .background(Color(red: 0.118, green: 0.118, blue: 0.118))
+        .presentationDetents([.large])
+        .presentationDragIndicator(.hidden)
+    }
+}
+
+private struct ContinueListeningSheetRow: View {
+    let item: PlaybackHistoryItem
+    @ObservedObject private var player = GlobalPlayerManager.shared
+    @Environment(\.managedObjectContext) private var viewContext
+
+    // Fetch podcast for this item to get artwork URL
+    private var podcast: PodcastEntity? {
+        let request: NSFetchRequest<PodcastEntity> = PodcastEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", item.podcastID)
+        return (try? viewContext.fetch(request))?.first
+    }
+
+    // Fetch notes for this episode to show pips
+    private var notesForEpisode: [NoteEntity] {
+        let request: NSFetchRequest<NoteEntity> = NoteEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "episodeTitle == %@", item.episodeTitle)
+        return (try? viewContext.fetch(request)) ?? []
+    }
+
+    private var progress: Double {
+        guard item.duration > 0 else { return 0 }
+        return item.currentTime / item.duration
+    }
+
+    private var timeRemainingText: String {
+        let remaining = item.duration - item.currentTime
+        let mins = Int(remaining) / 60
+        return mins > 0 ? "\(mins) min left" : "Almost done"
+    }
+
+    private var noteCountText: String? {
+        let count = notesForEpisode.count
+        guard count > 0 else { return nil }
+        return "· \(count) \(count == 1 ? "note" : "notes")"
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Artwork - look up PodcastEntity for artwork
+            CachedAsyncImage(url: podcast?.artworkURL) { image in
+                image.resizable().aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Image(systemName: "headphones")
+                    .font(.system(size: 20))
+                    .foregroundColor(.echoTextTertiary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.white.opacity(0.06))
+            }
+            .frame(width: 52, height: 52)
+            .cornerRadius(9)
+            .clipped()
+
+            // Info
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.podcastTitle)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(Color.mintAccent)
+                    .textCase(.uppercase)
+                    .lineLimit(1)
+
+                Text(item.episodeTitle)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.echoTextPrimary)
+                    .lineLimit(1)
+
+                HStack(spacing: 4) {
+                    Text(timeRemainingText)
+                    if let noteText = noteCountText {
+                        Text(noteText)
+                    }
+                }
+                .font(.system(size: 11))
+                .foregroundColor(.echoTextTertiary)
+
+                // Progress bar with note pips
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        // Track
+                        Rectangle()
+                            .fill(Color.white.opacity(0.08))
+                            .frame(height: 2)
+                            .cornerRadius(1)
+
+                        // Fill
+                        Rectangle()
+                            .fill(Color.mintAccent.opacity(0.7))
+                            .frame(width: geo.size.width * progress, height: 2)
+                            .cornerRadius(1)
+
+                        // Note pips
+                        ForEach(notesForEpisode, id: \.objectID) { note in
+                            if let pipPosition = pipPosition(for: note, width: geo.size.width) {
+                                Circle()
+                                    .fill(Color(red: 1, green: 0.816, blue: 0.376))
+                                    .frame(width: 5, height: 5)
+                                    .offset(x: pipPosition - 2.5, y: -1.5)
+                            }
+                        }
+                    }
+                }
+                .frame(height: 5)
+                .padding(.top, 2)
+            }
+
+            // Play button
+            Button {
+                resumePlayback()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.mintAccent)
+                        .frame(width: 30, height: 30)
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.black)
+                }
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+    }
+
+    private func pipPosition(for note: NoteEntity, width: CGFloat) -> CGFloat? {
+        guard item.duration > 0,
+              let timestampString = note.timestamp else { return nil }
+        let seconds = parseTimestampToSeconds(timestampString)
+        guard seconds > 0 else { return nil }
+        return (seconds / item.duration) * width
+    }
+
+    private func parseTimestampToSeconds(_ timestamp: String) -> TimeInterval {
+        let parts = timestamp.split(separator: ":").compactMap { Double($0) }
+        switch parts.count {
+        case 2: return parts[0] * 60 + parts[1]
+        case 3: return parts[0] * 3600 + parts[1] * 60 + parts[2]
+        default: return 0
+        }
+    }
+
+    private func resumePlayback() {
+        guard let podcast = podcast else { return }
+        // Construct RSSEpisode from PlaybackHistoryItem
+        let episode = RSSEpisode(
+            title: item.episodeTitle,
+            description: nil,
+            pubDate: nil,
+            duration: formatDuration(item.duration),
+            audioURL: item.audioURL,
+            imageURL: podcast.artworkURL
+        )
+        GlobalPlayerManager.shared.loadEpisodeAndPlay(episode, podcast: podcast, seekTo: item.currentTime)
+    }
+
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let hours = Int(seconds) / 3600
+        let mins = Int(seconds) / 60 % 60
+        let secs = Int(seconds) % 60
+
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, mins, secs)
+        } else {
+            return String(format: "%d:%02d", mins, secs)
+        }
+    }
+}
+
+// MARK: - Your Shows Sheet
+
+private struct YourShowsSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.managedObjectContext) private var viewContext
+    @State private var followedShows: [PodcastEntity] = []
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Handle
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color.white.opacity(0.15))
+                .frame(width: 36, height: 4)
+                .padding(.top, 10)
+
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Your Podcasts")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.echoTextPrimary)
+                    Text("\(followedShows.count) shows saved")
+                        .font(.system(size: 12))
+                        .foregroundColor(.echoTextTertiary)
+                }
+                Spacer()
+                Button("Done") { dismiss() }
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(Color.mintAccent)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+
+            Rectangle()
+                .fill(Color.white.opacity(0.07))
+                .frame(height: 1)
+
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Context blurb
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 13))
+                            .foregroundColor(Color.mintAccent.opacity(0.7))
+                            .padding(.top, 1)
+                        Text("Shows you save here are easy to come back to — tap any show to jump straight to its latest episodes.")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.45))
+                            .lineSpacing(2)
+                    }
+                    .padding(14)
+                    .background(Color.mintAccent.opacity(0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.mintAccent.opacity(0.18), lineWidth: 1)
+                    )
+                    .cornerRadius(12)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+
+                    // Show rows
+                    ForEach(followedShows) { show in
+                        YourShowsSheetRow(show: show)
+
+                        if show.id != followedShows.last?.id {
+                            Rectangle()
+                                .fill(Color.white.opacity(0.07))
+                                .frame(height: 1)
+                                .padding(.horizontal, 20)
+                        }
+                    }
+
+                    // Add a show row
+                    Button {
+                        dismiss()
+                        // Post notification to open search
+                        NotificationCenter.default.post(name: .openSearch, object: nil)
+                    } label: {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.white.opacity(0.12), style: StrokeStyle(lineWidth: 1.5, dash: [4]))
+                                    .frame(width: 52, height: 52)
+                                Image(systemName: "plus")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.25))
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Add a show")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.echoTextSecondary)
+                                Text("Search to find a podcast")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.echoTextTertiary)
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 4)
+                }
+                .padding(.bottom, 32)
+            }
+        }
+        .background(Color(red: 0.118, green: 0.118, blue: 0.118))
+        .presentationDetents([.large])
+        .presentationDragIndicator(.hidden)
+        .onAppear { loadFollowedShows() }
+    }
+
+    private func loadFollowedShows() {
+        // Fetch from Core Data - followed podcasts
+        let request: NSFetchRequest<PodcastEntity> = PodcastEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "isFollowing == YES")
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \PodcastEntity.followedAt, ascending: false)]
+        followedShows = (try? viewContext.fetch(request)) ?? []
+    }
+}
+
+private struct YourShowsSheetRow: View {
+    let show: PodcastEntity
+    @ObservedObject private var player = GlobalPlayerManager.shared
+    @Environment(\.managedObjectContext) private var viewContext
+
+    var body: some View {
+        HStack(spacing: 12) {
+            CachedAsyncImage(url: show.artworkURL) { image in
+                image.resizable().aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Image(systemName: "music.note")
+                    .font(.system(size: 20))
+                    .foregroundColor(.echoTextTertiary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.white.opacity(0.06))
+            }
+            .frame(width: 52, height: 52)
+            .cornerRadius(10)
+            .clipped()
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(show.title ?? "Unknown Podcast")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.echoTextPrimary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.2))
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button(role: .destructive) {
+                unfollowShow()
+            } label: {
+                Label("Remove", systemImage: "minus.circle")
+            }
+        }
+    }
+
+    private func unfollowShow() {
+        show.isFollowing = false
+        show.followedAt = nil
+        do {
+            try viewContext.save()
+        } catch {
+            print("❌ Failed to unfollow show: \(error)")
+        }
+    }
+}
+
+// MARK: - Notification for Search
+
+extension Notification.Name {
+    static let openSearch = Notification.Name("EchoCast.openSearch")
 }
 
 // MARK: - Podcast Following Card
