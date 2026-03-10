@@ -4060,8 +4060,8 @@ struct MiniPlayerBar: View {
                         showNoteSheet = true
                     }) {
                         Image(systemName: "note.text.badge.plus")
-                            .font(.system(size: 22, weight: .medium))
                             .renderingMode(.template)
+                            .font(.system(size: 22, weight: .medium))
                             .foregroundColor(.mintAccent)
                     }
                     .frame(width: 44, height: 44)
@@ -4183,9 +4183,9 @@ struct AppleMusicStyleMiniPlayer: View {
                     showingAddNote = true
                 }) {
                     Image(systemName: "note.text.badge.plus")
+                        .renderingMode(.template)
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.mintAccent)
-                        .renderingMode(.template)
                         .frame(width: 32, height: 32)
                 }
                 .buttonStyle(.plain)
