@@ -133,6 +133,36 @@ class GlobalPlayerManager: ObservableObject {
         nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
 
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+
+        // T59: Fetch and set artwork for CarPlay Now Playing screen
+        fetchAndSetArtwork()
+    }
+
+    private func fetchAndSetArtwork() {
+        // Prefer episode artwork, fall back to podcast artwork
+        let artworkURL = currentEpisode?.imageURL ?? currentPodcast?.artworkURL
+
+        guard let urlString = artworkURL, !urlString.isEmpty, let url = URL(string: urlString) else {
+            return
+        }
+
+        // Fetch artwork asynchronously
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            guard let self = self, let data = data, error == nil,
+                  let image = UIImage(data: data) else {
+                return
+            }
+
+            // Create MPMediaItemArtwork from the image
+            let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in
+                return image
+            }
+
+            // Update the nowPlayingInfo with artwork
+            var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
+            nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork
+            MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+        }.resume()
     }
 
     func loadEpisode(_ episode: RSSEpisode, podcast: PodcastEntity) {
