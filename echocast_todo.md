@@ -11,7 +11,7 @@ Instructions:
 ## 🔥 Currently working on
 
 - [ ] T42 (P2): Unify button icon color to mintAccent token — Commit history: 3a0d1c1, 84ce1a1. PENDING VISUAL TEST.
-- [x] T55 (P2): Update CarPlay display style — Added CPTabBarTemplate with Home and My Podcasts tabs. Home tab has "Continue Listening" (1 episode) and "Latest Episodes" (up to 5) sections. My Podcasts tab shows followed podcasts with episode counts. Tapping podcast shows episodes drill-down. Fixed artwork loading: added artworkURL to PlaybackHistoryItem, placeholder SF Symbol (headphones) while loading, corrected loadAndCacheImage error handling. (Commit: pending)
+- [x] T55 (P2): Update CarPlay display style — Added CPTabBarTemplate with Home and My Podcasts tabs. Home tab has "Continue Listening" (1 episode) and "Latest Episodes" (up to 5) sections. My Podcasts tab shows followed podcasts with episode counts. Tapping podcast shows episodes drill-down. Fixed artwork loading: added artworkURL to PlaybackHistoryItem, placeholder SF Symbol (headphones) while loading, corrected loadAndCacheImage error handling. (Commit: 4fb9c15)
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished). (LOE: M)
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12). (LOE: S)
 - [ ] T30 (P3): The "Bookmark added" undo toast appears at the top of the sheet, far from the bottom-right bookmark button that triggers it — move the toast anchor to just above the bottom action bar so the user sees it without scanning the full screen. This is especially important given the 10-second undo window; proximity to the action directly affects whether users catch it in time. (LOE: XS)
