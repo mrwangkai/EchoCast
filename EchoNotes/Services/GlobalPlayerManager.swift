@@ -87,6 +87,13 @@ class GlobalPlayerManager: ObservableObject {
             return .success
         }
 
+        // Toggle play/pause command
+        commandCenter.togglePlayPauseCommand.isEnabled = true
+        commandCenter.togglePlayPauseCommand.addTarget { [weak self] _ in
+            self?.togglePlayPause()
+            return .success
+        }
+
         // Skip forward command
         commandCenter.skipForwardCommand.isEnabled = true
         commandCenter.skipForwardCommand.preferredIntervals = [30]
@@ -313,6 +320,7 @@ class GlobalPlayerManager: ObservableObject {
                     print("❌ [Player] Status: FAILED - player item failed to load")
 
                     if let error = item.error {
+                        print("T58 DEBUG: AVPlayerItem failed — \(error.localizedDescription)")
                         print("❌ [Player] Error: \(error.localizedDescription)")
                         print("❌ [Player] Error code: \((error as NSError).code)")
                         print("❌ [Player] Error domain: \((error as NSError).domain)")
@@ -323,6 +331,7 @@ class GlobalPlayerManager: ObservableObject {
                             print("❌ [Player] Error info - \(key): \(value)")
                         }
                     } else {
+                        print("T58 DEBUG: AVPlayerItem failed — unknown")
                         print("❌ [Player] No error object available")
                     }
 
