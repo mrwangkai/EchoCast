@@ -1,6 +1,7 @@
 import CarPlay
 import Combine
 import AppIntents
+import AVFoundation
 
 class CarPlayNowPlayingController {
 
@@ -32,6 +33,9 @@ class CarPlayNowPlayingController {
         DispatchQueue.main.async {
             CPNowPlayingTemplate.shared.updateNowPlayingButtons([noteButton])
         }
+
+        // T58: Ensure audio session is active for CarPlay playback
+        try? AVAudioSession.sharedInstance().setActive(true, options: [])
     }
 
     private func handleAddNoteTap() {
