@@ -656,6 +656,7 @@ class GlobalPlayerManager: ObservableObject {
                 podcastTitle: podcast.title ?? "Unknown Podcast",
                 podcastID: podcastID,
                 audioURL: episode.audioURL ?? "",
+                artworkURL: podcast.artworkURL ?? "",
                 currentTime: self.currentTime,
                 duration: self.duration
             )

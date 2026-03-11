@@ -13,6 +13,7 @@ struct PlaybackHistoryItem: Codable, Identifiable {
     let podcastTitle: String
     let podcastID: String
     let audioURL: String
+    let artworkURL: String // Podcast artwork URL for CarPlay display
     var currentTime: TimeInterval
     var duration: TimeInterval
     var lastPlayed: Date
@@ -45,6 +46,7 @@ class PlaybackHistoryManager: ObservableObject {
         podcastTitle: String,
         podcastID: String,
         audioURL: String,
+        artworkURL: String,
         currentTime: TimeInterval,
         duration: TimeInterval
     ) {
@@ -56,6 +58,7 @@ class PlaybackHistoryManager: ObservableObject {
             podcastTitle: podcastTitle,
             podcastID: podcastID,
             audioURL: audioURL,
+            artworkURL: artworkURL,
             currentTime: currentTime,
             duration: duration,
             lastPlayed: Date(),

@@ -11,6 +11,7 @@ Instructions:
 ## 🔥 Currently working on
 
 - [ ] T42 (P2): Unify button icon color to mintAccent token — Commit history: 3a0d1c1, 84ce1a1. PENDING VISUAL TEST.
+- [x] T55 (P2): Update CarPlay display style — Added CPTabBarTemplate with Home and My Podcasts tabs. Home tab has "Continue Listening" (1 episode) and "Latest Episodes" (up to 5) sections. My Podcasts tab shows followed podcasts with episode counts. Tapping podcast shows episodes drill-down. Fixed artwork loading: added artworkURL to PlaybackHistoryItem, placeholder SF Symbol (headphones) while loading, corrected loadAndCacheImage error handling. (Commit: pending)
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished). (LOE: M)
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12). (LOE: S)
 - [ ] T30 (P3): The "Bookmark added" undo toast appears at the top of the sheet, far from the bottom-right bookmark button that triggers it — move the toast anchor to just above the bottom action bar so the user sees it without scanning the full screen. This is especially important given the 10-second undo window; proximity to the action directly affects whether users catch it in time. (LOE: XS)
@@ -42,7 +43,7 @@ Instructions:
 - [ ] T48 (P3): Update animation for how the markers show up. Right now its flying in from the left, which feels a bit buggy. And this is happening after the skeleton loading screen. (LOE: M)
 - [ ] T50 (P2): "Search is weird". when typing fast, "Con" does not have "Conan" as a top choice; when typing "Co", "Conan" shows up as a top choice. (LOE: M - diagnostic)
 - [ ] T53 (P3): CarPlay notes incorrectly write sourceApp = 'Siri' via AddNoteIntent — should write 'CarPlay'. Fix CarPlayNowPlayingController to pass sourceApp directly to createNote rather than routing through AddNoteIntent. (LOE: XS)
-- [ ] T54 (P1): CarPlay crash on row tap — handleEpisodeTap pushes CPNowPlayingTemplate but never loads or plays the episode. Need to call GlobalPlayerManager.loadEpisode() and .play(). Also guard against uninitialized state on cold CarPlay launch. (LOE: M)
+- [ ] T54 (P1): CarPlay crash on row tap — Fixed handleEpisodeTap to actually load and play the episode through GlobalPlayerManager. Added CoreData import, fetches PodcastEntity from Core Data using podcastID, constructs RSSEpisode from PlaybackHistoryItem, and calls GlobalPlayerManager.shared.loadEpisodeAndPlay() with seekTo currentTime. Cold-start guard not needed — PlaybackHistoryManager.recentlyPlayed defaults to empty array safely. Build confirmed successful. (Commit: fb4e779)
 
 ## ✅ Done
 

@@ -1,27 +1,42 @@
-CARPLAY CRASH FIX — add to echocast_todo.md Inbox as a new ticket, then implement
-Files to edit: EchoNotes/CarPlay/CarPlaySceneDelegate.swift and EchoNotes/CarPlay/CarPlayNowPlayingController.swift only. Do not touch SwiftUI views, player files, or Core Data models.
+CARPLAY UI REDESIGN — branch: t55-carplay-ui-redesign
+Create branch t55-carplay-ui-redesign from current main. Add a new ticket to echocast_todo.md Inbox for this work.
+Edit EchoNotes/CarPlay/CarPlaySceneDelegate.swift only. Do not touch CarPlayNowPlayingController.swift, any SwiftUI views, or Core Data models.
 
-Fix 1: Actually start playback when a row is tapped
-This is the primary crash cause. handleEpisodeTap pushes CPNowPlayingTemplate but never loads or plays an episode. Fix it:
-First, check what type item is in handleEpisodeTap(item:). If it already carries the episode data needed to call GlobalPlayerManager.shared.loadEpisode(), use it directly. If item is only a CPListItem with text, look up the matching episode from PlaybackHistoryManager.shared.recentlyPlayed by title.
-Then inside handleEpisodeTap, before pushing CPNowPlayingTemplate:
-GlobalPlayerManager.shared.loadEpisode(episode, podcast: podcast)
-GlobalPlayerManager.shared.play()
+Goal: Replace the current single CPListTemplate with a CPTabBarTemplate containing two tabs: Home and My Podcasts.
 
-Use whatever the correct method signatures are on GlobalPlayerManager — do not invent new methods. Read GlobalPlayerManager.swift to confirm the exact API before writing this call.
+Tab 1 — Home
+Replace buildRecentlyPlayedTemplate() with a new method buildHomeTemplate() -> CPListTemplate that returns a list with two sections:
+Section 1 — "Continue Listening": the most recent 1 episode from PlaybackHistoryManager.shared.recentlyPlayed (the episode currently in progress or last played).
+Section 2 — "Latest Episodes": up to 5 recent episodes from PlaybackHistoryManager.shared.recentlyPlayed, skipping the one already shown in Continue Listening.
+Each CPListItem should be built with:
 
-Fix 2: Guard against uninitialized AVPlayer on cold CarPlay launch
-GlobalPlayerManager.shared always exists, but its internal player (AVPlayer) and currentEpisode are nil until loadEpisode() is called. CarPlayNowPlayingController.setup() subscribes to $currentEpisode via Combine — that's safe since it's just observing a @Published optional.
-The risk is in buildRecentlyPlayedTemplate() accessing PlaybackHistoryManager.shared.recentlyPlayed on cold start before Core Data is ready. Wrap that access defensively:
-let episodes = PlaybackHistoryManager.shared.recentlyPlayed ?? []
+text: episode title
+detailText: formatted string combining publication date + duration, e.g. "Mar 10, 2026 · 3h 3m". Use the episode's pubDate (formatted as MMM d, yyyy) and duration. If an episode is currently playing (GlobalPlayerManager.shared.currentEpisode?.id == episode.id), append " · Playing" instead of duration.
+image: series artwork loaded from the episode's podcast artworkURL. Use CPListItem's image parameter. Load asynchronously with URLSession and update the item via CPListItem.update(_:) after the image downloads. Use a placeholder SF Symbol (headphones) while loading.
 
-If recentlyPlayed is non-optional, check whether it can return an empty array safely before Core Data loads. If it force-unwraps a Core Data context internally, add a do/catch or verify the persistence controller is initialized before calling it. Read PlaybackHistoryManager.swift to confirm — do not guess.
+Keep the existing tap handler pattern (push CPNowPlayingTemplate + trigger playback).
 
-Sequence:
+Tab 2 — My Podcasts
+New method buildMyPodcastsTemplate() -> CPListTemplate.
+Fetch followed podcasts from Core Data. Use the existing PersistenceController.shared.container.viewContext to fetch PodcastEntity objects — filter to only those where isFollowing == true (or whatever the follow flag is called on PodcastEntity — read the model before assuming the property name).
+Each CPListItem:
 
-1. Add ticket to echocast_todo.md Inbox
-2. Read GlobalPlayerManager.swift to confirm loadEpisode and play method signatures
-3. Read PlaybackHistoryManager.swift to check if recentlyPlayed is crash-safe on cold start
-4. Implement Fix 1
-5. Implement Fix 2 only if the audit shows cold-start access is unsafe
-6. Do not modify any files outside EchoNotes/CarPlay/
+text: podcast series title
+detailText: episode count, e.g. "12 episodes"
+image: series artwork, same async loading pattern as above
+
+Tapping a podcast row should push a new CPListTemplate showing that podcast's recent episodes (fetch from Core Data EpisodeEntity where podcast == selectedPodcast, limit 10, sorted by pubDate descending). Each episode item in that drill-down uses the same text/detailText/image format as the Home tab. Tapping an episode starts playback.
+
+Tab bar assembly
+swiftlet tabBarTemplate = CPTabBarTemplate(templates: [homeTemplate, myPodcastsTemplate])
+interfaceController.setRootTemplate(tabBarTemplate, animated: false, completion: nil)
+Set tabBarTemplate as the root in didConnect, replacing the current setRootTemplate call.
+
+Important constraints:
+
+Read PodcastEntity and EpisodeEntity Core Data model properties before referencing any field names — do not guess property names
+Read PlaybackHistoryManager.swift to understand the recentlyPlayed data type before using it
+Read GlobalPlayerManager.swift to confirm the playback trigger API
+Do not modify any file outside CarPlaySceneDelegate.swift
+Do not restructure or rename existing methods — add new ones alongside
+Commit with message: t55-carplay-ui-redesign: CPTabBarTemplate with Home and My Podcasts tabs
