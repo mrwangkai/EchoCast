@@ -1,26 +1,17 @@
-Update docs/echocast_todo.md to mark T22 as complete with today's date and note the CarPlay fixes applied.
-Then run the following git commands:
+You are working on EchoCast (codebase: EchoNotes). Reference docs/echocast_todo.md throughout.
 
-1. git add -A
-2. Use this exact multi-line commit message:
+## Task: T46 follow-up — Remove source badge from NoteCardView only
 
-T22: Fix CarPlay scene registration — CarPlay now functional in simulator
+The source badge added in commit 93b6ca1 should only appear in NoteRowDetailView (the notes sheet list row), not on NoteCardView (used on home screen and library).
 
-Root causes fixed:
-- UIApplicationSupportsCarPlay was missing from Info.plist (iOS was not
-  registering EchoCast as a CarPlay-capable app)
-- AppDelegate.swift was missing entirely — no implementation of
-  application(_:configurationForConnecting:options:) meant iOS could not
-  connect the CarPlay scene, causing "No scene exists for identity" error
-- CarPlaySceneDelegate.swift and CarPlayNowPlayingController.swift were
-  not added to the Xcode target, so the classes were not compiled
+**Change:**
+In ContentView.swift, find the source badge code added to NoteCardView in the last commit (~lines 3191-3225) and remove it entirely. Leave NoteRowDetailView and NoteDetailSheet untouched.
 
-Validation: EchoCast CarPlay template loads in simulator showing
-CPListTemplate with "No recent episodes" state. Physical device
-validation pending TestFlight build.
+**Rules:**
+- ContentView.swift only
+- Remove only the source badge block from NoteCardView — nothing else
+- Do NOT touch NoteRowDetailView, NoteDetailSheet, or any other view
+- Do NOT touch player files, Core Data models, or design tokens
+- Build must succeed
 
-3. git checkout main
-4. git merge t43-view-all-sheets
-5. git push origin main
-
-Stop here and wait for confirmation before doing anything else.
+Commit message: "T46 follow-up: remove source badge from NoteCardView, keep on NoteRowDetailView only"

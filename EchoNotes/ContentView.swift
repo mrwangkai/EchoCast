@@ -1601,19 +1601,27 @@ struct NoteRowDetailView: View {
                     .lineLimit(5)
             }
 
-            HStack {
+            HStack(spacing: 6) {
                 if let timestamp = note.timestamp {
                     Label(timestamp, systemImage: "clock")
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
 
-                Spacer()
-
-                if let createdAt = note.createdAt {
-                    Text(createdAt, style: .relative)
-                        .font(.caption)
-                        .foregroundColor(.gray)
+                if let sourceApp = note.sourceApp, !sourceApp.isEmpty {
+                    HStack(spacing: 4) {
+                        if sourceApp.lowercased() == "siri" {
+                            Image(systemName: "waveform")
+                                .font(.system(size: 10))
+                        }
+                        Text(sourceApp)
+                    }
+                    .font(.caption2)
+                    .foregroundColor(.echoTextTertiary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Color.white.opacity(0.08))
+                    .cornerRadius(6)
                 }
             }
         }
@@ -3390,14 +3398,6 @@ struct NoteDetailSheet: View {
                                 Label(sourceApp, systemImage: "app.badge")
                                     .font(.caption)
                                     .foregroundColor(.echoTextSecondary)
-                            }
-
-                            Spacer()
-
-                            if let createdAt = note.createdAt {
-                                Text(createdAt, style: .relative)
-                                    .font(.caption)
-                                    .foregroundColor(.echoTextTertiary)
                             }
                         }
                     }

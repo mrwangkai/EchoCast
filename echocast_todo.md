@@ -25,28 +25,28 @@ Instructions:
 - [ ] T11 (P2): add a "View all" for Continue Listening — sheet or new screen? (LOE: M - requires product decision)
 - [ ] T12 (P2): add a "View all" for Following Podcasts — sheet or new screen? (LOE: M - requires product decision)
 - [ ] T21 (P2): What does "Following" mean? download the latest episode? if so, should there be series level control similar to overcast? We need something like that but hopefully not overly complicating things. (LOE: M - product + feature work)
-- [] T25 (P1) Note Sheet Text Field Activation Lag — Keyboard Cursor Delayed on First Tap During Active Playback. (LOE: M - performance investigation)
+- [ ] T25 (P1): Note Sheet Text Field Activation Lag — Keyboard Cursor Delayed on First Tap During Active Playback. (LOE: M - performance investigation)
 - [ ] T32 (P3): UX investigation — Home tab re-tap behavior when Browse is in navigation stack. Currently tapping Home tab while on Library returns user to Browse (last navigation state) rather than Home root. Investigate iOS convention: should tab re-tap always pop to root, or preserve navigation state? Reference: Apple Music, Overcast, Podcasts app behavior. If pop-to-root is preferred, implement navigationPath.removeLast() or .removeAll() on tab re-selection. (LOE: S)
-- [ ] T33 (P2): Add paywall options — number of notes, number of times you can use advice option(s) such as ai summary/synthesis
-- [ ] T34 (P2): Think through AI use cases: select podcast episode or individual notes (including after filtered) and ask AI to take pre-defined actions such as summarize, generate action items, etc
-- [ ] T36 (P2): Add/update interaction with individual episodes on podcast series sheet (e.g. swipe to delete)
-- [ ] T37 (P1): Refactor the top section of home screen to have the search and settings button be similar to library tab. This was previously changed to reduce space at the top. Can probably find more info from previous commits.
-- [ ] T42 (P3) Update color of link -- the green color is inconsistent in different context: in mini player, the add note and playback buttons have a brighter green; in the individual player sheet, the "add note..." and "bookmark" buttons have a darker green
-- [ ] (P2) Remove these from Note sheet/detail: time "passed", the section header "details"
-- [ ] (P2) Add method that note was added (such as Siri or manual or Carplay) as a tag
-- [ ] Improve search/browse: more relevant options
+- [ ] T33 (P2): Add paywall options — number of notes, number of times you can use advice option(s) such as ai summary/synthesis (LOE: L - business logic + UI)
+- [ ] T34 (P2): Think through AI use cases: select podcast episode or individual notes (including after filtered) and ask AI to take pre-defined actions such as summarize, generate action items, etc (LOE: L - product + implementation)
+- [ ] T36 (P2): Add/update interaction with individual episodes on podcast series sheet (e.g. swipe to delete) (LOE: M)
+- [ ] T37 (P1): Refactor the top section of home screen to have the search and settings button be similar to library tab. This was previously changed to reduce space at the top. Can probably find more info from previous commits. (LOE: S)
+- [ ] T45 (P2): Remove these from Note sheet/detail: time "passed", the section header "details" (LOE: S)
+- [ ] T47 (P2): Improve search/browse: more relevant options (LOE: L)
 
 
 
 ## 📨 Inbox (raw ideas)
-- [ ] T38 (P1): Notes listing on notes tab feel … improvement needed
-- [ ] T39 (P1): Update button style for play — maybe more rounded
-- [ ] Update animation for how the markers show up. Right now its flying in from the left, which feels a bit buggy. And this is happening after the skeleton loading screen. Would it be possible to 
-- [ ] (P2) Timer in the bottom right of new notes keeps ticking up for some reason -- this is the time since added. we can remove it for now. there's no strong reason to have a timestamp for when the note was added.
-- [ ] "Search is weird". when typing fast, "Con" does not have "Conan" as a top choice; when typing "Co", "Conan" shows up as a top choice. Possible need to evaluate common search behavior.
+- [ ] T38 (P1): Notes listing on notes tab feel … improvement needed (LOE: L - redesign work)
+- [ ] T39 (P1): Update button style for play — maybe more rounded (LOE: XS)
+- [ ] T48 (P3): Update animation for how the markers show up. Right now its flying in from the left, which feels a bit buggy. And this is happening after the skeleton loading screen. (LOE: M)
+- [ ] T50 (P2): "Search is weird". when typing fast, "Con" does not have "Conan" as a top choice; when typing "Co", "Conan" shows up as a top choice. (LOE: M - diagnostic)
+- [ ] T53 (P3): CarPlay notes incorrectly write sourceApp = 'Siri' via AddNoteIntent — should write 'CarPlay'. Fix CarPlayNowPlayingController to pass sourceApp directly to createNote rather than routing through AddNoteIntent. (LOE: XS)
 
 ## ✅ Done
 
+- [x] T46: Add method that note was added as a source badge — Added sourceApp badge to NoteRowDetailView and NoteCardView. Shows "Siri" with waveform icon for Siri notes, raw string for other sources. NoteDetailSheet already had source display. Build confirmed successful. (Commit: 93b6ca1)
+- [x] T49: Remove "time since added" timer from note rows — Removed `Text(createdAt, style: .relative)` from NoteRowDetailView and NoteDetailSheet. The playback timestamp (e.g., "12:45") remains. Build confirmed successful. (Commit: 84ccfd8)
 - [x] T22: CarPlay "Add note" feature — Fixed CarPlay scene registration: UIApplicationSupportsCarPlay added to Info.plist, AppDelegate.swift created with application(_:configurationForConnecting:options:) implementation, CarPlaySceneDelegate and CarPlayNowPlayingController added to Xcode target. CarPlay now loads in simulator showing "No recent episodes" state. Physical device validation pending TestFlight build. (Commit: {pending})
 - [x] T01: Scrubber — make drag smooth by decoupling visual position from seek (1dc4e0d, 33469b5)
 - [x] T06: Mini player — visual alignment (9ba80a2, 47a09ce, 9c3e297, 4ee9f7f)
@@ -72,7 +72,7 @@ Instructions:
 - [x] T40: Fix player action button visual hierarchy — Add note button remains primary (mint fill), Bookmark button now secondary (white opacity 0.08 background with white icon). Creates clear visual hierarchy between primary and secondary actions. (909ea9d, 9025859, d9e9160, a3019b8)
 
 ## Reported bug 🐞
-- [ ] (P1) "There doesn’t appear to be a way to get back to the episodes list when you start an episode". This is an assumption that user are familiar with the swipe down action, which may not be the case. #UX
+- [ ] T44 (P1): "There doesn't appear to be a way to get back to the episodes list when you start an episode". This is an assumption that user are familiar with the swipe down action, which may not be the case. (LOE: S - add back button or dismiss)
 
 ## 🧬 Possible Duplicates
 
@@ -81,6 +81,6 @@ Instructions:
 
 ## 🚫 Audit recommendations but does not agree
 
-- (P2): Gemini recommends increasing Play/Pause button visual prominence by applying mint/teal color to make it the focal point of the player. EchoCast intentionally weights the "Add note" action as the primary CTA since timestamped capture is the app's differentiator — rebalancing toward Play/Pause would undermine the product's positioning and should not be acted on. (LOE: N/A)
-- (P3): Gemini flags secondary text contrast (podcast name, timestamps) as a potential WCAG failure. The design tokens echoTextSecondary (white 85%) and echoTextTertiary (white 65%) on #262626 background pass WCAG AA at normal text sizes — this is an intentional tiered hierarchy, not an oversight, and should be validated against actual contrast ratios before any change is considered. (LOE: N/A now; revisit post-beta with real device testing)
+- [ ] T51 (DECLINED): Gemini recommends increasing Play/Pause button visual prominence by applying mint/teal color to make it the focal point of the player. EchoCast intentionally weights the "Add note" action as the primary CTA since timestamped capture is the app's differentiator — rebalancing toward Play/Pause would undermine the product's positioning and should not be acted on.
+- [ ] T52 (DECLINED): Gemini flags secondary text contrast (podcast name, timestamps) as a potential WCAG failure. The design tokens echoTextSecondary (white 85%) and echoTextTertiary (white 65%) on #262626 background pass WCAG AA at normal text sizes — this is an intentional tiered hierarchy, not an oversight, and should be validated against actual contrast ratios before any change is considered. Revisit post-beta with real device testing.
 
