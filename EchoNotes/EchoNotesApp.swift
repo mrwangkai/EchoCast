@@ -9,6 +9,7 @@ import SwiftUI
 
 @main
 struct EchoNotesApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     let persistenceController = PersistenceController.shared
     // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
     // @StateObject private var deepLinkManager = DeepLinkManager.shared

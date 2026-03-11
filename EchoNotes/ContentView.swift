@@ -3446,7 +3446,10 @@ struct SettingsView: View {
     }
 
     private var appVersion: String {
-        return "v0.01 + 2025.11.24.02.05"
+        if let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+            return "Build \(buildNumber)"
+        }
+        return "Build Unknown"
     }
 
     var body: some View {

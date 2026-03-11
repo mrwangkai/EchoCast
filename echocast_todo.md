@@ -10,7 +10,6 @@ Instructions:
 
 ## 🔥 Currently working on
 
-- [ ] T22 (P1): CarPlay "Add note" feature — Pending device validation: awaiting Apple CarPlay Audio entitlement approval for com.kai.echocast. Implementation complete with commits 83e24d6, c8affbf, 6530df3.
 - [ ] T42 (P2): Unify button icon color to mintAccent token — Commit history: 3a0d1c1, 84ce1a1. PENDING VISUAL TEST.
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished). (LOE: M)
 - [ ] T20 (P2): Adjusting element placement on miniplayer — button height 40 (from 44), button spacing 8 (from 12). (LOE: S)
@@ -33,7 +32,9 @@ Instructions:
 - [ ] T36 (P2): Add/update interaction with individual episodes on podcast series sheet (e.g. swipe to delete)
 - [ ] T37 (P1): Refactor the top section of home screen to have the search and settings button be similar to library tab. This was previously changed to reduce space at the top. Can probably find more info from previous commits.
 - [ ] T42 (P3) Update color of link -- the green color is inconsistent in different context: in mini player, the add note and playback buttons have a brighter green; in the individual player sheet, the "add note..." and "bookmark" buttons have a darker green
-
+- [ ] (P2) Remove these from Note sheet/detail: time "passed", the section header "details"
+- [ ] (P2) Add method that note was added (such as Siri or manual or Carplay) as a tag
+- [ ] Improve search/browse: more relevant options
 
 
 
@@ -46,6 +47,7 @@ Instructions:
 
 ## ✅ Done
 
+- [x] T22: CarPlay "Add note" feature — Fixed CarPlay scene registration: UIApplicationSupportsCarPlay added to Info.plist, AppDelegate.swift created with application(_:configurationForConnecting:options:) implementation, CarPlaySceneDelegate and CarPlayNowPlayingController added to Xcode target. CarPlay now loads in simulator showing "No recent episodes" state. Physical device validation pending TestFlight build. (Commit: {pending})
 - [x] T01: Scrubber — make drag smooth by decoupling visual position from seek (1dc4e0d, 33469b5)
 - [x] T06: Mini player — visual alignment (9ba80a2, 47a09ce, 9c3e297, 4ee9f7f)
 - [x] T13: Balanced single-item "Following Podcast" section layout — inline nudge when count == 1 (e105072)
@@ -70,7 +72,7 @@ Instructions:
 - [x] T40: Fix player action button visual hierarchy — Add note button remains primary (mint fill), Bookmark button now secondary (white opacity 0.08 background with white icon). Creates clear visual hierarchy between primary and secondary actions. (909ea9d, 9025859, d9e9160, a3019b8)
 
 ## Reported bug 🐞
-- There doesn’t appear to be a way to get back to the episodes list when you start an episode 
+- [ ] (P1) "There doesn’t appear to be a way to get back to the episodes list when you start an episode". This is an assumption that user are familiar with the swipe down action, which may not be the case. #UX
 
 ## 🧬 Possible Duplicates
 
