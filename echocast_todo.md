@@ -42,6 +42,7 @@ Instructions:
 - [ ] T48 (P3): Update animation for how the markers show up. Right now its flying in from the left, which feels a bit buggy. And this is happening after the skeleton loading screen. (LOE: M)
 - [ ] T50 (P2): "Search is weird". when typing fast, "Con" does not have "Conan" as a top choice; when typing "Co", "Conan" shows up as a top choice. (LOE: M - diagnostic)
 - [ ] T53 (P3): CarPlay notes incorrectly write sourceApp = 'Siri' via AddNoteIntent — should write 'CarPlay'. Fix CarPlayNowPlayingController to pass sourceApp directly to createNote rather than routing through AddNoteIntent. (LOE: XS)
+- [ ] T54 (P1): CarPlay crash on row tap — handleEpisodeTap pushes CPNowPlayingTemplate but never loads or plays the episode. Need to call GlobalPlayerManager.loadEpisode() and .play(). Also guard against uninitialized state on cold CarPlay launch. (LOE: M)
 
 ## ✅ Done
 

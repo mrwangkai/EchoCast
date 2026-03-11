@@ -492,7 +492,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = EchoNotes/EchoNotes.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BY2WMSQ7U3;
 				ENABLE_PREVIEWS = YES;
@@ -503,7 +503,7 @@
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "EchoNotes needs access to the microphone to capture voice notes.";
 				INFOPLIST_KEY_NSSiriUsageDescription = "EchoNotes uses Siri to enable hands-free note capture.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "EchoNotes uses speech recognition to transcribe your voice notes.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -529,7 +529,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = EchoNotes/EchoNotes.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BY2WMSQ7U3;
 				ENABLE_PREVIEWS = YES;
@@ -540,7 +540,7 @@
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "EchoNotes needs access to the microphone to capture voice notes.";
 				INFOPLIST_KEY_NSSiriUsageDescription = "EchoNotes uses Siri to enable hands-free note capture.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "EchoNotes uses speech recognition to transcribe your voice notes.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;

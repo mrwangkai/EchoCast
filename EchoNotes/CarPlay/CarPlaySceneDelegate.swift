@@ -1,5 +1,6 @@
 import CarPlay
 import Combine
+import CoreData
 
 class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
 
@@ -53,16 +54,58 @@ class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
 
     private func handleEpisodeTap(item: PlaybackHistoryItem) {
         // Load into GlobalPlayerManager and push Now Playing
-        DispatchQueue.main.async {
-            // GlobalPlayerManager needs audio URL and episode context to resume
-            // For now, push CPNowPlayingTemplate — full resume is out of scope for T22
-            CPNowPlayingTemplate.shared.isUpNextButtonEnabled = false
-            CPNowPlayingTemplate.shared.isAlbumArtistButtonEnabled = false
-            self.interfaceController?.pushTemplate(
-                CPNowPlayingTemplate.shared,
-                animated: true,
-                completion: nil
-            )
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            // Fetch podcast from Core Data using podcastID
+            let context = PersistenceController.shared.container.viewContext
+            let fetchRequest: NSFetchRequest<PodcastEntity> = PodcastEntity.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %@", item.podcastID)
+            fetchRequest.fetchLimit = 1
+
+            do {
+                let podcasts = try context.fetch(fetchRequest)
+                guard let podcast = podcasts.first else {
+                    print("❌ [CarPlay] Podcast not found for ID: \(item.podcastID)")
+                    return
+                }
+
+                // Construct RSSEpisode from PlaybackHistoryItem
+                let episode = RSSEpisode(
+                    title: item.episodeTitle,
+                    description: nil,
+                    pubDate: nil,
+                    duration: self.formatDuration(item.duration),
+                    audioURL: item.audioURL,
+                    imageURL: podcast.artworkURL
+                )
+
+                // Load and play the episode
+                GlobalPlayerManager.shared.loadEpisodeAndPlay(episode, podcast: podcast, seekTo: item.currentTime)
+
+                // Push CPNowPlayingTemplate
+                CPNowPlayingTemplate.shared.isUpNextButtonEnabled = false
+                CPNowPlayingTemplate.shared.isAlbumArtistButtonEnabled = false
+                self.interfaceController?.pushTemplate(
+                    CPNowPlayingTemplate.shared,
+                    animated: true,
+                    completion: nil
+                )
+            } catch {
+                print("❌ [CarPlay] Failed to fetch podcast: \(error)")
+            }
+        }
+    }
+
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let hours = Int(seconds) / 3600
+        let mins = Int(seconds) / 60 % 60
+        let secs = Int(seconds) % 60
+
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, mins, secs)
+        } else {
+            return String(format: "%d:%02d", mins, secs)
         }
     }
 }
