@@ -109,7 +109,7 @@ struct HomeView: View {
                     .padding(.top, EchoSpacing.headerTopPadding)
 
                     // Continue Listening Section
-                    if player.currentEpisode != nil || !recentNotes.isEmpty {
+                    if player.currentEpisode != nil || !continueListeningEpisodes.isEmpty || !recentNotes.isEmpty {
                         continueListeningSection
                     }
 
@@ -124,7 +124,7 @@ struct HomeView: View {
                     }
 
                     // Empty state - only show when there's no content at all
-                    if player.currentEpisode == nil && recentNotes.isEmpty && followedPodcasts.isEmpty {
+                    if player.currentEpisode == nil && continueListeningEpisodes.isEmpty && recentNotes.isEmpty && followedPodcasts.isEmpty {
                         emptyStateView
                     }
                 }

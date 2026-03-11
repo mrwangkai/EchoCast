@@ -607,17 +607,17 @@ class GlobalPlayerManager: ObservableObject {
     //     }
     // }
     //
-    // private func formatDuration(_ seconds: TimeInterval) -> String {
-    //     let hours = Int(seconds) / 3600
-    //     let minutes = Int(seconds) / 60 % 60
-    //     let secs = Int(seconds) % 60
-    //
-    //     if hours > 0 {
-    //         return String(format: "%d:%02d:%02d", hours, minutes, secs)
-    //     } else {
-    //         return String(format: "%d:%02d", minutes, secs)
-    //     }
-    // }
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let hours = Int(seconds) / 3600
+        let minutes = Int(seconds) / 60 % 60
+        let secs = Int(seconds) % 60
+
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, secs)
+        } else {
+            return String(format: "%d:%02d", minutes, secs)
+        }
+    }
 
     func skipForward(_ seconds: TimeInterval) {
         let newTime = min(currentTime + seconds, duration)
@@ -661,6 +661,65 @@ class GlobalPlayerManager: ObservableObject {
                 duration: self.duration
             )
         }
+    }
+
+    // MARK: - T57: Restore Last Played Episode
+
+    @MainActor
+    func restoreLastPlayedEpisode() {
+        let history = PlaybackHistoryManager.shared.recentlyPlayed
+        guard let mostRecent = history.first(where: { !$0.isFinished }) else {
+            print("🏠 [T57] No unfinished history to restore")
+            return
+        }
+
+        print("🏠 [T57] Restoring last played: \(mostRecent.episodeTitle)")
+
+        // Reconstruct RSSEpisode from persisted history fields
+        let episode = RSSEpisode(
+            title: mostRecent.episodeTitle,
+            description: nil,
+            pubDate: mostRecent.lastPlayed,
+            duration: mostRecent.duration > 0 ? formatDuration(mostRecent.duration) : nil,
+            audioURL: mostRecent.audioURL,
+            imageURL: mostRecent.artworkURL.isEmpty ? nil : mostRecent.artworkURL
+        )
+
+        // Fetch the PodcastEntity from Core Data by podcastID
+        let context = PersistenceController.shared.container.viewContext
+        let fetchRequest: NSFetchRequest<PodcastEntity> = PodcastEntity.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "id == %@", mostRecent.podcastID)
+        fetchRequest.fetchLimit = 1
+
+        var podcastEntity: PodcastEntity?
+        do {
+            let results = try context.fetch(fetchRequest)
+            podcastEntity = results.first
+        } catch {
+            print("❌ [T57] Failed to fetch PodcastEntity: \(error)")
+        }
+
+        // If no Core Data match, construct a minimal PodcastEntity stub
+        if podcastEntity == nil {
+            let stub = PodcastEntity(context: context)
+            stub.id = mostRecent.podcastID
+            stub.title = mostRecent.podcastTitle
+            stub.artworkURL = mostRecent.artworkURL
+            podcastEntity = stub
+            // Do NOT save context — this is a transient stub
+        }
+
+        guard let podcast = podcastEntity else {
+            print("❌ [T57] Could not construct podcast for restoration")
+            return
+        }
+
+        // Restore state WITHOUT playing
+        self.currentEpisode = episode
+        self.currentPodcast = podcast
+        self.currentTime = mostRecent.currentTime
+        self.duration = mostRecent.duration
+        print("✅ [T57] Restored — episode: \(episode.title), time: \(Int(mostRecent.currentTime))s")
     }
 
     deinit {

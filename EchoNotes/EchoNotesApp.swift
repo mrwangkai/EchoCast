@@ -24,6 +24,7 @@ struct EchoNotesApp: App {
                 //     _ = deepLinkManager.handleURL(url)
                 // }
                 .onAppear {
+                    GlobalPlayerManager.shared.restoreLastPlayedEpisode()
                     EchoNotesShortcuts.updateAppShortcutParameters()
                 }
         }

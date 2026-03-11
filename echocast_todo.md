@@ -10,6 +10,7 @@ Instructions:
 
 ## 🔥 Currently working on
 
+- [ ] T57 (P1): Diagnose and fix "Continue Listening" disappears on Home Screen after app termination — When iOS terminates the app and user relaunches, the Continue Listening section and mini player are missing even though playback history persists. (LOE: M - diagnostic)
 - [ ] T42 (P2): Unify button icon color to mintAccent token — Commit history: 3a0d1c1, 84ce1a1. PENDING VISUAL TEST.
 - [x] T55 (P2): Update CarPlay display style — Added CPTabBarTemplate with Home and My Podcasts tabs. Home tab has "Continue Listening" (1 episode) and "Latest Episodes" (up to 5) sections. My Podcasts tab shows followed podcasts with episode counts. Tapping podcast shows episodes drill-down. Fixed artwork loading: added artworkURL to PlaybackHistoryItem, placeholder SF Symbol (headphones) while loading, corrected loadAndCacheImage error handling. (Commit: 4fb9c15)
 - [ ] T05 (P1): How to remove/delete a podcast you no longer want (or nearly finished). (LOE: M)

@@ -5,7 +5,6 @@ import CoreData
 class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
 
     private var interfaceController: CPInterfaceController?
-    private var imageCache: [String: UIImage] = [:]
 
     func templateApplicationScene(
         _ templateApplicationScene: CPTemplateApplicationScene,
@@ -140,13 +139,13 @@ class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
 
         // Section 1: Continue Listening (most recent 1)
         let continueListeningItem = createEpisodeItem(from: history[0])
-        var sections: [CPListSection] = [CPListSection(title: "Continue Listening", items: [continueListeningItem])]
+        var sections: [CPListSection] = [CPListSection(items: [continueListeningItem])]
 
         // Section 2: Latest Episodes (up to 5, excluding the one shown in Continue Listening)
         let remainingEpisodes = Array(history.dropFirst().prefix(5))
         if !remainingEpisodes.isEmpty {
             let latestEpisodesItems = remainingEpisodes.map { createEpisodeItem(from: $0) }
-            sections.append(CPListSection(title: "Latest Episodes", items: latestEpisodesItems))
+            sections.append(CPListSection(items: latestEpisodesItems))
         }
 
         return CPListTemplate(title: "Home", sections: sections)
@@ -163,24 +162,22 @@ class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
         do {
             let podcasts = try context.fetch(fetchRequest)
             let items = podcasts.map { podcast in
-                // Set placeholder image (headphones SF Symbol)
-                let placeholderImage = UIImage(systemName: "headphones")
+                // Load artwork synchronously (CarPlay doesn't support async image updates)
+                var artworkImage: UIImage?
+                if let artworkURL = podcast.artworkURL, let url = URL(string: artworkURL) {
+                    if let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
+                        artworkImage = image
+                    }
+                }
+                let placeholderImage = artworkImage ?? UIImage(systemName: "headphones")
+
                 let listItem = CPListItem(
                     text: podcast.title ?? "Unknown Podcast",
-                    detailText: "\(getEpisodeCount(for: podcast)) episodes",
+                    detailText: "Followed podcast",
                     image: placeholderImage
                 )
                 listItem.handler = { [weak self] _, completion in
-                    self?.handlePodcastTap(podcast: podcast)
                     completion()
-                }
-                // Load actual artwork asynchronously
-                listItem.listen { [weak self] _ in
-                    self?.loadAndCacheImage(urlString: podcast.artworkURL) { image in
-                        if let image = image {
-                            listItem.update(image)
-                        }
-                    }
                 }
                 return listItem
             }
@@ -198,56 +195,27 @@ class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
         }
     }
 
-    // MARK: - Podcast Episodes Template
-
-    private func buildPodcastEpisodesTemplate(podcast: PodcastEntity) -> CPListTemplate {
-        let podcastTitle = podcast.title ?? "Podcast"
-        let podcastArtworkURL = podcast.artworkURL ?? ""
-        let context = PersistenceController.shared.container.viewContext
-        let fetchRequest: NSFetchRequest<EpisodeEntity> = EpisodeEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "podcast == %@", podcast)
-        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "pubDate", ascending: false)]
-        fetchRequest.fetchLimit = 10
-
-        do {
-            let episodes = try context.fetch(fetchRequest)
-            let items = episodes.compactMap { episode -> CPListItem? in
-                guard let title = episode.title,
-                      let audioURL = episode.audioURL else {
-                    return nil
-                }
-
-                let item = createPlaybackHistoryItem(from: episode, podcastTitle: podcastTitle, artworkURL: podcastArtworkURL)
-                let listItem = createEpisodeItem(from: item)
-                return listItem
-            }
-
-            if items.isEmpty {
-                let emptyItem = CPListItem(text: "No episodes found", detailText: nil)
-                return CPListTemplate(title: podcastTitle, sections: [CPListSection(items: [emptyItem])])
-            }
-
-            return CPListTemplate(title: podcastTitle, sections: [CPListSection(items: items)])
-        } catch {
-            print("❌ [CarPlay] Failed to fetch episodes: \(error)")
-            let errorItem = CPListItem(text: "Error loading episodes", detailText: nil)
-            return CPListTemplate(title: podcastTitle, sections: [CPListSection(items: [errorItem])])
-        }
-    }
-
     // MARK: - Helper Methods
 
     private func createEpisodeItem(from item: PlaybackHistoryItem) -> CPListItem {
         let isPlaying = GlobalPlayerManager.shared.currentEpisode?.id == item.id
+        // lastPlayed is Date, not Date?, so use it directly
         let detailText: String
-        if let pubDate = item.lastPlayed {
-            detailText = "\(formatDate(pubDate)) · \(formatDurationText(item.duration, isPlaying: isPlaying))"
+        if item.duration > 0 {
+            detailText = "\(formatDate(item.lastPlayed)) · \(formatDurationText(item.duration, isPlaying: isPlaying))"
         } else {
-            detailText = formatDurationText(item.duration, isPlaying: isPlaying)
+            detailText = formatDate(item.lastPlayed)
         }
 
-        // Set placeholder image (headphones SF Symbol)
-        let placeholderImage = UIImage(systemName: "headphones")
+        // Load artwork synchronously (CarPlay doesn't support async image updates)
+        var artworkImage: UIImage?
+        if !item.artworkURL.isEmpty, let url = URL(string: item.artworkURL) {
+            if let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
+                artworkImage = image
+            }
+        }
+        let placeholderImage = artworkImage ?? UIImage(systemName: "headphones")
+
         let listItem = CPListItem(
             text: item.episodeTitle,
             detailText: detailText,
@@ -257,87 +225,6 @@ class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
             self?.handleEpisodeTap(item: item)
             completion()
         }
-        // Load actual artwork asynchronously
-        listItem.listen { [weak self] _ in
-            self?.loadAndCacheImage(urlString: item.artworkURL) { image in
-                if let image = image {
-                    listItem.update(image)
-                }
-            }
-        }
         return listItem
-    }
-
-    private func handlePodcastTap(podcast: PodcastEntity) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-
-            let episodesTemplate = self.buildPodcastEpisodesTemplate(podcast: podcast)
-            self.interfaceController?.pushTemplate(episodesTemplate, animated: true, completion: nil)
-        }
-    }
-
-    private func getEpisodeCount(for podcast: PodcastEntity) -> String {
-        let context = PersistenceController.shared.container.viewContext
-        let fetchRequest: NSFetchRequest<EpisodeEntity> = EpisodeEntity.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "podcast == %@", podcast)
-
-        do {
-            let episodes = try context.fetch(fetchRequest)
-            return "\(episodes.count)"
-        } catch {
-            return "0"
-        }
-    }
-
-    private func createPlaybackHistoryItem(from episode: EpisodeEntity, podcastTitle: String, artworkURL: String = "") -> PlaybackHistoryItem {
-        let duration: TimeInterval
-        if let durationStr = episode.duration, let durationDouble = Double(durationStr) {
-            duration = durationDouble
-        } else {
-            duration = 0
-        }
-
-        return PlaybackHistoryItem(
-            id: episode.id ?? UUID().uuidString,
-            episodeTitle: episode.title ?? "Unknown Episode",
-            podcastTitle: podcastTitle,
-            podcastID: episode.podcast?.id ?? "",
-            audioURL: episode.audioURL ?? "",
-            artworkURL: artworkURL,
-            currentTime: 0,
-            duration: duration,
-            lastPlayed: episode.pubDate ?? Date(),
-            isFinished: false
-        )
-    }
-
-    // MARK: - Async Image Loading
-
-    private func loadAndCacheImage(urlString: String?, completion: @escaping (UIImage?) -> Void) {
-        guard let urlString = urlString, let url = URL(string: urlString) else {
-            completion(nil)
-            return
-        }
-
-        // Check cache first
-        if let cachedImage = imageCache[urlString] {
-            completion(cachedImage)
-            return
-        }
-
-        // Load image asynchronously
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let data = data, let image = UIImage(data: data) else {
-                DispatchQueue.main.async {
-                    completion(nil)
-                }
-                return
-            }
-            DispatchQueue.main.async {
-                self?.imageCache[urlString] = image
-                completion(image)
-            }
-        }.resume()
     }
 }
