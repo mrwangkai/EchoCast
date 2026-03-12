@@ -26,7 +26,7 @@ class CarPlayNowPlayingController {
 
     private func setupNowPlayingButtons() {
         let noteButton = CPNowPlayingImageButton(
-            image: UIImage(systemName: "square.and.pencil")!
+            image: UIImage(systemName: "square.and.pencil") ?? UIImage()
         ) { [weak self] _ in
             self?.handleAddNoteTap()
         }
@@ -43,6 +43,7 @@ class CarPlayNowPlayingController {
             do {
                 _ = try await AddNoteIntent().perform()
             } catch {
+                print("T63 DEBUG: AddNoteIntent failed — \(error)")
                 showCarPlayAlert("Couldn't start note capture. Try Siri instead.")
             }
         }
