@@ -91,6 +91,7 @@ struct PodcastDetailView: View {
                             EpisodeRowView(
                                 episode: episode,
                                 podcastTitle: podcast.title ?? "Unknown Podcast",
+                                podcastArtworkURL: podcast.artworkURL,
                                 podcastFeedURL: podcast.feedURL
                             )
                         }
@@ -301,15 +302,17 @@ struct PodcastHeaderView: View {
 
 struct EpisodeRowView: View {
     let episode: RSSEpisode
-    var podcastTitle: String = "Unknown Podcast"
+    let podcastTitle: String
+    let podcastArtworkURL: String?
     var podcastFeedURL: String? = nil
     var onPlay: () -> Void = {}
     @ObservedObject private var downloadManager = EpisodeDownloadManager.shared
     @Environment(\.managedObjectContext) private var viewContext
 
-    init(episode: RSSEpisode, podcastTitle: String = "Unknown Podcast", podcastFeedURL: String? = nil, onPlay: @escaping () -> Void = {}) {
+    init(episode: RSSEpisode, podcastTitle: String = "Unknown Podcast", podcastArtworkURL: String? = nil, podcastFeedURL: String? = nil, onPlay: @escaping () -> Void = {}) {
         self.episode = episode
         self.podcastTitle = podcastTitle
+        self.podcastArtworkURL = podcastArtworkURL
         self.podcastFeedURL = podcastFeedURL
         self.onPlay = onPlay
     }
@@ -329,8 +332,24 @@ struct EpisodeRowView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(episode.title)
+        HStack(alignment: .top, spacing: 12) {
+            // Thumbnail — episode art with podcast art fallback
+            CachedAsyncImage(url: URL(string: episode.imageURL ?? podcastArtworkURL ?? "")) {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.noteCardBackground)
+                    .frame(width: 56, height: 56)
+                    .overlay {
+                        Image(systemName: "music.note")
+                            .font(.system(size: 20))
+                            .foregroundColor(.echoTextTertiary)
+                    }
+            }
+            .frame(width: 56, height: 56)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+
+            // Existing VStack — no changes to its contents
+            VStack(alignment: .leading, spacing: 8) {
+                Text(episode.title)
                 .font(.headline)
                 .lineLimit(2)
 
@@ -415,6 +434,7 @@ struct EpisodeRowView: View {
                     .frame(width: 24)
                 }
             }
+        }
         }
         .padding(.vertical, 8)
         .contextMenu {
