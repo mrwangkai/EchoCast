@@ -1051,17 +1051,19 @@ private struct NotesEmptyStateCard: View {
             NotesEmptyStep(
                 icon: {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color(.sRGB, red: 0.10, green: 0.23, blue: 0.21, opacity: 1.0))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color(.sRGB, red: 0.20, green: 0.55, blue: 0.47, opacity: 0.35), lineWidth: 1)
-                            )
                         Image(systemName: "pencil")
                             .font(.system(size: 22, weight: .medium))
                             .foregroundColor(Color.mintAccent)
                     }
-                    .frame(width: 38, height: 38)
+                    .frame(width: 56, height: 56)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color.white.opacity(0.05))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            )
+                    )
                 },
                 verb: "Capture",
                 sub: "Right as you hear it",
@@ -1114,7 +1116,7 @@ private struct NotesEmptyStep: View {
 
             Text(sub)
                 .font(.captionRounded())
-                .foregroundColor(Color.echoTextSecondary)
+                .foregroundColor(Color.white.opacity(0.50))
                 .multilineTextAlignment(.center)
         }
         .padding(.horizontal, 6)
@@ -1126,39 +1128,43 @@ private struct NotesEmptyStep: View {
 
 private struct MiniNotePreview: View {
     var body: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack {
             VStack(alignment: .leading, spacing: 4) {
                 Capsule()
-                    .fill(Color.white.opacity(0.18))
-                    .frame(height: 4)
+                    .fill(Color.white.opacity(0.22))
+                    .frame(height: 5)
 
                 Capsule()
-                    .fill(Color.white.opacity(0.18))
-                    .frame(width: 24, height: 4)
+                    .fill(Color.white.opacity(0.22))
+                    .frame(width: 27, height: 5)
             }
-            .padding(8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+            .padding(.bottom, 8)
+            .padding(.leading, 7)
 
             Text("1:23")
                 .font(.system(size: 9, weight: .bold))
                 .foregroundColor(Color.mintAccent)
-                .padding(.horizontal, 3)
-                .padding(.vertical, 1)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
                 .background(
                     Capsule()
-                        .fill(Color.mintAccent.opacity(0.12))
+                        .fill(Color.mintAccent.opacity(0.20))
                         .overlay(
                             Capsule()
-                                .stroke(Color.mintAccent.opacity(0.25), lineWidth: 0.5)
+                                .stroke(Color.mintAccent.opacity(0.30), lineWidth: 0.5)
                         )
                 )
-                .offset(x: -2, y: -2)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .padding(.top, 4)
+                .padding(.trailing, 4)
         }
-        .frame(width: 38, height: 38)
+        .frame(width: 56, height: 56)
         .background(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: 14)
                 .fill(Color.white.opacity(0.05))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: 14)
                         .stroke(Color.white.opacity(0.08), lineWidth: 1)
                 )
         )
