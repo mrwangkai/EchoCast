@@ -39,6 +39,7 @@ struct HomeView: View {
 
     @State private var showingPlayerSheet = false
     @State private var showingSettings = false
+    @State private var searchText = ""
     @State private var selectedPodcast: PodcastEntity?
     @State private var selectedNote: NoteEntity?
     @State private var navigationPath = NavigationPath()
@@ -68,45 +69,46 @@ struct HomeView: View {
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: EchoSpacing.homeSectionSpacing) {
-                    // Header with inline buttons
-                    HStack(alignment: .center) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("EchoCast")
-                                .font(.largeTitleEcho())
-                                .foregroundColor(.echoTextPrimary)
+                    // Search Section (matches Library tab style)
+                    HStack(spacing: 8) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.echoTextTertiary)
+                            .font(.system(size: 17))
+                        TextField("Search podcasts...", text: $searchText)
+                            .textFieldStyle(.plain)
+                            .font(.bodyEcho())
+                            .foregroundColor(.echoTextPrimary)
+                            .onSubmit {
+                                // Navigate to Browse when user submits search
+                                if !searchText.isEmpty {
+                                    navigationPath.append("browse")
+                                }
+                            }
 
-                            Text(greetingText)
-                                .font(.bodyEcho())
-                                .foregroundColor(.echoTextSecondary)
+                        if !searchText.isEmpty {
+                            Button(action: {
+                                searchText = ""
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.echoTextTertiary)
+                            }
                         }
 
-                        Spacer()
-
-                        // Buttons inline with header
-                        HStack(spacing: 16) {
-                            Button(action: {
-                                print("🔍 [HomeView] Browse button tapped")
-                                navigationPath.append("browse")
-                            }) {
-                                Image(systemName: "magnifyingglass")
-                                    .font(.body)
-                                    .foregroundColor(.echoTextPrimary)
-                                    .frame(width: 44, height: 44)
-                            }
-
-                            Button(action: {
-                                print("⚙️ [HomeView] Settings button tapped")
-                                showingSettings = true
-                            }) {
-                                Image(systemName: "gearshape")
-                                    .font(.body)
-                                    .foregroundColor(.echoTextPrimary)
-                                    .frame(width: 44, height: 44)
-                            }
+                        Button(action: {
+                            showingSettings = true
+                        }) {
+                            Image(systemName: "gearshape")
+                                .foregroundColor(.echoTextTertiary)
+                                .font(.system(size: 17))
                         }
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color.searchFieldBackground)
+                    .cornerRadius(8)
                     .padding(.horizontal, EchoSpacing.homeSidePadding)
-                    .padding(.top, EchoSpacing.headerTopPadding)
+                    .padding(.top, 12)
 
                     // Continue Listening Section
                     if player.currentEpisode != nil || !continueListeningEpisodes.isEmpty || !recentNotes.isEmpty {
@@ -138,7 +140,9 @@ struct HomeView: View {
                 }
             }
             .background(Color.echoBackground)
-            .navigationBarHidden(true)
+            .navigationTitle("EchoCast")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(Color.echoBackground, for: .navigationBar)
             .onAppear {
                 print("🏠 [HomeView] View appeared")
                 print("🏠 [HomeView] Recent notes count: \(recentNotes.count)")
@@ -260,29 +264,6 @@ struct HomeView: View {
             return parts[0] * 3600 + parts[1] * 60 + parts[2]
         default:
             return nil
-        }
-    }
-
-    // MARK: - Header Section
-
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("EchoCast")
-                .font(.largeTitleEcho())
-                .foregroundColor(.echoTextPrimary)
-
-            Text(greetingText)
-                .font(.bodyEcho())
-                .foregroundColor(.echoTextSecondary)
-        }
-    }
-
-    private var greetingText: String {
-        let hour = Calendar.current.component(.hour, from: Date())
-        switch hour {
-        case 0..<12: return "Good morning"
-        case 12..<17: return "Good afternoon"
-        default: return "Good evening"
         }
     }
 
@@ -616,7 +597,11 @@ private struct ContinueListeningSheetView: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(historyManager.recentlyPlayed) { item in
-                        ContinueListeningSheetRow(item: item, showingPlayerSheet: $showingPlayerSheet)
+                        ContinueListeningSheetRow(
+                            item: item,
+                            onRemove: { removeEpisode(item) },
+                            showingPlayerSheet: $showingPlayerSheet
+                        )
 
                         if item.id != historyManager.recentlyPlayed.last?.id {
                             Rectangle()
@@ -633,10 +618,29 @@ private struct ContinueListeningSheetView: View {
         .presentationDetents([.large])
         .presentationDragIndicator(.hidden)
     }
+
+    private func removeEpisode(_ item: PlaybackHistoryItem) {
+        let episodeID = item.id
+
+        // 1. If this episode is currently playing, stop and clear the player
+        let player = GlobalPlayerManager.shared
+        if player.currentEpisode?.id == episodeID {
+            player.stop()
+            player.currentEpisode = nil
+            player.currentPodcast = nil
+        }
+
+        // 2. Delete local download file
+        EpisodeDownloadManager.shared.deleteDownload(episodeID)
+
+        // 3. Remove from Continue Listening history
+        PlaybackHistoryManager.shared.removeFromHistory(episodeID: episodeID)
+    }
 }
 
 private struct ContinueListeningSheetRow: View {
     let item: PlaybackHistoryItem
+    let onRemove: () -> Void
     @ObservedObject private var player = GlobalPlayerManager.shared
     @Environment(\.managedObjectContext) private var viewContext
     @Binding var showingPlayerSheet: Bool
@@ -757,6 +761,13 @@ private struct ContinueListeningSheetRow: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                onRemove()
+            } label: {
+                Label("Remove", systemImage: "trash")
+            }
+        }
     }
 
     private func pipPosition(for note: NoteEntity, width: CGFloat) -> CGFloat? {
