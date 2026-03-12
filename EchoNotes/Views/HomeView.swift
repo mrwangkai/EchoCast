@@ -121,6 +121,8 @@ struct HomeView: View {
                     // Recent Notes Section
                     if !recentNotes.isEmpty {
                         recentNotesSection
+                    } else if recentNotes.isEmpty {
+                        notesEmptyStateCard
                     }
 
                     // Empty state - only show when there's no content at all
@@ -487,7 +489,7 @@ struct HomeView: View {
 
     private var recentNotesSection: some View {
         VStack(alignment: .leading, spacing: EchoSpacing.sectionHeaderToContentSpacing) {
-            Text("Recent Notes")
+            Text("Notes")
                 .font(.title2Echo())
                 .foregroundColor(.echoTextPrimary)
 
@@ -503,6 +505,18 @@ struct HomeView: View {
         .onAppear {
             print("📝 [HomeView] Showing Recent Notes section (\(recentNotes.count) notes)")
         }
+    }
+
+    private var notesEmptyStateCard: some View {
+        VStack(alignment: .leading, spacing: EchoSpacing.sectionHeaderToContentSpacing) {
+            Text("Notes")
+                .font(.title2Echo())
+                .foregroundColor(.echoTextPrimary)
+
+            NotesEmptyStateCard()
+        }
+        .padding(.horizontal, EchoSpacing.homeSidePadding)
+        .padding(.top, 8)
     }
 
     // MARK: - Empty State View
@@ -1016,5 +1030,150 @@ struct PodcastFollowingCard: View {
         .frame(height: 160)  // Fixed total height for consistent alignment
         .contentShape(Rectangle())
     }
+}
+
+// MARK: - T66: Notes Empty State Card
+
+private struct NotesEmptyStateCard: View {
+    var body: some View {
+        HStack(spacing: 0) {
+            NotesEmptyStep(
+                icon: {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.white.opacity(0.05))
+                        Text("🎧")
+                            .font(.system(size: 18))
+                    }
+                    .frame(width: 38, height: 38)
+                },
+                verb: "Listen",
+                sub: "Play any episode",
+                accentVerb: false
+            )
+
+            Divider()
+                .background(Color.white.opacity(0.07))
+
+            ZStack {
+                Text("›")
+                    .font(.system(size: 12))
+                    .foregroundColor(.echoTextTertiary)
+                    .offset(x: -6)
+            }
+            .frame(width: 12)
+
+            NotesEmptyStep(
+                icon: {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.mintAccent)
+                        Image(systemName: "pencil")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(Color.black)
+                    }
+                    .frame(width: 38, height: 38)
+                },
+                verb: "Capture",
+                sub: "Right as you hear it",
+                accentVerb: true
+            )
+
+            Divider()
+                .background(Color.white.opacity(0.07))
+
+            ZStack {
+                Text("›")
+                    .font(.system(size: 12))
+                    .foregroundColor(.echoTextTertiary)
+                    .offset(x: -6)
+            }
+            .frame(width: 12)
+
+            NotesEmptyStep(
+                icon: {
+                    MiniNotePreview()
+                },
+                verb: "Remember",
+                sub: "Ideas that stick",
+                accentVerb: false
+            )
+        }
+        .background(Color.noteCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.07), lineWidth: 1)
+        )
+    }
+}
+
+private struct NotesEmptyStep: View {
+    let icon: (() -> any View)
+    let verb: String
+    let sub: String
+    let accentVerb: Bool
+
+    var body: some View {
+        VStack(spacing: 6) {
+            icon()
+                .any()
+
+            Text(verb)
+                .font(.footnote.weight(.semibold))
+                .foregroundColor(accentVerb ? Color.mintAccent : Color.echoTextPrimary)
+
+            Text(sub)
+                .font(.captionRounded())
+                .foregroundColor(.echoTextTertiary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 6)
+        .padding(.top, 15)
+        .padding(.bottom, 14)
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct MiniNotePreview: View {
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            VStack(alignment: .leading, spacing: 3) {
+                Capsule()
+                    .fill(Color.white.opacity(0.1))
+                    .frame(height: 6)
+
+                Capsule()
+                    .fill(Color.white.opacity(0.1))
+                    .frame(width: 24, height: 6)
+            }
+            .padding(8)
+
+            Text("1:23")
+                .font(.system(size: 7, weight: .medium))
+                .foregroundColor(Color.mintAccent)
+                .padding(.horizontal, 3)
+                .padding(.vertical, 1)
+                .background(
+                    Capsule()
+                        .fill(Color.mintAccent.opacity(0.15))
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.mintAccent.opacity(0.3), lineWidth: 0.5)
+                        )
+                )
+                .offset(x: -2, y: -2)
+        }
+        .frame(width: 38, height: 38)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.white.opacity(0.05))
+        )
+    }
+}
+
+// Helper to wrap AnyView
+extension View {
+    func any() -> AnyView { AnyView(self) }
 }
 
