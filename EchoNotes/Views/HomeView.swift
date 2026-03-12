@@ -1052,13 +1052,13 @@ private struct NotesEmptyStateCard: View {
                 icon: {
                     ZStack {
                         RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.white.opacity(0.05))
+                            .fill(Color(.sRGB, red: 0.10, green: 0.23, blue: 0.21, opacity: 1.0))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                    .stroke(Color(.sRGB, red: 0.20, green: 0.55, blue: 0.47, opacity: 0.35), lineWidth: 1)
                             )
                         Image(systemName: "pencil")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 22, weight: .medium))
                             .foregroundColor(Color.mintAccent)
                     }
                     .frame(width: 38, height: 38)
@@ -1104,7 +1104,7 @@ private struct NotesEmptyStep: View {
     let accentVerb: Bool
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 14) {
             icon()
                 .any()
 
@@ -1114,12 +1114,12 @@ private struct NotesEmptyStep: View {
 
             Text(sub)
                 .font(.captionRounded())
-                .foregroundColor(.echoTextTertiary)
+                .foregroundColor(Color.echoTextSecondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.horizontal, 6)
-        .padding(.top, 15)
-        .padding(.bottom, 14)
+        .padding(.top, 22)
+        .padding(.bottom, 22)
         .frame(maxWidth: .infinity)
     }
 }
@@ -1127,28 +1127,28 @@ private struct NotesEmptyStep: View {
 private struct MiniNotePreview: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 4) {
                 Capsule()
-                    .fill(Color.white.opacity(0.1))
-                    .frame(height: 6)
+                    .fill(Color.white.opacity(0.18))
+                    .frame(height: 4)
 
                 Capsule()
-                    .fill(Color.white.opacity(0.1))
-                    .frame(width: 24, height: 6)
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 24, height: 4)
             }
             .padding(8)
 
             Text("1:23")
-                .font(.system(size: 7, weight: .medium))
+                .font(.system(size: 9, weight: .bold))
                 .foregroundColor(Color.mintAccent)
                 .padding(.horizontal, 3)
                 .padding(.vertical, 1)
                 .background(
                     Capsule()
-                        .fill(Color.mintAccent.opacity(0.15))
+                        .fill(Color.mintAccent.opacity(0.12))
                         .overlay(
                             Capsule()
-                                .stroke(Color.mintAccent.opacity(0.3), lineWidth: 0.5)
+                                .stroke(Color.mintAccent.opacity(0.25), lineWidth: 0.5)
                         )
                 )
                 .offset(x: -2, y: -2)
@@ -1157,6 +1157,10 @@ private struct MiniNotePreview: View {
         .background(
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.white.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
         )
     }
 }
