@@ -1053,41 +1053,19 @@ private struct NotesEmptyStateCard: View {
                     ZStack {
                         RoundedRectangle(cornerRadius: 10)
                             .fill(Color.white.opacity(0.05))
-                        Text("🎧")
-                            .font(.system(size: 18))
-                    }
-                    .frame(width: 38, height: 38)
-                },
-                verb: "Listen",
-                sub: "Play any episode",
-                accentVerb: false
-            )
-
-            Divider()
-                .background(Color.white.opacity(0.07))
-
-            ZStack {
-                Text("›")
-                    .font(.system(size: 12))
-                    .foregroundColor(.echoTextTertiary)
-                    .offset(x: -6)
-            }
-            .frame(width: 12)
-
-            NotesEmptyStep(
-                icon: {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.mintAccent)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            )
                         Image(systemName: "pencil")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(Color.black)
+                            .foregroundColor(Color.mintAccent)
                     }
                     .frame(width: 38, height: 38)
                 },
                 verb: "Capture",
                 sub: "Right as you hear it",
-                accentVerb: true
+                accentVerb: false
             )
 
             Divider()

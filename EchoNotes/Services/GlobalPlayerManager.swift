@@ -35,6 +35,10 @@ class GlobalPlayerManager: ObservableObject {
     private var pendingSeekTime: TimeInterval?
     private var pendingAutoPlay: Bool = false
 
+    // T71: Cached artwork to prevent CarPlay flicker
+    private var cachedArtworkImage: UIImage? = nil
+    private var cachedArtworkURL: String? = nil
+
     private init() {
         print("🎵 [Player] GlobalPlayerManager initializing")
         setupAudioSession()
@@ -139,29 +143,31 @@ class GlobalPlayerManager: ObservableObject {
     }
 
     private func fetchAndSetArtwork() {
-        // Prefer episode artwork, fall back to podcast artwork
         let artworkURL = currentEpisode?.imageURL ?? currentPodcast?.artworkURL
+        guard let urlString = artworkURL, !urlString.isEmpty,
+              let url = URL(string: urlString) else { return }
 
-        guard let urlString = artworkURL, !urlString.isEmpty, let url = URL(string: urlString) else {
+        // If we already have this artwork cached, re-apply and skip network call
+        if urlString == cachedArtworkURL, let cached = cachedArtworkImage {
+            let artwork = MPMediaItemArtwork(boundsSize: cached.size) { _ in cached }
+            var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
+            info[MPMediaItemPropertyArtwork] = artwork
+            MPNowPlayingInfoCenter.default().nowPlayingInfo = info
             return
         }
 
-        // Fetch artwork asynchronously
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let self = self, let data = data, error == nil,
-                  let image = UIImage(data: data) else {
-                return
+        // New URL — fetch and cache
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+            guard let self, let data, error == nil,
+                  let image = UIImage(data: data) else { return }
+            DispatchQueue.main.async {
+                self.cachedArtworkImage = image
+                self.cachedArtworkURL = urlString
+                let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+                var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
+                info[MPMediaItemPropertyArtwork] = artwork
+                MPNowPlayingInfoCenter.default().nowPlayingInfo = info
             }
-
-            // Create MPMediaItemArtwork from the image
-            let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in
-                return image
-            }
-
-            // Update the nowPlayingInfo with artwork
-            var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
-            nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork
-            MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
         }.resume()
     }
 
@@ -189,6 +195,10 @@ class GlobalPlayerManager: ObservableObject {
         currentPodcast = podcast
         playerError = nil
         isBuffering = true
+
+        // T71: Clear artwork cache when episode changes
+        cachedArtworkImage = nil
+        cachedArtworkURL = nil
 
         // Write shared state for Siri Intent
         writeSharedPlayerState()
