@@ -109,6 +109,29 @@ class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
         }
     }
 
+    private func parseDurationString(_ durationString: String?) -> TimeInterval {
+        guard let durationString = durationString, !durationString.isEmpty else {
+            return 0
+        }
+
+        // Parse duration string in formats: "HH:MM:SS" or "MM:SS"
+        let components = durationString.split(separator: ":").compactMap { Int($0) }
+
+        switch components.count {
+        case 3:
+            // HH:MM:SS
+            return TimeInterval(components[0] * 3600 + components[1] * 60 + components[2])
+        case 2:
+            // MM:SS
+            return TimeInterval(components[0] * 60 + components[1])
+        case 1:
+            // Just seconds
+            return TimeInterval(components[0])
+        default:
+            return 0
+        }
+    }
+
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, yyyy"
@@ -177,7 +200,97 @@ class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
                     image: placeholderImage
                 )
                 listItem.handler = { [weak self] _, completion in
-                    completion()
+                    guard let self = self else {
+                        completion()
+                        return
+                    }
+
+                    // (a) Fetch the podcast's RSS feed URL
+                    guard let feedURL = podcast.feedURL, !feedURL.isEmpty else {
+                        print("❌ [CarPlay] No feed URL for podcast: \(podcast.title ?? "Unknown")")
+                        completion()
+                        return
+                    }
+
+                    // (b) Fetch episodes via RSS
+                    Task {
+                        do {
+                            let rssPodcast = try await PodcastRSSService.shared.fetchPodcast(from: feedURL)
+                            let episodes = rssPodcast.episodes
+
+                            // (c) Build episode list template
+                            let episodeItems = episodes.map { episode -> CPListItem in
+                                let detailText: String?
+                                if let duration = episode.duration {
+                                    detailText = duration
+                                } else if let pubDate = episode.pubDate {
+                                    detailText = self.formatDate(pubDate)
+                                } else {
+                                    detailText = nil
+                                }
+
+                                let item = CPListItem(
+                                    text: episode.title,
+                                    detailText: detailText
+                                )
+
+                                // (d) Episode row handler calls handleEpisodeTap
+                                item.handler = { [weak self] _, completion in
+                                    guard let self = self else {
+                                        completion()
+                                        return
+                                    }
+
+                                    // Create PlaybackHistoryItem from episode data
+                                    let playbackItem = PlaybackHistoryItem(
+                                        id: episode.id,
+                                        episodeTitle: episode.title,
+                                        podcastTitle: podcast.title ?? "Unknown Podcast",
+                                        podcastID: podcast.id ?? "",
+                                        audioURL: episode.audioURL ?? "",
+                                        artworkURL: podcast.artworkURL ?? "",
+                                        currentTime: 0,
+                                        duration: self.parseDurationString(episode.duration),
+                                        lastPlayed: Date(),
+                                        isFinished: false
+                                    )
+
+                                    self.handleEpisodeTap(item: playbackItem)
+                                    completion()
+                                }
+
+                                return item
+                            }
+
+                            // Create episode list section
+                            let episodeSection: CPListSection
+                            if episodeItems.isEmpty {
+                                let emptyItem = CPListItem(text: "No episodes available", detailText: nil)
+                                episodeSection = CPListSection(items: [emptyItem])
+                            } else {
+                                episodeSection = CPListSection(items: episodeItems)
+                            }
+
+                            // Create episode list template with podcast name as title
+                            let episodeListTemplate = CPListTemplate(
+                                title: podcast.title ?? "Episodes",
+                                sections: [episodeSection]
+                            )
+
+                            // (e) Push the episode list template
+                            await MainActor.run {
+                                self.interfaceController?.pushTemplate(
+                                    episodeListTemplate,
+                                    animated: true,
+                                    completion: nil
+                                )
+                            }
+
+                        } catch {
+                            print("❌ [CarPlay] Failed to fetch episodes: \(error)")
+                        }
+                        completion()
+                    }
                 }
                 return listItem
             }
