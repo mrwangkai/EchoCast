@@ -11,6 +11,8 @@ class CarPlayNowPlayingController {
     private weak var interfaceController: CPInterfaceController?
     private var cancellables = Set<AnyCancellable>()
     private let speechSynthesizer = AVSpeechSynthesizer()
+    private var isShowingAlert = false
+    private var isHandlingNoteTap = false
 
     func setup(interfaceController: CPInterfaceController) {
         self.interfaceController = interfaceController
@@ -40,6 +42,8 @@ class CarPlayNowPlayingController {
     }
 
     private func handleAddNoteTap() {
+        guard !isHandlingNoteTap else { return }
+        isHandlingNoteTap = true
         Task { @MainActor in
             do {
                 _ = try await AddNoteIntent().perform()
@@ -58,6 +62,7 @@ class CarPlayNowPlayingController {
                 print("T63 DEBUG: AddNoteIntent failed — \(error)")
                 showCarPlayAlert("Couldn't start note capture. Try Siri instead.")
             }
+            isHandlingNoteTap = false
         }
     }
 
@@ -65,11 +70,17 @@ class CarPlayNowPlayingController {
 
     private func showCarPlayAlert(_ message: String) {
         DispatchQueue.main.async { [weak self] in
-            guard let controller = self?.interfaceController else { return }
+            guard let self = self else { return }
+            guard !self.isShowingAlert else { return }
+            guard let controller = self.interfaceController else { return }
+            self.isShowingAlert = true
             let action = CPAlertAction(
                 title: "OK",
                 style: .default,
-                handler: { _ in controller.dismissTemplate(animated: true, completion: nil) }
+                handler: { _ in
+                    controller.dismissTemplate(animated: true, completion: nil)
+                    self.isShowingAlert = false
+                }
             )
             let alert = CPAlertTemplate(titleVariants: [message], actions: [action])
             controller.presentTemplate(alert, animated: true, completion: nil)
@@ -77,6 +88,7 @@ class CarPlayNowPlayingController {
             // Auto-dismiss after 1.5s
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 controller.dismissTemplate(animated: true, completion: nil)
+                self.isShowingAlert = false
             }
         }
     }
@@ -85,11 +97,17 @@ class CarPlayNowPlayingController {
 
     private func showNoteSavedConfirmation(at time: String) {
         DispatchQueue.main.async { [weak self] in
-            guard let controller = self?.interfaceController else { return }
+            guard let self = self else { return }
+            guard !self.isShowingAlert else { return }
+            guard let controller = self.interfaceController else { return }
+            self.isShowingAlert = true
             let action = CPAlertAction(
                 title: "OK",
                 style: .default,
-                handler: { _ in controller.dismissTemplate(animated: true, completion: nil) }
+                handler: { _ in
+                    controller.dismissTemplate(animated: true, completion: nil)
+                    self.isShowingAlert = false
+                }
             )
             let alert = CPAlertTemplate(titleVariants: ["Note Saved"], actions: [action])
             controller.presentTemplate(alert, animated: true, completion: nil)
@@ -97,6 +115,7 @@ class CarPlayNowPlayingController {
             // Auto-dismiss after 2 seconds
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 controller.dismissTemplate(animated: true, completion: nil)
+                self.isShowingAlert = false
             }
         }
     }
