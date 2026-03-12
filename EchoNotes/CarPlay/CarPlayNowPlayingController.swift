@@ -10,6 +10,7 @@ class CarPlayNowPlayingController {
 
     private weak var interfaceController: CPInterfaceController?
     private var cancellables = Set<AnyCancellable>()
+    private let speechSynthesizer = AVSpeechSynthesizer()
 
     func setup(interfaceController: CPInterfaceController) {
         self.interfaceController = interfaceController
@@ -42,6 +43,17 @@ class CarPlayNowPlayingController {
         Task { @MainActor in
             do {
                 _ = try await AddNoteIntent().perform()
+
+                // T64: Audio confirmation
+                let currentTime = GlobalPlayerManager.shared.currentTime
+                let formattedTime = formatTimestamp(currentTime)
+                let utterance = AVSpeechUtterance(string: "Note saved at \(formattedTime)")
+                utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+                speechSynthesizer.speak(utterance)
+
+                // T64: Visual confirmation
+                showNoteSavedConfirmation(at: formattedTime)
+
             } catch {
                 print("T63 DEBUG: AddNoteIntent failed — \(error)")
                 showCarPlayAlert("Couldn't start note capture. Try Siri instead.")
@@ -67,6 +79,32 @@ class CarPlayNowPlayingController {
                 controller.dismissTemplate(animated: true, completion: nil)
             }
         }
+    }
+
+    // MARK: - T64: Note Saved Confirmation
+
+    private func showNoteSavedConfirmation(at time: String) {
+        DispatchQueue.main.async { [weak self] in
+            guard let controller = self?.interfaceController else { return }
+            let action = CPAlertAction(
+                title: "OK",
+                style: .default,
+                handler: { _ in controller.dismissTemplate(animated: true, completion: nil) }
+            )
+            let alert = CPAlertTemplate(titleVariants: ["Note Saved"], actions: [action])
+            controller.presentTemplate(alert, animated: true, completion: nil)
+
+            // Auto-dismiss after 2 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                controller.dismissTemplate(animated: true, completion: nil)
+            }
+        }
+    }
+
+    private func formatTimestamp(_ seconds: TimeInterval) -> String {
+        let mins = Int(seconds) / 60
+        let secs = Int(seconds) % 60
+        return String(format: "%d:%02d", mins, secs)
     }
 
     // MARK: - Player State Observation
