@@ -97,7 +97,7 @@ struct EchoSpacing {
     static let smallCornerRadius: CGFloat = 6
 
     // HomeView spacing constants
-    static let homeSectionSpacing: CGFloat = 24
+    static let homeSectionSpacing: CGFloat = 32
     static let homeSidePadding: CGFloat = 20
     static let sectionHeaderToContentSpacing: CGFloat = 12
 }
