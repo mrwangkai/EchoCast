@@ -39,7 +39,6 @@ struct HomeView: View {
 
     @State private var showingPlayerSheet = false
     @State private var showingSettings = false
-    @State private var searchText = ""
     @State private var selectedPodcast: PodcastEntity?
     @State private var selectedNote: NoteEntity?
     @State private var navigationPath = NavigationPath()
@@ -69,46 +68,6 @@ struct HomeView: View {
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: EchoSpacing.homeSectionSpacing) {
-                    // Search Section (matches Library tab style)
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.echoTextTertiary)
-                            .font(.system(size: 17))
-                        TextField("Search podcasts...", text: $searchText)
-                            .textFieldStyle(.plain)
-                            .font(.bodyEcho())
-                            .foregroundColor(.echoTextPrimary)
-                            .onSubmit {
-                                // Navigate to Browse when user submits search
-                                if !searchText.isEmpty {
-                                    navigationPath.append("browse")
-                                }
-                            }
-
-                        if !searchText.isEmpty {
-                            Button(action: {
-                                searchText = ""
-                            }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.echoTextTertiary)
-                            }
-                        }
-
-                        Button(action: {
-                            showingSettings = true
-                        }) {
-                            Image(systemName: "gearshape")
-                                .foregroundColor(.echoTextTertiary)
-                                .font(.system(size: 17))
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(Color.searchFieldBackground)
-                    .cornerRadius(8)
-                    .padding(.horizontal, EchoSpacing.homeSidePadding)
-                    .padding(.top, 12)
 
                     // Continue Listening Section
                     if player.currentEpisode != nil || !continueListeningEpisodes.isEmpty || !recentNotes.isEmpty {
@@ -143,6 +102,39 @@ struct HomeView: View {
             .navigationTitle("EchoCast")
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.echoBackground, for: .navigationBar)
+            .toolbar {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    // Search button → pushes to Browse via NavigationPath
+                    Button(action: {
+                        navigationPath.append("browse")
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(red: 0.071, green: 0.071, blue: 0.071))
+                                .frame(width: 36, height: 36)
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 15, weight: .regular))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .buttonStyle(.plain)
+
+                    // Settings button → opens sheet
+                    Button(action: {
+                        showingSettings = true
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(red: 0.071, green: 0.071, blue: 0.071))
+                                .frame(width: 36, height: 36)
+                            Image(systemName: "gearshape")
+                                .font(.system(size: 15, weight: .regular))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
             .onAppear {
                 print("🏠 [HomeView] View appeared")
                 print("🏠 [HomeView] Recent notes count: \(recentNotes.count)")
