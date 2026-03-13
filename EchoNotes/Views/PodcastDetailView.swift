@@ -96,6 +96,8 @@ struct PodcastDetailView: View {
                             )
                         }
                         .buttonStyle(PlainButtonStyle())
+                        .listRowSeparator(.visible)
+                        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                         .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
                                     deleteEpisode(episode)

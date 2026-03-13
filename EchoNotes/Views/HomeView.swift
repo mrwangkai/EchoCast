@@ -82,15 +82,17 @@ struct HomeView: View {
                     }
 
                     // Recent Notes Section
-                    if !recentNotes.isEmpty {
-                        recentNotesSection
-                    } else {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Notes")
-                                .font(.title2Echo())
-                                .foregroundColor(.echoTextPrimary)
-                                .padding(.horizontal, EchoSpacing.screenPadding)
-                            notesEmptyStateCard
+                    if !continueListeningEpisodes.isEmpty || !followedPodcasts.isEmpty {
+                        if !recentNotes.isEmpty {
+                            recentNotesSection
+                        } else {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Notes")
+                                    .font(.title2Echo())
+                                    .foregroundColor(.echoTextPrimary)
+                                    .padding(.horizontal, EchoSpacing.screenPadding)
+                                notesEmptyStateCard
+                            }
                         }
                     }
 
@@ -181,9 +183,11 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingContinueListeningSheet) {
             ContinueListeningSheetView(showingPlayerSheet: $showingPlayerSheet)
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingYourShowsSheet) {
             YourShowsSheetView(selectedPodcast: $selectedPodcast)
+                .presentationDragIndicator(.visible)
         }
     }
 
@@ -281,10 +285,10 @@ struct HomeView: View {
                 } label: {
                     HStack(spacing: 3) {
                         Text("View all")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.body)
                             .foregroundColor(Color.mintAccent.opacity(0.85))
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.body)
                             .foregroundColor(Color.mintAccent.opacity(0.85))
                     }
                 }
@@ -340,10 +344,10 @@ struct HomeView: View {
                 } label: {
                     HStack(spacing: 3) {
                         Text("View all")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.body)
                             .foregroundColor(Color.mintAccent.opacity(0.85))
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.body)
                             .foregroundColor(Color.mintAccent.opacity(0.85))
                     }
                 }
@@ -595,94 +599,126 @@ struct ContinueListeningSheetView: View {
 
     @State private var showingRemoveConfirmation = false
     @State private var itemToRemove: PlaybackHistoryItem?
+    @State private var removingItemID: String? = nil
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Handle
-            RoundedRectangle(cornerRadius: 2)
-                .fill(Color.white.opacity(0.15))
-                .frame(width: 36, height: 4)
-                .padding(.top, 10)
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Content
+                if historyManager.recentlyPlayed.isEmpty {
+                    // Empty state
+                    VStack(spacing: 8) {
+                        Spacer()
 
-            // Header
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Continue Listening")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.echoTextPrimary)
-                    Text("\(historyManager.recentlyPlayed.count) episodes in progress")
-                        .font(.system(size: 12))
-                        .foregroundColor(.echoTextTertiary)
-                }
-                Spacer()
-                Button("Done") { dismiss() }
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(Color.mintAccent)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 14)
+                        Image(systemName: "headphones")
+                            .font(.system(size: 48))
+                            .foregroundColor(Color.secondary)
 
-            Rectangle()
-                .fill(Color.white.opacity(0.07))
-                .frame(height: 1)
+                        Text("Nothing in progress")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.echoTextPrimary)
 
-            // List
-            List {
-                ForEach(historyManager.recentlyPlayed) { item in
-                    ContinueListeningSheetRow(
-                        item: item,
-                        onRemove: {
-                            itemToRemove = item
-                            showingRemoveConfirmation = true
-                        },
-                        showingPlayerSheet: showingPlayerSheet ?? .constant(false)
-                    )
+                        Text("Episodes you've started will appear here")
+                            .font(.subheadline)
+                            .foregroundColor(Color.secondary)
 
-                    if item.id != historyManager.recentlyPlayed.last?.id {
-                        Rectangle()
-                            .fill(Color.white.opacity(0.07))
-                            .frame(height: 1)
-                            .padding(.horizontal, 20)
+                        Button("Done") {
+                            dismiss()
+                        }
+                        .buttonStyle(.plain)
+                        .font(.body)
+                        .foregroundColor(Color.mintAccent)
+                        .padding(.top, 16)
+
+                        Spacer()
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    // List
+                    List {
+                        ForEach(historyManager.recentlyPlayed) { item in
+                            ContinueListeningSheetRow(
+                                item: item,
+                                onRemove: {
+                                    itemToRemove = item
+                                    showingRemoveConfirmation = true
+                                },
+                                showingPlayerSheet: showingPlayerSheet ?? .constant(false)
+                            )
+                            .listRowSeparator(.hidden)
+                            .offset(y: removingItemID == item.id ? -20 : 0)
+                            .opacity(removingItemID == item.id ? 0 : 1)
+                            .animation(.easeOut(duration: 0.15), value: removingItemID)
+
+                            if item.id != historyManager.recentlyPlayed.last?.id {
+                                Rectangle()
+                                    .fill(Color.white.opacity(0.07))
+                                    .frame(height: 1)
+                                    .padding(.horizontal, 20)
+                            }
+                        }
+                    }
+                    .listStyle(.plain)
+                    .background(Color.echoBackground)
+                    .scrollContentBackground(.hidden)
                 }
             }
-            .listStyle(.plain)
-            .background(Color.echoBackground)
-            .scrollContentBackground(.hidden)
+            .background(Color(red: 0.118, green: 0.118, blue: 0.118))
+            .navigationTitle("Continue Listening")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Done") { dismiss() }
+                        .foregroundColor(Color.mintAccent)
+                }
+            }
         }
-        .background(Color(red: 0.118, green: 0.118, blue: 0.118))
         .presentationDetents([.large])
-        .presentationDragIndicator(.hidden)
         .confirmationDialog(
             "Remove from Continue Listening?",
             isPresented: $showingRemoveConfirmation,
             presenting: itemToRemove
         ) { item in
             Button("Remove", role: .destructive) {
-                removeEpisode(item)
+                let itemToRemoveCopy = item
+                itemToRemove = nil
+                showingRemoveConfirmation = false
+                removeEpisode(itemToRemoveCopy)
             }
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {
+                itemToRemove = nil
+                showingRemoveConfirmation = false
+            }
         } message: { item in
             Text("Are you sure you want to remove \"\(item.episodeTitle)\" from your Continue Listening list?")
         }
     }
 
     private func removeEpisode(_ item: PlaybackHistoryItem) {
-        let episodeID = item.id
+        let episodeID = item.id  // capture immediately
 
-        // 1. If this episode is currently playing, stop and clear the player
-        let player = GlobalPlayerManager.shared
-        if player.currentEpisode?.id == episodeID {
-            player.stop()
-            player.currentEpisode = nil
-            player.currentPodcast = nil
+        // Animate the row out
+        withAnimation(.easeOut(duration: 0.15)) {
+            removingItemID = episodeID
         }
 
-        // 2. Delete local download file
-        EpisodeDownloadManager.shared.deleteDownload(episodeID)
-
-        // 3. Remove from Continue Listening history
-        PlaybackHistoryManager.shared.removeFromHistory(episodeID: episodeID)
+        // Wait for animation then remove
+        Task {
+            try? await Task.sleep(for: .milliseconds(175))
+            await MainActor.run {
+                // Stop player if needed
+                let player = GlobalPlayerManager.shared
+                if player.currentEpisode?.id == episodeID {
+                    player.stop()
+                    player.currentEpisode = nil
+                    player.currentPodcast = nil
+                }
+                EpisodeDownloadManager.shared.deleteDownload(episodeID)
+                PlaybackHistoryManager.shared.removeFromHistory(episodeID: episodeID)
+                removingItemID = nil
+            }
+        }
     }
 }
 
@@ -808,13 +844,14 @@ private struct ContinueListeningSheetRow: View {
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 10)
-        .swipeActions(edge: .trailing) {
-            Button(role: .destructive) {
+        .padding(.vertical, 8)
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button {
                 onRemove()
             } label: {
                 Label("Remove", systemImage: "trash")
             }
+            .tint(.red)
         }
     }
 
@@ -873,108 +910,89 @@ private struct YourShowsSheetView: View {
     @Binding var selectedPodcast: PodcastEntity?
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Handle
-            RoundedRectangle(cornerRadius: 2)
-                .fill(Color.white.opacity(0.15))
-                .frame(width: 36, height: 4)
-                .padding(.top, 10)
-
-            // Header
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Your Podcasts")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.echoTextPrimary)
-                    Text("\(followedShows.count) shows saved")
-                        .font(.system(size: 12))
-                        .foregroundColor(.echoTextTertiary)
-                }
-                Spacer()
-                Button("Done") { dismiss() }
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(Color.mintAccent)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 14)
-
-            Rectangle()
-                .fill(Color.white.opacity(0.07))
-                .frame(height: 1)
-
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Context blurb
-                    HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: "info.circle")
-                            .font(.system(size: 13))
-                            .foregroundColor(Color.mintAccent.opacity(0.7))
-                            .padding(.top, 1)
-                        Text("Shows you save here are easy to come back to — tap any show to jump straight to its latest episodes.")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white.opacity(0.45))
-                            .lineSpacing(2)
-                    }
-                    .padding(14)
-                    .background(Color.mintAccent.opacity(0.08))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.mintAccent.opacity(0.18), lineWidth: 1)
-                    )
-                    .cornerRadius(12)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
-
-                    // Show rows
-                    ForEach(followedShows) { show in
-                        YourShowsSheetRow(show: show, selectedPodcast: $selectedPodcast)
-
-                        if show.id != followedShows.last?.id {
-                            Rectangle()
-                                .fill(Color.white.opacity(0.07))
-                                .frame(height: 1)
-                                .padding(.horizontal, 20)
+        NavigationStack {
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Context blurb
+                        HStack(alignment: .top, spacing: 10) {
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 13))
+                                .foregroundColor(Color.mintAccent.opacity(0.7))
+                                .padding(.top, 1)
+                            Text("Shows you save here are easy to come back to — tap any show to jump straight to its latest episodes.")
+                                .font(.system(size: 12))
+                                .foregroundColor(.white.opacity(0.45))
+                                .lineSpacing(2)
                         }
-                    }
-
-                    // Add a show row
-                    Button {
-                        dismiss()
-                        // Post notification to open search
-                        NotificationCenter.default.post(name: .openSearch, object: nil)
-                    } label: {
-                        HStack(spacing: 12) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.white.opacity(0.12), style: StrokeStyle(lineWidth: 1.5, dash: [4]))
-                                    .frame(width: 52, height: 52)
-                                Image(systemName: "plus")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.25))
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Add a show")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.echoTextSecondary)
-                                Text("Search to find a podcast")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(.echoTextTertiary)
-                            }
-                            Spacer()
-                        }
+                        .padding(14)
+                        .background(Color.mintAccent.opacity(0.08))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.mintAccent.opacity(0.18), lineWidth: 1)
+                        )
+                        .cornerRadius(12)
                         .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
+                        .padding(.top, 16)
+                        .padding(.bottom, 8)
+
+                        // Show rows
+                        ForEach(followedShows) { show in
+                            YourShowsSheetRow(show: show, selectedPodcast: $selectedPodcast)
+
+                            if show.id != followedShows.last?.id {
+                                Rectangle()
+                                    .fill(Color.white.opacity(0.07))
+                                    .frame(height: 1)
+                                    .padding(.horizontal, 20)
+                            }
+                        }
+
+                        // Add a show row
+                        Button {
+                            dismiss()
+                            // Post notification to open search
+                            NotificationCenter.default.post(name: .openSearch, object: nil)
+                        } label: {
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.white.opacity(0.12), style: StrokeStyle(lineWidth: 1.5, dash: [4]))
+                                        .frame(width: 52, height: 52)
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.25))
+                                }
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Add a show")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.echoTextSecondary)
+                                    Text("Search to find a podcast")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.echoTextTertiary)
+                                }
+                                Spacer()
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 4)
                     }
-                    .buttonStyle(.plain)
-                    .padding(.top, 4)
+                    .padding(.bottom, 32)
                 }
-                .padding(.bottom, 32)
+            }
+            .background(Color(red: 0.118, green: 0.118, blue: 0.118))
+            .navigationTitle("Your Podcasts")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Done") { dismiss() }
+                        .foregroundColor(Color.mintAccent)
+                }
             }
         }
-        .background(Color(red: 0.118, green: 0.118, blue: 0.118))
         .presentationDetents([.large])
-        .presentationDragIndicator(.hidden)
         .onAppear { loadFollowedShows() }
     }
 
