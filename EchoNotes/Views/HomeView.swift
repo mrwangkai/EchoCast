@@ -68,6 +68,8 @@ struct HomeView: View {
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: EchoSpacing.homeSectionSpacing) {
+                    Spacer()
+                        .frame(height: 32)
 
                     // Continue Listening Section
                     if player.currentEpisode != nil || !continueListeningEpisodes.isEmpty || !recentNotes.isEmpty {
@@ -548,12 +550,16 @@ struct HomeView: View {
 
 // MARK: - Continue Listening Sheet
 
-private struct ContinueListeningSheetView: View {
+struct ContinueListeningSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var historyManager = PlaybackHistoryManager.shared
     @ObservedObject private var player = GlobalPlayerManager.shared
     @Environment(\.managedObjectContext) private var viewContext
-    @Binding var showingPlayerSheet: Bool
+    var showingPlayerSheet: Binding<Bool>?
+
+    init(showingPlayerSheet: Binding<Bool>? = nil) {
+        self.showingPlayerSheet = showingPlayerSheet
+    }
 
     @State private var showingRemoveConfirmation = false
     @State private var itemToRemove: PlaybackHistoryItem?
@@ -597,7 +603,7 @@ private struct ContinueListeningSheetView: View {
                             itemToRemove = item
                             showingRemoveConfirmation = true
                         },
-                        showingPlayerSheet: $showingPlayerSheet
+                        showingPlayerSheet: showingPlayerSheet ?? .constant(false)
                     )
 
                     if item.id != historyManager.recentlyPlayed.last?.id {

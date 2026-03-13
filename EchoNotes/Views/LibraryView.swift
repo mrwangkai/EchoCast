@@ -13,6 +13,11 @@ struct LibraryView: View {
     @StateObject private var viewModel = NoteViewModel()
     @ObservedObject private var player = GlobalPlayerManager.shared
 
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \PodcastEntity.title, ascending: true)],
+        animation: .default
+    ) private var followedPodcasts: FetchedResults<PodcastEntity>
+
     @State private var showingSortOptions = false
     @State private var selectedNote: NoteEntity?
     @State private var showingPlayerSheet = false
@@ -21,6 +26,7 @@ struct LibraryView: View {
     @State private var showingShareSheet = false
     @State private var shareItem: ShareSheetItem?
     @State private var navigationPath = NavigationPath()
+    @State private var showingContinueListeningSheet = false
 
     // Namespace for matched geometry effect with mini player
     @Namespace private var playerAnimation
@@ -283,52 +289,76 @@ struct LibraryView: View {
     }
     
     // MARK: - Empty State View
-    
+
     private var emptyStateView: some View {
-        VStack(spacing: 24) {
-            Spacer()
-                .frame(height: 100)
-
-            Image(systemName: "note.text")
-                .font(.system(size: 72))
-                .foregroundColor(.mintAccent)
-
-            VStack(spacing: 8) {
-                Text("No notes yet")
-                    .font(.title2Echo())
-                    .foregroundColor(.echoTextPrimary)
-
-                Text("Start listening to podcasts and take notes as you go")
-                    .font(.bodyEcho())
-                    .foregroundColor(.echoTextSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
-
-            // Find a podcast CTA
-            Button(action: {
-                navigationPath.append("browse")
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 15, weight: .medium))
-                    Text("Find a podcast")
-                        .font(.bodyRoundedMedium())
+        VStack(spacing: 16) {
+            if followedPodcasts.isEmpty {
+                // Sub-state 1: no podcasts followed
+                VStack(spacing: 12) {
+                    Image(systemName: "note.text")
+                        .font(.system(size: 36))
+                        .foregroundColor(.echoTextTertiary)
+                    Text("Your notes live here")
+                        .font(.title2Echo())
+                        .foregroundColor(.echoTextPrimary)
+                    Text("Play any episode and tap the note button to capture ideas as you listen.")
+                        .font(.bodyEcho())
+                        .foregroundColor(.echoTextSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                    Button(action: {
+                        // Navigate to Browse via parent if possible,
+                        // otherwise post a notification
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("navigateToBrowse"),
+                            object: nil
+                        )
+                    }) {
+                        Text("Browse podcasts")
+                            .font(.bodyEcho())
+                            .foregroundColor(.echoBackground)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(Color.mintAccent)
+                            .clipShape(Capsule())
+                    }
                 }
-                .foregroundColor(.mintButtonText)
-                .frame(maxWidth: .infinity)
+            } else {
+                // Sub-state 2: has podcasts, no notes yet
+                HStack(spacing: 12) {
+                    Text("Play an episode and capture what stays with you")
+                        .font(.bodyEcho())
+                        .foregroundColor(.echoTextSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button(action: {
+                        showingContinueListeningSheet = true
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.mintAccent.opacity(0.15))
+                                .frame(width: 36, height: 36)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.mintAccent)
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .background(Color.mintAccent.opacity(0.07))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.mintAccent.opacity(0.15), lineWidth: 1)
+                )
                 .padding(.horizontal, EchoSpacing.screenPadding)
-                .padding(.vertical, 16)
-                .background(Color.mintButtonBackground)
-                .cornerRadius(12)
             }
-            .padding(.horizontal, EchoSpacing.screenPadding)
-            .buttonStyle(.plain)
-
-            Spacer()
-                .frame(height: 32)
         }
         .frame(maxWidth: .infinity)
+        .padding(.top, 60)
+        .sheet(isPresented: $showingContinueListeningSheet) {
+            ContinueListeningSheetView()
+        }
     }
 }
 
