@@ -11,7 +11,7 @@ import SwiftUI
 
 extension Color {
     // Primary accent color - Mint
-    static let mintAccent = Color(red: 0.647, green: 0.898, blue: 0.847)  // #a5e5d8
+    static let mintAccent = Color(red: 0.0, green: 0.784, blue: 0.702)
 
     // Semantic colors for dark theme
     static let echoBackground = Color(red: 0.149, green: 0.149, blue: 0.149)
