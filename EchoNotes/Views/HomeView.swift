@@ -483,19 +483,31 @@ struct HomeView: View {
     }
 
     private var notesEmptyStateCard: some View {
-        HStack(spacing: 12) {
+        let hasContinueListening = !followedPodcasts.isEmpty ||
+                                    player.currentEpisode != nil
+
+        return HStack(spacing: 12) {
             Text("Play an episode and capture what stays with you")
                 .font(.bodyEcho())
                 .foregroundColor(.echoTextSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            ZStack {
-                Circle()
-                    .fill(Color.mintAccent.opacity(0.12))
-                    .frame(width: 30, height: 30)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.mintAccent)
+            Button(action: {
+                if hasContinueListening {
+                    showingContinueListeningSheet = true
+                } else {
+                    navigationPath.append("browse")
+                }
+            }) {
+                ZStack {
+                    Circle()
+                        .fill(Color.mintAccent.opacity(0.12))
+                        .frame(width: 30, height: 30)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.mintAccent)
+                }
             }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
