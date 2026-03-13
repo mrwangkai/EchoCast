@@ -586,25 +586,25 @@ private struct ContinueListeningSheetView: View {
                 .frame(height: 1)
 
             // List
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(historyManager.recentlyPlayed) { item in
-                        ContinueListeningSheetRow(
-                            item: item,
-                            onRemove: { removeEpisode(item) },
-                            showingPlayerSheet: $showingPlayerSheet
-                        )
+            List {
+                ForEach(historyManager.recentlyPlayed) { item in
+                    ContinueListeningSheetRow(
+                        item: item,
+                        onRemove: { removeEpisode(item) },
+                        showingPlayerSheet: $showingPlayerSheet
+                    )
 
-                        if item.id != historyManager.recentlyPlayed.last?.id {
-                            Rectangle()
-                                .fill(Color.white.opacity(0.07))
-                                .frame(height: 1)
-                                .padding(.horizontal, 20)
-                        }
+                    if item.id != historyManager.recentlyPlayed.last?.id {
+                        Rectangle()
+                            .fill(Color.white.opacity(0.07))
+                            .frame(height: 1)
+                            .padding(.horizontal, 20)
                     }
                 }
-                .padding(.bottom, 32)
             }
+            .listStyle(.plain)
+            .background(Color.echoBackground)
+            .scrollContentBackground(.hidden)
         }
         .background(Color(red: 0.118, green: 0.118, blue: 0.118))
         .presentationDetents([.large])
