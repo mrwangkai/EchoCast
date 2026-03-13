@@ -84,8 +84,14 @@ struct HomeView: View {
                     // Recent Notes Section
                     if !recentNotes.isEmpty {
                         recentNotesSection
-                    } else if recentNotes.isEmpty {
-                        notesEmptyStateCard
+                    } else {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Notes")
+                                .font(.title2Echo())
+                                .foregroundColor(.echoTextPrimary)
+                                .padding(.horizontal, EchoSpacing.screenPadding)
+                            notesEmptyStateCard
+                        }
                     }
 
                     // Empty state - only show when there's no content at all
@@ -489,7 +495,7 @@ struct HomeView: View {
         return HStack(spacing: 12) {
             Text("Play an episode and capture what stays with you")
                 .font(.bodyEcho())
-                .foregroundColor(.echoTextSecondary)
+                .foregroundColor(Color.white.opacity(0.45))
                 .frame(maxWidth: .infinity, alignment: .leading)
             Button(action: {
                 if hasContinueListening {
@@ -502,7 +508,7 @@ struct HomeView: View {
                     Circle()
                         .fill(Color.mintAccent.opacity(0.12))
                         .frame(width: 30, height: 30)
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "arrow.right")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(.mintAccent)
                 }
