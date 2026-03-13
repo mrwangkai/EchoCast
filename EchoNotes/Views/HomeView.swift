@@ -483,15 +483,29 @@ struct HomeView: View {
     }
 
     private var notesEmptyStateCard: some View {
-        VStack(alignment: .leading, spacing: EchoSpacing.sectionHeaderToContentSpacing) {
-            Text("Notes")
-                .font(.title2Echo())
-                .foregroundColor(.echoTextPrimary)
-
-            NotesEmptyStateCard()
+        HStack(spacing: 12) {
+            Text("Play an episode and capture what stays with you")
+                .font(.bodyEcho())
+                .foregroundColor(.echoTextSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            ZStack {
+                Circle()
+                    .fill(Color.mintAccent.opacity(0.12))
+                    .frame(width: 30, height: 30)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.mintAccent)
+            }
         }
-        .padding(.horizontal, EchoSpacing.homeSidePadding)
-        .padding(.top, 8)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Color.mintAccent.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.mintAccent.opacity(0.13), lineWidth: 1)
+        )
+        .padding(.horizontal, EchoSpacing.screenPadding)
     }
 
     // MARK: - Empty State View
@@ -1059,149 +1073,4 @@ struct PodcastFollowingCard: View {
     }
 }
 
-// MARK: - T66: Notes Empty State Card
-
-private struct NotesEmptyStateCard: View {
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                NotesEmptyStep(
-                    icon: {
-                        ZStack {
-                            Image(systemName: "pencil")
-                                .font(.system(size: 22, weight: .medium))
-                                .foregroundColor(Color.mintAccent)
-                        }
-                        .frame(width: 56, height: 56)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(Color.white.opacity(0.05))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                                )
-                        )
-                    },
-                    verb: "Capture",
-                    sub: "Right as you hear it",
-                    accentVerb: false
-                )
-
-                Divider()
-                    .background(Color.white.opacity(0.07))
-
-                ZStack {
-                    Text("›")
-                        .font(.system(size: 12))
-                        .foregroundColor(.echoTextTertiary)
-                        .offset(x: -6)
-                }
-                .frame(width: 12)
-
-                NotesEmptyStep(
-                    icon: {
-                        MiniNotePreview()
-                    },
-                    verb: "Remember",
-                    sub: "Ideas that stick",
-                    accentVerb: false
-                )
-            }
-
-            Divider()
-                .background(Color.echoTextTertiary.opacity(0.3))
-
-            Text("Play an episode and capture what stays with you")
-                .font(.bodyEcho())
-                .foregroundColor(.echoTextSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .frame(maxWidth: .infinity)
-        }
-        .background(Color.noteCardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.07), lineWidth: 1)
-        )
-    }
-}
-
-private struct NotesEmptyStep: View {
-    let icon: (() -> any View)
-    let verb: String
-    let sub: String
-    let accentVerb: Bool
-
-    var body: some View {
-        VStack(spacing: 14) {
-            icon()
-                .any()
-
-            Text(verb)
-                .font(.footnote.weight(.semibold))
-                .foregroundColor(accentVerb ? Color.mintAccent : Color.echoTextPrimary)
-
-            Text(sub)
-                .font(.captionRounded())
-                .foregroundColor(Color.white.opacity(0.50))
-                .multilineTextAlignment(.center)
-        }
-        .padding(.horizontal, 6)
-        .padding(.top, 22)
-        .padding(.bottom, 22)
-        .frame(maxWidth: .infinity)
-    }
-}
-
-private struct MiniNotePreview: View {
-    var body: some View {
-        ZStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Capsule()
-                    .fill(Color.white.opacity(0.22))
-                    .frame(height: 5)
-
-                Capsule()
-                    .fill(Color.white.opacity(0.22))
-                    .frame(width: 27, height: 5)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-            .padding(.bottom, 8)
-            .padding(.leading, 7)
-
-            Text("1:23")
-                .font(.system(size: 9, weight: .bold))
-                .foregroundColor(Color.mintAccent)
-                .padding(.horizontal, 5)
-                .padding(.vertical, 2)
-                .background(
-                    Capsule()
-                        .fill(Color.mintAccent.opacity(0.20))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.mintAccent.opacity(0.30), lineWidth: 0.5)
-                        )
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                .padding(.top, 4)
-                .padding(.trailing, 4)
-        }
-        .frame(width: 56, height: 56)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color.white.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                )
-        )
-    }
-}
-
-// Helper to wrap AnyView
-extension View {
-    func any() -> AnyView { AnyView(self) }
-}
 
