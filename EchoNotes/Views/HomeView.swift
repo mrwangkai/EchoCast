@@ -1039,48 +1039,61 @@ struct PodcastFollowingCard: View {
 
 private struct NotesEmptyStateCard: View {
     var body: some View {
-        HStack(spacing: 0) {
-            NotesEmptyStep(
-                icon: {
-                    ZStack {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 22, weight: .medium))
-                            .foregroundColor(Color.mintAccent)
-                    }
-                    .frame(width: 56, height: 56)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color.white.opacity(0.05))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                            )
-                    )
-                },
-                verb: "Capture",
-                sub: "Right as you hear it",
-                accentVerb: false
-            )
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                NotesEmptyStep(
+                    icon: {
+                        ZStack {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 22, weight: .medium))
+                                .foregroundColor(Color.mintAccent)
+                        }
+                        .frame(width: 56, height: 56)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(Color.white.opacity(0.05))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                )
+                        )
+                    },
+                    verb: "Capture",
+                    sub: "Right as you hear it",
+                    accentVerb: false
+                )
+
+                Divider()
+                    .background(Color.white.opacity(0.07))
+
+                ZStack {
+                    Text("›")
+                        .font(.system(size: 12))
+                        .foregroundColor(.echoTextTertiary)
+                        .offset(x: -6)
+                }
+                .frame(width: 12)
+
+                NotesEmptyStep(
+                    icon: {
+                        MiniNotePreview()
+                    },
+                    verb: "Remember",
+                    sub: "Ideas that stick",
+                    accentVerb: false
+                )
+            }
 
             Divider()
-                .background(Color.white.opacity(0.07))
+                .background(Color.echoTextTertiary.opacity(0.3))
 
-            ZStack {
-                Text("›")
-                    .font(.system(size: 12))
-                    .foregroundColor(.echoTextTertiary)
-                    .offset(x: -6)
-            }
-            .frame(width: 12)
-
-            NotesEmptyStep(
-                icon: {
-                    MiniNotePreview()
-                },
-                verb: "Remember",
-                sub: "Ideas that stick",
-                accentVerb: false
-            )
+            Text("Play an episode and capture what stays with you")
+                .font(.bodyEcho())
+                .foregroundColor(.echoTextSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .frame(maxWidth: .infinity)
         }
         .background(Color.noteCardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14))
