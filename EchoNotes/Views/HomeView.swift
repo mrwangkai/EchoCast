@@ -555,6 +555,9 @@ private struct ContinueListeningSheetView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Binding var showingPlayerSheet: Bool
 
+    @State private var showingRemoveConfirmation = false
+    @State private var itemToRemove: PlaybackHistoryItem?
+
     var body: some View {
         VStack(spacing: 0) {
             // Handle
@@ -590,7 +593,10 @@ private struct ContinueListeningSheetView: View {
                 ForEach(historyManager.recentlyPlayed) { item in
                     ContinueListeningSheetRow(
                         item: item,
-                        onRemove: { removeEpisode(item) },
+                        onRemove: {
+                            itemToRemove = item
+                            showingRemoveConfirmation = true
+                        },
                         showingPlayerSheet: $showingPlayerSheet
                     )
 
@@ -609,6 +615,18 @@ private struct ContinueListeningSheetView: View {
         .background(Color(red: 0.118, green: 0.118, blue: 0.118))
         .presentationDetents([.large])
         .presentationDragIndicator(.hidden)
+        .confirmationDialog(
+            "Remove from Continue Listening?",
+            isPresented: $showingRemoveConfirmation,
+            presenting: itemToRemove
+        ) { item in
+            Button("Remove", role: .destructive) {
+                removeEpisode(item)
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: { item in
+            Text("Are you sure you want to remove \"\(item.episodeTitle)\" from your Continue Listening list?")
+        }
     }
 
     private func removeEpisode(_ item: PlaybackHistoryItem) {
