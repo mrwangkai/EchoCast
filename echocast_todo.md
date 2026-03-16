@@ -40,6 +40,7 @@ Instructions:
 - [ ] T85 (P2) — Continue Listening sheet: Reduce delete animation duration from 600ms to 300ms. LOE: XS
 
 
+
 ## 📨 Inbox (raw ideas)
 - [ ] T38 (P1): Notes listing on notes tab feel … improvement needed (LOE: L - redesign work)
 - [ ] T39 (P1): Update button style for play — maybe more rounded (LOE: XS)
@@ -97,15 +98,19 @@ Instructions:
 - [x] T73 (S) — Notes Tab: Context-aware empty state redesign — Added two sub-states to Library/Notes empty state based on whether user follows podcasts. Sub-state 1 (no podcasts): quiet workspace treatment with note.text icon (36pt), "Your notes live here" title, "Browse podcasts" CTA button (pill style with mintAccent). Sub-state 2 (has podcasts, no notes): CTA card matching T72 style with "Play an episode and capture what stays with you" copy and chevron.right button that opens Continue Listening sheet. Added @FetchRequest for followedPodcasts and @State showingContinueListeningSheet. Also added 16px top spacing to Home between nav title and first section. Made ContinueListeningSheetView internal with optional showingPlayerSheet binding. (Commits: 0a0b5e7, df3478e)
 - [x] T37 (P1) — Home toolbar circle buttons — Replaced inline header HStack with native .toolbar containing 36pt circle icon buttons for search (magnifyingglass) and settings (gearshape). Buttons use Color(red: 0.071, green: 0.071, blue: 0.071) fill with white icons. Deleted @State searchText var and entire search TextField section. Navigation via navigationPath.append("browse") for search, showingSettings sheet for settings. Commit: cc087d1
 - [x] T74 (S) — Home Notes empty state simplification — Replaced NotesEmptyStateCard (Capture→Remember two-column grid) with simplified single-row CTA matching T73 Library style. Deleted unused supporting structs: NotesEmptyStep, MiniNotePreview, and View.any() helper extension. New CTA: "Play an episode and capture what stays with you" text with mint-tinted circle chevron button, 12pt corner radius, mintAccent.opacity(0.06) background with opacity(0.13) border. Added context-aware navigation: checks hasContinueListening (!followedPodcasts.isEmpty || player.currentEpisode != nil), routes to Continue Listening sheet if true otherwise navigates to Browse. (Commits: bcc660a, 8d556bf)
-- [x] T75 (S) — Continue Listening sheet: Fix swipe-to-remove flicker bug — Removed `role: .destructive` from swipeActions Button and added `.tint(.red)` to preserve red color. The destructive role was causing SwiftUI to auto-animate the row away before the confirmation dialog appeared. Also added `allowsFullSwipe: false` to prevent List from auto-removing on full swipe. Row now stays visible during confirmation dialog, and removal only happens after user confirms. (Commit: TBD)
-- [x] T81 (XS) — Home: Increased "View all" link font to .body size on Continue Listening and Your Shows sections. (Commit: TBD)
-- [x] T76 (P2) — Home: Hide Recent Notes section when no continue listening episodes and no followed podcasts. (Commit: TBD)
-- [x] T77 (P2) — Continue Listening sheet: Empty state when all episodes removed — "Nothing in progress" with headphones icon and Done button. (Commit: TBD)
-- [x] T78 (P2) — Continue Listening sheet: Slide-up fade-out animation on row removal, 600ms easeOut. (Commit: TBD)
-- [x] T84 (P1) — Continue Listening sheet: Fix double-tap-to-remove race condition — captured episodeID before Task.sleep to prevent itemToRemove being cleared before removal fires. (Commit: TBD)
-- [x] T85 (P2) — Continue Listening sheet: Reduced delete animation from 600ms to 300ms. (Commit: TBD)
-- [x] T83 (P2) — Continue Listening sheet: Reduced row vertical padding from 10pt to 12pt. (Commit: TBD)
-- [x] T82 (P2) — Continue Listening + Your Shows sheets: Replaced custom headers with standard NavigationStack + .navigationTitle + Done button on leading edge. (Commit: TBD)
+- [x] T75 (S) — Continue Listening sheet: Fix swipe-to-remove flicker bug — Removed `role: .destructive` from swipeActions Button and added `.tint(.red)` to preserve red color. The destructive role was causing SwiftUI to auto-animate the row away before the confirmation dialog appeared. Also added `allowsFullSwipe: false` to prevent List from auto-removing on full swipe. Row now stays visible during confirmation dialog, and removal only happens after user confirms. (Commit: db142a1)
+- [x] T81 (XS) — Home: Increased "View all" link font to .body size on Continue Listening and Your Shows sections. (Commit: db142a1)
+- [x] T76 (P2) — Home: Hide Recent Notes section when no continue listening episodes and no followed podcasts. (Commit: db142a1)
+- [x] T77 (P2) — Continue Listening sheet: Empty state when all episodes removed — "Nothing in progress" with headphones icon and Done button. (Commit: db142a1)
+- [x] T78 (P2) — Continue Listening sheet: Slide-up fade-out animation on row removal, 300ms easeOut (reduced from 600ms). (Commit: db142a1)
+- [x] T84 (P1) — Continue Listening sheet: Fix double-tap-to-remove race condition — captured episodeID before Task.sleep to prevent itemToRemove being cleared before removal fires. (Commit: db142a1)
+- [x] T85 (P2) — Continue Listening sheet: Reduced delete animation from 600ms to 300ms. (Commit: db142a1)
+- [x] T83 (P2) — Continue Listening sheet: Reduced row vertical padding to 12pt. (Commit: db142a1)
+- [x] T82 (P2) — Continue Listening + Your Shows sheets: Replaced custom headers with standard NavigationStack + .navigationTitle + Done button on leading edge. (Commit: db142a1)
+- [x] T88 (P2) — Home Screen Top Spacing Fix — Reduced top spacing between nav title and first section. Removed Spacer().frame(height: 16), later re-added with height: 0 to leverage natural spacing. (Commits: 5f3683d, ff3842a)
+- [x] T89 (P2) — Remove Chevron from "View All" Links — Removed chevron.right Image from both Continue Listening and Your Shows "View all" buttons, keeping only Text label. (Commit: 48b1b3b)
+- [x] T90 (P2) — Notes section header ingress to Library tab — Added note count badge (• {count}) and tappable books.vertical.fill icon that switches to Library tab via selectedTab binding. Hidden when note count is 0. (Commit: 48b1b3b)
+- [x] T87 (P1) — CarPlay blank screen race condition — Fixed by implementing two-step template loading: (1) immediate "Loading…" template, (2) deferred real template after 800ms delay. Root cause was didConnect firing before GlobalPlayerManager and Core Data finished initialization. The delay allows app data to populate before templates build. (Commit: dd5d0a1)
 
 ## Reported bug 🐞
 - [ ] T44 (P1): "There doesn't appear to be a way to get back to the episodes list when you start an episode". This is an assumption that user are familiar with the swipe down action, which may not be the case. (LOE: S - add back button or dismiss)
