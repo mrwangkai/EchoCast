@@ -13,8 +13,20 @@ class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
         self.interfaceController = interfaceController
         CarPlayNowPlayingController.shared.setup(interfaceController: interfaceController)
 
-        let tabBarTemplate = CPTabBarTemplate(templates: [buildHomeTemplate(), buildMyPodcastsTemplate()])
-        interfaceController.setRootTemplate(tabBarTemplate, animated: false, completion: nil)
+        // Step 1: Set lightweight loading template immediately
+        let loadingList = CPListTemplate(title: "EchoCast", sections: [])
+        loadingList.emptyViewTitleVariants = ["Loading…"]
+        interfaceController.setRootTemplate(loadingList, animated: false, completion: nil)
+
+        // Step 2: Defer real template building to allow initialization
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(800))
+            let tabBarTemplate = CPTabBarTemplate(templates: [
+                buildHomeTemplate(),
+                buildMyPodcastsTemplate()
+            ])
+            interfaceController.setRootTemplate(tabBarTemplate, animated: false, completion: nil)
+        }
     }
 
     func templateApplicationScene(
