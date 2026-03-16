@@ -9,6 +9,7 @@ import SwiftUI
 import CoreData
 
 struct HomeView: View {
+    @Binding var selectedTab: Int
     @Environment(\.managedObjectContext) private var viewContext
 
     // Fetch recent notes
@@ -283,14 +284,9 @@ struct HomeView: View {
                 Button {
                     showingContinueListeningSheet = true
                 } label: {
-                    HStack(spacing: 3) {
-                        Text("View all")
-                            .font(.body)
-                            .foregroundColor(Color.mintAccent.opacity(0.85))
-                        Image(systemName: "chevron.right")
-                            .font(.body)
-                            .foregroundColor(Color.mintAccent.opacity(0.85))
-                    }
+                    Text("View all")
+                        .font(.body)
+                        .foregroundColor(Color.mintAccent.opacity(0.85))
                 }
                 .buttonStyle(.plain)
             }
@@ -342,14 +338,9 @@ struct HomeView: View {
                 Button {
                     showingYourShowsSheet = true
                 } label: {
-                    HStack(spacing: 3) {
-                        Text("View all")
-                            .font(.body)
-                            .foregroundColor(Color.mintAccent.opacity(0.85))
-                        Image(systemName: "chevron.right")
-                            .font(.body)
-                            .foregroundColor(Color.mintAccent.opacity(0.85))
-                    }
+                    Text("View all")
+                        .font(.body)
+                        .foregroundColor(Color.mintAccent.opacity(0.85))
                 }
                 .buttonStyle(.plain)
             }
@@ -474,9 +465,26 @@ struct HomeView: View {
 
     private var recentNotesSection: some View {
         VStack(alignment: .leading, spacing: EchoSpacing.sectionHeaderToContentSpacing) {
-            Text("Notes")
-                .font(.title2Echo())
-                .foregroundColor(.echoTextPrimary)
+            HStack(alignment: .firstTextBaseline) {
+                Text("Notes")
+                    .font(.title2Echo())
+                    .foregroundColor(.echoTextPrimary)
+                if recentNotes.count > 0 {
+                    Text("• \(recentNotes.count)")
+                        .font(.subheadline)
+                        .foregroundColor(.echoTextSecondary)
+                }
+                Spacer()
+                if recentNotes.count > 0 {
+                    Button {
+                        selectedTab = 1
+                    } label: {
+                        Image(systemName: "books.vertical.fill")
+                            .font(.body)
+                            .foregroundColor(Color.mintAccent.opacity(0.85))
+                    }
+                }
+            }
 
             ForEach(recentNotes.prefix(5)) { note in
                 NoteCardView(note: note)

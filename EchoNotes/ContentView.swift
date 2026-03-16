@@ -35,7 +35,7 @@ struct ContentView: View {
     var body: some View {
         // Root TabView - manages layout insets natively
         TabView(selection: $selectedTab) {
-            HomeView()
+            HomeView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Home", systemImage: "house.fill")
                 }
