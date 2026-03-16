@@ -68,9 +68,6 @@ struct HomeView: View {
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: EchoSpacing.homeSectionSpacing) {
-                    Spacer()
-                        .frame(height: 16)
-
                     // Continue Listening Section
                     if player.currentEpisode != nil || !continueListeningEpisodes.isEmpty || !recentNotes.isEmpty {
                         continueListeningSection
