@@ -89,7 +89,7 @@ class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
                     pubDate: nil,
                     duration: self.formatDuration(item.duration),
                     audioURL: item.audioURL,
-                    imageURL: podcast.artworkURL
+                    imageURL: item.artworkURL.isEmpty ? podcast.artworkURL : item.artworkURL
                 )
 
                 // Load and play the episode
@@ -260,7 +260,7 @@ class CarPlaySceneDelegate: NSObject, CPTemplateApplicationSceneDelegate {
                                         podcastTitle: podcast.title ?? "Unknown Podcast",
                                         podcastID: podcast.id ?? "",
                                         audioURL: episode.audioURL ?? "",
-                                        artworkURL: podcast.artworkURL ?? "",
+                                        artworkURL: episode.imageURL ?? podcast.artworkURL ?? "",
                                         currentTime: 0,
                                         duration: self.parseDurationString(episode.duration),
                                         lastPlayed: Date(),

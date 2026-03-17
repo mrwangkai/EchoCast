@@ -145,7 +145,10 @@ class GlobalPlayerManager: ObservableObject {
     private func fetchAndSetArtwork() {
         let artworkURL = currentEpisode?.imageURL ?? currentPodcast?.artworkURL
         guard let urlString = artworkURL, !urlString.isEmpty,
-              let url = URL(string: urlString) else { return }
+              let url = URL(string: urlString) else {
+            print("⚠️ [T92] fetchAndSetArtwork: no artwork URL available — episode: \(currentEpisode?.imageURL ?? "nil"), podcast: \(currentPodcast?.artworkURL ?? "nil")")
+            return
+        }
 
         // If we already have this artwork cached, re-apply and skip network call
         if urlString == cachedArtworkURL, let cached = cachedArtworkImage {
@@ -196,9 +199,12 @@ class GlobalPlayerManager: ObservableObject {
         playerError = nil
         isBuffering = true
 
-        // T71: Clear artwork cache when episode changes
-        cachedArtworkImage = nil
-        cachedArtworkURL = nil
+        // T93: Only clear artwork cache if the new episode has a different artwork URL
+        let newArtworkURL = episode.imageURL ?? podcast.artworkURL
+        if newArtworkURL != cachedArtworkURL {
+            cachedArtworkImage = nil
+            cachedArtworkURL = nil
+        }
 
         // Write shared state for Siri Intent
         writeSharedPlayerState()

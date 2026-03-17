@@ -1,11 +1,9 @@
 git add .
-git commit -m "fix(T95,T96): CarPlay Add Note crash + first launch Core Data crash
+git commit -m "fix(T92,T93): CarPlay album art missing + flashing
 
-T95: Replace AddNoteIntent().perform() in CarPlayNowPlayingController
-with NotificationCenter post. ContentView receives via .onReceive and
-presents note sheet via showMiniPlayerNoteSheet.
+T92: Prefer episode.imageURL over podcast.artworkURL in CarPlaySceneDelegate
+for both My Podcasts (line 263) and Continue Listening (line 92) paths.
+Add debug log in fetchAndSetArtwork for missing URL diagnosis.
 
-T96: Replace fatalError in PersistenceController.loadPersistentStores
-with store deletion recovery path to prevent crash on corrupt/failed store."
-
-Once that's done, mark T95 and T96 complete in echocast_todo.md with the commit hash.
+T93: Only clear artwork cache in loadEpisode() when new episode has a
+different artwork URL — prevents flash to placeholder on same-podcast episodes."
