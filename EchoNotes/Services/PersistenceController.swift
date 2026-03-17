@@ -52,8 +52,15 @@ struct PersistenceController {
 
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             if let error = error as NSError? {
-                // Replace this implementation with code to handle the error appropriately.
-                fatalError("Unresolved error \(error), \(error.userInfo)")
+                print("⚠️ [CoreData] Store load failed: \(error). Attempting recovery.")
+                if let storeURL = storeDescription.url {
+                    do {
+                        try FileManager.default.removeItem(at: storeURL)
+                        print("🗑️ [CoreData] Deleted corrupt store, will recreate on next launch.")
+                    } catch {
+                        print("❌ [CoreData] Could not delete store: \(error)")
+                    }
+                }
             }
         })
         container.viewContext.automaticallyMergesChangesFromParent = true

@@ -45,23 +45,22 @@ class CarPlayNowPlayingController {
         guard !isHandlingNoteTap else { return }
         isHandlingNoteTap = true
         Task { @MainActor in
-            do {
-                _ = try await AddNoteIntent().perform()
+            // Post notification for phone side to handle note sheet presentation
+            NotificationCenter.default.post(
+                name: Notification.Name("EchoCast.carPlayAddNoteTapped"),
+                object: nil
+            )
 
-                // T64: Audio confirmation
-                let currentTime = GlobalPlayerManager.shared.currentTime
-                let formattedTime = formatTimestamp(currentTime)
-                let utterance = AVSpeechUtterance(string: "Note saved at \(formattedTime)")
-                utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-                speechSynthesizer.speak(utterance)
+            // T64: Audio confirmation
+            let currentTime = GlobalPlayerManager.shared.currentTime
+            let formattedTime = formatTimestamp(currentTime)
+            let utterance = AVSpeechUtterance(string: "Note saved at \(formattedTime)")
+            utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+            speechSynthesizer.speak(utterance)
 
-                // T64: Visual confirmation
-                showNoteSavedConfirmation(at: formattedTime)
+            // T64: Visual confirmation
+            showNoteSavedConfirmation(at: formattedTime)
 
-            } catch {
-                print("T63 DEBUG: AddNoteIntent failed — \(error)")
-                showCarPlayAlert("Couldn't start note capture. Try Siri instead.")
-            }
             isHandlingNoteTap = false
         }
     }

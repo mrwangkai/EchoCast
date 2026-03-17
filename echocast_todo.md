@@ -38,6 +38,12 @@ Instructions:
 - [ ] T83 (P2) — Continue Listening sheet: Reduce vertical padding on each row — currently ~24pt gap between row content and separator, bring it down to ~10-12pt. LOE: XS
 - [ ] T84 (P1) — Continue Listening sheet: Fix double-tap-to-remove bug — first swipe+confirm removes visually but episode repopulates; second attempt succeeds. Likely a timing issue between the 600ms animation delay and the confirmation dialog dismiss. LOE: S
 - [ ] T85 (P2) — Continue Listening sheet: Reduce delete animation duration from 600ms to 300ms. LOE: XS
+- [x] T91 LOE: S (P0) Description: CarPlay "Add Note" button crashes the app — guard AddNoteIntent against nil currentEpisode, investigate UI presentation from CarPlay context. post crash analysis decision: close, description was wrong (it's not a nil currentEpisode guard issue). Superseded by T95.
+- [ ] T92 LOE: S (P1) Description: CarPlay album art missing for episodes from "My Podcasts" tab — cachedArtworkURL not populated before CarPlayNowPlayingController updates. keep open, not yet diagnosed
+- [ ] T93 LOE: S (P1) Description: CarPlay album art flashing between artwork and placeholder — race condition on cachedArtworkImage during episode load/rehydration. keep open, not yet diagnosed
+- [x] T94 LOE: M (P0) Description: App crashes on first launch — needs crash log to isolate; suspected Core Data init or scene config issue. post crash analysis: close, root cause now confirmed. Superseded by T96.
+- [ ] T95 LOE: S (P0) Description: CarPlay Add Note button crashes (NSException in CPInterfaceController._handleCompletion) — replace direct AddNoteIntent().perform() call in CarPlayNowPlayingController.handleAddNoteTap() with NotificationCenter post; add .onReceive in ContentView to present note sheet on phone side. STATUS: Fix implemented (NotificationCenter post + ContentView .onReceive), awaiting commit.
+- [ ] T96 LOE: XS (P0) Description: First launch crash — fatalError in PersistenceController.loadPersistentStores crashes on store load failure; replace with recovery path that deletes corrupt store instead of crashing. STATUS: Fix implemented (store recovery with logging), awaiting commit.
 
 
 

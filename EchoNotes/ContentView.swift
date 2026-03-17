@@ -112,6 +112,11 @@ struct ContentView: View {
                 .environment(\.managedObjectContext, viewContext)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(
+            for: Notification.Name("EchoCast.carPlayAddNoteTapped")
+        )) { _ in
+            showMiniPlayerNoteSheet = true
+        }
         .onAppear {
             checkForSiriIntent()
         }
