@@ -3312,6 +3312,7 @@ struct NoteDetailSheet: View {
     let note: NoteEntity
     let onTimestampTap: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.managedObjectContext) private var viewContext
     @State private var showingEditSheet = false
 
     var body: some View {
@@ -3430,7 +3431,8 @@ struct NoteDetailSheet: View {
             }
         }
         .sheet(isPresented: $showingEditSheet) {
-            NoteCaptureView(existingNote: note)
+            EditNoteSheetWrapper(existingNote: note)
+                .environment(\.managedObjectContext, viewContext)
         }
     }
 }

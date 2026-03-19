@@ -44,6 +44,8 @@ Instructions:
 - [x] T94 LOE: M (P0) Description: App crashes on first launch — needs crash log to isolate; suspected Core Data init or scene config issue. post crash analysis: close, root cause now confirmed. Superseded by T96.
 - [ ] T95 LOE: S (P0) Description: CarPlay Add Note button crashes (NSException in CPInterfaceController._handleCompletion) — replace direct AddNoteIntent().perform() call in CarPlayNowPlayingController.handleAddNoteTap() with NotificationCenter post; add .onReceive in ContentView to present note sheet on phone side. (Commit: e803d8f)
 - [ ] T96 LOE: XS (P0) Description: First launch crash — fatalError in PersistenceController.loadPersistentStores crashes on store load failure; replace with recovery path that deletes corrupt store instead of crashing. (Commit: e803d8f)
+- [] T98 (P1) update the button on Home and Library in empty state so that they are consistent. right now they have two different styles (i.e. shapes, width and color). I'm leaning adopting the Home screen's "find a podcast" button style and apply it to the Library tab's empty state's "Browse podcast" button.
+- [ ] T97 LOE: S (P1) Description: Edit Note sheet — remove stale recording button and any legacy components; mirror Add Note sheet field layout exactly; timestamp remains read-only mint badge (intentional divergence from Add Note).
 
 
 

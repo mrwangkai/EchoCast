@@ -1,9 +1,12 @@
 git add .
-git commit -m "fix(T92,T93): CarPlay album art missing + flashing
+git commit -m "feat(T97): Edit Note sheet mirrors Add Note design
 
-T92: Prefer episode.imageURL over podcast.artworkURL in CarPlaySceneDelegate
-for both My Podcasts (line 263) and Continue Listening (line 92) paths.
-Add debug log in fetchAndSetArtwork for missing URL diagnosis.
-
-T93: Only clear artwork cache in loadEpisode() when new episode has a
-different artwork URL — prevents flash to placeholder on same-podcast episodes."
+- Add EditNoteSheetWrapper in EpisodePlayerView.swift mirroring
+  NoteCaptureSheetWrapper layout exactly
+- Pre-populates noteText and tags from existingNote on appear
+- Timestamp read-only (clock icon + formatted time, no editing)
+- Context display matches Add Note (podcast title, episode title)
+- Update Note button matches Save Note styling (mint text, dark bg)
+- Wire EditNoteSheetWrapper in ContentView NoteDetailSheet
+- Remove recording button, Speech/AVFoundation imports, and all
+  speech recognition code from NoteCaptureView.swift"

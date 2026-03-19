@@ -1305,6 +1305,154 @@ struct NoteCaptureSheetWrapper: View {
     }
 }
 
+// MARK: - Edit Note Sheet Wrapper
+
+struct EditNoteSheetWrapper: View {
+    let existingNote: NoteEntity
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.managedObjectContext) private var viewContext
+
+    @State private var noteText: String = ""
+    @State private var tags: String = ""
+    @State private var saveErrorMessage: String? = nil
+    @State private var showSaveError: Bool = false
+
+    var body: some View {
+        ZStack {
+            NavigationView {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        // Static context — no label
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(existingNote.showTitle ?? "Unknown Podcast")
+                                .font(.system(size: 13, weight: .regular))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                            Text(existingNote.episodeTitle ?? "Unknown Episode")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(.primary)
+                                .lineLimit(2)
+                            HStack(spacing: 5) {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 11))
+                                Text(existingNote.timestamp ?? "")
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 4)
+                        }
+                        .padding(.top, 8)
+
+                        // Note input — label + field
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Note")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(.primary)
+                            ZStack(alignment: .topLeading) {
+                                if noteText.isEmpty {
+                                    Text("What's on your mind?")
+                                        .font(.system(size: 15))
+                                        .foregroundStyle(.tertiary)
+                                        .padding(.top, 8)
+                                        .padding(.leading, 4)
+                                }
+                                TextEditor(text: $noteText)
+                                    .font(.system(size: 15))
+                                    .frame(minHeight: 110)
+                                    .scrollContentBackground(.hidden)
+                            }
+                            .padding(12)
+                            .background(Color(red: 0.2, green: 0.2, blue: 0.2))
+                            .cornerRadius(12)
+                        }
+
+                        // Tags input — label + field + persistent hint
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Tags")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(.primary)
+                            TextField("interesting, quote...", text: $tags)
+                                .font(.system(size: 15))
+                                .padding(12)
+                                .background(Color(red: 0.2, green: 0.2, blue: 0.2))
+                                .cornerRadius(12)
+                            Text("Separate tags with commas")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 2)
+                        }
+
+                        // Update button
+                        Button(action: updateNote) {
+                            Text("Update Note")
+                                .font(.system(size: 17, weight: .medium))
+                                .foregroundStyle(Color.mintAccent)
+                                .frame(maxWidth: .infinity)
+                                .padding(14)
+                                .background(Color(red: 0.2, green: 0.2, blue: 0.2))
+                                .cornerRadius(12)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 24)
+                }
+                .background(Color(red: 0.149, green: 0.149, blue: 0.149))
+                .navigationTitle("Edit Note")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { dismiss() }
+                    }
+                }
+            }
+
+            if showSaveError, let message = saveErrorMessage {
+                VStack {
+                    Spacer()
+                    Text(message)
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(Color.red.opacity(0.85))
+                        .cornerRadius(10)
+                        .padding(.bottom, 24)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                withAnimation { showSaveError = false }
+                            }
+                        }
+                }
+                .animation(.easeInOut, value: showSaveError)
+            }
+        }
+        .preferredColorScheme(.dark)
+        .onAppear {
+            noteText = existingNote.noteText ?? ""
+            tags = existingNote.tagsArray.joined(separator: ", ")
+        }
+    }
+
+    private func updateNote() {
+        existingNote.noteText = noteText
+        existingNote.tags = tags
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .joined(separator: ",")
+
+        do {
+            try viewContext.save()
+            dismiss()
+        } catch {
+            saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+            showSaveError = true
+        }
+    }
+}
+
 // MARK: - Note Preview Popover
 
 struct NotePreviewPopover: View {
