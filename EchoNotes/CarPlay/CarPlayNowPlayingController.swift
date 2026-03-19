@@ -18,11 +18,28 @@ class CarPlayNowPlayingController {
         self.interfaceController = interfaceController
         setupNowPlayingButtons()
         observePlayerState()
+        setupCarPlayNoteSavedObserver()
     }
 
     func teardown() {
         cancellables.removeAll()
         interfaceController = nil
+    }
+
+    // MARK: - CarPlay Note Saved Observer
+
+    private func setupCarPlayNoteSavedObserver() {
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("EchoCast.carPlayNoteSaved"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let timestamp = notification.object as? String else { return }
+            self?.showNoteSavedConfirmation(at: timestamp)
+            let utterance = AVSpeechUtterance(string: "Note saved at \(timestamp)")
+            utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+            self?.speechSynthesizer.speak(utterance)
+        }
     }
 
     // MARK: - Now Playing Button
@@ -51,16 +68,8 @@ class CarPlayNowPlayingController {
                 object: nil
             )
 
-            // T64: Audio confirmation
-            let currentTime = GlobalPlayerManager.shared.currentTime
-            let formattedTime = formatTimestamp(currentTime)
-            let utterance = AVSpeechUtterance(string: "Note saved at \(formattedTime)")
-            utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-            speechSynthesizer.speak(utterance)
-
-            // T64: Visual confirmation
-            showNoteSavedConfirmation(at: formattedTime)
-
+            // Reset tap guard after a short delay to prevent double-taps
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
             isHandlingNoteTap = false
         }
     }

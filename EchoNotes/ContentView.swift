@@ -25,6 +25,7 @@ struct ContentView: View {
     @State private var siriNoteTimestamp = ""
     @State private var showFullPlayer = false  // Manage full player sheet at root level
     @State private var showMiniPlayerNoteSheet = false
+    @State private var showCarPlayDictationSheet = false
     @Environment(\.managedObjectContext) private var viewContext
     @Namespace private var playerAnimation  // Namespace for matched geometry effect
     // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
@@ -112,10 +113,14 @@ struct ContentView: View {
                 .environment(\.managedObjectContext, viewContext)
             }
         }
+        .sheet(isPresented: $showCarPlayDictationSheet) {
+            CarPlayDictationView()
+                .environment(\.managedObjectContext, viewContext)
+        }
         .onReceive(NotificationCenter.default.publisher(
             for: Notification.Name("EchoCast.carPlayAddNoteTapped")
         )) { _ in
-            showMiniPlayerNoteSheet = true
+            showCarPlayDictationSheet = true
         }
         .onAppear {
             checkForSiriIntent()
@@ -126,6 +131,12 @@ struct ContentView: View {
                 UserDefaults.standard.removeObject(forKey: "shouldShowNoteCaptureFromSiri")
                 UserDefaults.standard.removeObject(forKey: "siriNoteTimestamp")
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(
+            for: Notification.Name("EchoCast.carPlayNoteSaved")
+        )) { notification in
+            // CarPlay side will handle its own confirmation
+            // Nothing needed here beyond dismissal which the sheet handles
         }
         // TODO: Uncomment when DeepLinkManager.swift is added to Xcode project
         // .onChange(of: deepLinkManager.pendingDeepLink) { _, newValue in
