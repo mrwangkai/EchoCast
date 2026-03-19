@@ -314,14 +314,21 @@ struct LibraryView: View {
                             object: nil
                         )
                     }) {
-                        Text("Browse podcasts")
-                            .font(.bodyEcho())
-                            .foregroundColor(.echoBackground)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 10)
-                            .background(Color.mintAccent)
-                            .clipShape(Capsule())
+                        HStack(spacing: 8) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 15, weight: .medium))
+                            Text("Browse podcasts")
+                                .font(.bodyRoundedMedium())
+                        }
+                        .foregroundColor(.mintButtonText)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, EchoSpacing.screenPadding)
+                        .padding(.vertical, 16)
+                        .background(Color.mintButtonBackground)
+                        .cornerRadius(12)
                     }
+                    .padding(.horizontal, EchoSpacing.screenPadding)
+                    .buttonStyle(.plain)
                 }
             } else {
                 // Sub-state 2: has podcasts, no notes yet
