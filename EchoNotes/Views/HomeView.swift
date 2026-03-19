@@ -73,7 +73,7 @@ struct HomeView: View {
                         .frame(height: 0)
 
                     // Continue Listening Section
-                    if player.currentEpisode != nil || !continueListeningEpisodes.isEmpty || !recentNotes.isEmpty {
+                    if player.currentEpisode != nil || !continueListeningEpisodes.isEmpty {
                         continueListeningSection
                     }
 
@@ -83,22 +83,23 @@ struct HomeView: View {
                     }
 
                     // Recent Notes Section
-                    if !continueListeningEpisodes.isEmpty || !followedPodcasts.isEmpty {
-                        if !recentNotes.isEmpty {
-                            recentNotesSection
-                        } else {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Notes")
-                                    .font(.title2Echo())
-                                    .foregroundColor(.echoTextPrimary)
-                                    .padding(.horizontal, EchoSpacing.screenPadding)
-                                notesEmptyStateCard
-                            }
+                    if !recentNotes.isEmpty {
+                        recentNotesSection
+                    } else if !continueListeningEpisodes.isEmpty || !followedPodcasts.isEmpty || player.currentEpisode != nil {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Notes")
+                                .font(.title2Echo())
+                                .foregroundColor(.echoTextPrimary)
+                                .padding(.horizontal, EchoSpacing.screenPadding)
+                            notesEmptyStateCard
                         }
                     }
 
                     // Empty state - only show when there's no content at all
-                    if player.currentEpisode == nil && continueListeningEpisodes.isEmpty && recentNotes.isEmpty && followedPodcasts.isEmpty {
+                    if player.currentEpisode == nil &&
+                       continueListeningEpisodes.isEmpty &&
+                       recentNotes.isEmpty &&
+                       followedPodcasts.isEmpty {
                         emptyStateView
                     }
                 }
