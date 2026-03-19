@@ -2,6 +2,7 @@ import CarPlay
 import Combine
 import AppIntents
 import AVFoundation
+import Speech
 
 class CarPlayNowPlayingController {
 
@@ -14,32 +15,22 @@ class CarPlayNowPlayingController {
     private var isShowingAlert = false
     private var isHandlingNoteTap = false
 
+    // T104: In-process voice capture
+    private var speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var recognitionTask: SFSpeechRecognitionTask?
+    private var audioEngine = AVAudioEngine()
+    private var isCapturingNote = false
+
     func setup(interfaceController: CPInterfaceController) {
         self.interfaceController = interfaceController
         setupNowPlayingButtons()
         observePlayerState()
-        setupCarPlayNoteSavedObserver()
     }
 
     func teardown() {
         cancellables.removeAll()
         interfaceController = nil
-    }
-
-    // MARK: - CarPlay Note Saved Observer
-
-    private func setupCarPlayNoteSavedObserver() {
-        NotificationCenter.default.addObserver(
-            forName: Notification.Name("EchoCast.carPlayNoteSaved"),
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            guard let timestamp = notification.object as? String else { return }
-            self?.showNoteSavedConfirmation(at: timestamp)
-            let utterance = AVSpeechUtterance(string: "Note saved at \(timestamp)")
-            utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-            self?.speechSynthesizer.speak(utterance)
-        }
     }
 
     // MARK: - Now Playing Button
@@ -59,46 +50,127 @@ class CarPlayNowPlayingController {
     }
 
     private func handleAddNoteTap() {
-        guard !isHandlingNoteTap else { return }
+        guard !isHandlingNoteTap, !isCapturingNote else { return }
         isHandlingNoteTap = true
-        Task { @MainActor in
-            // Post notification for phone side to handle note sheet presentation
-            NotificationCenter.default.post(
-                name: Notification.Name("EchoCast.carPlayAddNoteTapped"),
-                object: nil
-            )
 
-            // Reset tap guard after a short delay to prevent double-taps
-            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-            isHandlingNoteTap = false
+        SFSpeechRecognizer.requestAuthorization { [weak self] status in
+            guard let self = self, status == .authorized else {
+                self?.isHandlingNoteTap = false
+                return
+            }
+            DispatchQueue.main.async {
+                self.startVoiceCapture()
+                self.isHandlingNoteTap = false
+            }
         }
     }
 
-    // MARK: - Confirmation Alert
+    private func startVoiceCapture() {
+        isCapturingNote = true
 
-    private func showCarPlayAlert(_ message: String) {
-        DispatchQueue.main.async { [weak self] in
+        // Prompt the user via speech
+        let prompt = AVSpeechUtterance(string: "What's your note?")
+        prompt.voice = AVSpeechSynthesisVoice(language: "en-US")
+        prompt.postUtteranceDelay = 0.4
+
+        speechSynthesizer.speak(prompt)
+
+        // Wait for prompt to finish before starting mic capture
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
+            self?.beginRecognition()
+        }
+    }
+
+    private func beginRecognition() {
+        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
+        guard let recognitionRequest = recognitionRequest,
+              let speechRecognizer = speechRecognizer, speechRecognizer.isAvailable else {
+            isCapturingNote = false
+            return
+        }
+
+        recognitionRequest.shouldReportPartialResults = false
+
+        let audioSession = AVAudioSession.sharedInstance()
+        try? audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .allowBluetooth])
+        try? audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+
+        let inputNode = audioEngine.inputNode
+        let recordingFormat = inputNode.outputFormat(forBus: 0)
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
+            self.recognitionRequest?.append(buffer)
+        }
+
+        audioEngine.prepare()
+        try? audioEngine.start()
+
+        // Auto-stop after 10 seconds of listening
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
+            self?.stopRecognition()
+        }
+
+        recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             guard let self = self else { return }
-            guard !self.isShowingAlert else { return }
-            guard let controller = self.interfaceController else { return }
-            self.isShowingAlert = true
-            let action = CPAlertAction(
-                title: "OK",
-                style: .default,
-                handler: { _ in
-                    controller.dismissTemplate(animated: true, completion: nil)
-                    self.isShowingAlert = false
-                }
-            )
-            let alert = CPAlertTemplate(titleVariants: [message], actions: [action])
-            controller.presentTemplate(alert, animated: true, completion: nil)
-
-            // Auto-dismiss after 1.5s
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                controller.dismissTemplate(animated: true, completion: nil)
-                self.isShowingAlert = false
+            if let result = result, result.isFinal {
+                let noteText = result.bestTranscription.formattedString
+                self.stopRecognition()
+                self.saveNote(text: noteText)
+            } else if error != nil {
+                self.stopRecognition()
             }
         }
+    }
+
+    private func stopRecognition() {
+        audioEngine.stop()
+        audioEngine.inputNode.removeTap(onBus: 0)
+        recognitionRequest?.endAudio()
+        recognitionRequest = nil
+        recognitionTask?.cancel()
+        recognitionTask = nil
+        isCapturingNote = false
+
+        // Restore audio session for playback
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.allowBluetooth])
+        try? AVAudioSession.sharedInstance().setActive(true, options: [])
+    }
+
+    private func saveNote(text: String) {
+        guard !text.isEmpty else {
+            let utterance = AVSpeechUtterance(string: "No note captured.")
+            utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+            speechSynthesizer.speak(utterance)
+            return
+        }
+
+        let currentTime = GlobalPlayerManager.shared.currentTime
+        let formattedTime = formatTimestamp(currentTime)
+        let sharedDefaults = UserDefaults(suiteName: "group.com.echonotes.app202601302226.echocast")
+        let episodeTitle = sharedDefaults?.string(forKey: "siri_episodeTitle") ?? ""
+        let podcastTitle = sharedDefaults?.string(forKey: "siri_podcastTitle") ?? ""
+
+        let context = PersistenceController.shared.container.viewContext
+        context.perform {
+            let note = NoteEntity(context: context)
+            note.id = UUID()
+            note.episodeTitle = episodeTitle
+            note.showTitle = podcastTitle
+            note.timestamp = formattedTime
+            note.noteText = text
+            note.isPriority = false
+            note.tags = ""
+            note.createdAt = Date()
+            note.sourceApp = "CarPlay"
+            try? context.save()
+        }
+
+        // Spoken confirmation
+        let utterance = AVSpeechUtterance(string: "Note saved at \(formattedTime).")
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        speechSynthesizer.speak(utterance)
+
+        // Visual confirmation
+        showNoteSavedConfirmation(at: formattedTime)
     }
 
     // MARK: - T64: Note Saved Confirmation
