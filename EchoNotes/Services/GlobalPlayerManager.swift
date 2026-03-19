@@ -136,6 +136,12 @@ class GlobalPlayerManager: ObservableObject {
         nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentTime
         nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
 
+        // T99: Include cached artwork in first nowPlayingInfo assignment to prevent lock screen flash
+        if let cached = cachedArtworkImage {
+            let artwork = MPMediaItemArtwork(boundsSize: cached.size) { _ in cached }
+            nowPlayingInfo[MPMediaItemPropertyArtwork] = artwork
+        }
+
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
 
         // T59: Fetch and set artwork for CarPlay Now Playing screen
