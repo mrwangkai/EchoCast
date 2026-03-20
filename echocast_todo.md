@@ -27,19 +27,19 @@ Instructions:
 - [ ] T36 (P2): Add/update interaction with individual episodes on podcast series sheet (e.g. swipe to delete) (LOE: M)
 - [ ] T45 (P2): Remove these from Note sheet/detail: time "passed", the section header "details" (LOE: S)
 - [ ] T47 (P2): Improve search/browse: more relevant options (LOE: L)
-- [ ] T60 #CarPlay (P1): App crashes on first launch, recovers on second — Observed in Build 8: the first time EchoCast is opened via CarPlay it crashes; the second attempt succeeds and stays open. Likely a race condition in CarPlaySceneDelegate — scene is connecting before GlobalPlayerManager or Core Data stack is fully initialized. Investigate CarPlaySceneDelegate.templateApplicationScene(_:didConnect:) — add a guard or deferred initialization to ensure the persistent store is loaded before building CarPlay templates. Check for force-unwraps or synchronous Core Data fetches happening at scene connection time. (LOE: M)
+- [X] T60 #CarPlay (P1): App crashes on first launch, recovers on second — Observed in Build 8: the first time EchoCast is opened via CarPlay it crashes; the second attempt succeeds and stays open. Likely a race condition in CarPlaySceneDelegate — scene is connecting before GlobalPlayerManager or Core Data stack is fully initialized. Investigate CarPlaySceneDelegate.templateApplicationScene(_:didConnect:) — add a guard or deferred initialization to ensure the persistent store is loaded before building CarPlay templates. Check for force-unwraps or synchronous Core Data fetches happening at scene connection time. (LOE: M) believed resolved by T87, verify in Build 16
  - [ ] T76 (P2) — Home: Hide Recent Notes section entirely when user has no continue listening episodes AND no followed podcasts; lean on existing "No notes yet" empty state. LOE: S
 - [ ] T77 (P2) — Continue Listening sheet: Add empty state view when all episodes are removed (e.g. waveform icon + "Nothing in progress" copy + Done button or auto-dismiss). LOE: S
 - [ ] T78 (P2) — Continue Listening sheet: Animate removed row sliding upward and fading out (~500–800ms) before list collapses. T78 and T79 interacts. T78's animation needs to work first before touching the dialog, since both modify the removal flow.  LOE: S
 - [ ] T79 (P3) — Continue Listening sheet: Replace small custom confirmation dialog with a standard full-width .alert or native action sheet so it spans the expected iOS dialog width. LOE: S
 - [ ] T80 (P3) — Continue Listening + Your Shows "view all" sheets: Replace custom header (title + subheader + Done button on right) with standard sheet presentation style — drag indicator, title in standard position, Done on left. LOE: M
 - [ ] T81 (P3) — Home: Increase "View all" link size from its current small size to body-weight text to match iOS convention. LOE: XS
-- [ ] T82 (P2) — Continue Listening + Your Shows "view all" sheets: Replace custom header (title + subheader + Done button on right) with standard iOS sheet style — drag indicator, title in standard position, Done on left. LOE: M
 - [ ] T83 (P2) — Continue Listening sheet: Reduce vertical padding on each row — currently ~24pt gap between row content and separator, bring it down to ~10-12pt. LOE: XS
 - [ ] T84 (P1) — Continue Listening sheet: Fix double-tap-to-remove bug — first swipe+confirm removes visually but episode repopulates; second attempt succeeds. Likely a timing issue between the 600ms animation delay and the confirmation dialog dismiss. LOE: S
 - [ ] T85 (P2) — Continue Listening sheet: Reduce delete animation duration from 600ms to 300ms. LOE: XS
-
-
+- [ ] T102 (P2) – improve the zero state illustration. On home screen's empty state, green was used in the highlight of the illustration, vs. the library tab's empty state where its just gray.
+- [ ] T103 (P1) Improve the tagging system, so it is easy to add, manage (update, remove), and search. #refinements
+- [x] T104 LOE: L (P0) Description: CarPlay Add Note — replace notification-based phone handoff with in-process voice capture using SFSpeechRecognizer + AVSpeechSynthesizer. Button tap speaks "What's your note?", captures live speech via car mic, saves note to Core Data directly (mirroring AddNoteIntent.perform() logic), speaks confirmation. Set AddNoteIntent.openAppWhenRun = false separately to prevent phone foregrounding when Siri invokes the intent by voice shortcut. (build/build17) (Commit: 8337ca4)
 
 
 ## 📨 Inbox (raw ideas)
@@ -47,7 +47,7 @@ Instructions:
 - [ ] T39 (P1): Update button style for play — maybe more rounded (LOE: XS)
 - [ ] T48 (P3): Update animation for how the markers show up. Right now its flying in from the left, which feels a bit buggy. And this is happening after the skeleton loading screen. (LOE: M)
 - [ ] T50 (P2): "Search is weird". when typing fast, "Con" does not have "Conan" as a top choice; when typing "Co", "Conan" shows up as a top choice. (LOE: M - diagnostic)
-- [ ] T53 (P3): CarPlay notes incorrectly write sourceApp = 'Siri' via AddNoteIntent — should write 'CarPlay'. Fix CarPlayNowPlayingController to pass sourceApp directly to createNote rather than routing through AddNoteIntent. (LOE: XS)
+- [x] T53 (P3): CarPlay notes incorrectly write sourceApp = 'Siri' via AddNoteIntent — should write 'CarPlay'. Fix CarPlayNowPlayingController to pass sourceApp directly to createNote rather than routing through AddNoteIntent. (LOE: XS). This is resolved by T101. 
 
 ## ✅ Done
 
