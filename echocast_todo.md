@@ -8,9 +8,9 @@ Instructions:
 - If a task you are working on does not exist in this file, create it in "Currently working on" section with the next available T-ID before starting work.
 - For any work that has passed build and commit with an assigned task-id, please include: (Commit history: {commit hash 1}, {commit hash n+1}). Once that task is moved to Done, you can update that with the latest commit (i.e. just showing one: {commit hash})
 
-## 🔥 Currently working on
+## 🔥 In Progress
 
-(No active tasks — see Backlog for available work)
+- [ ] T105 LOE: S (P2) Description: Experiment branch — (1) surface-differentiate Continue Listening section with subtle elevated background vs. flat Podcasts section, mirroring Granola's two-floor home hierarchy; (2) anchor empty state to geometric center rather than fixed top offset. Branch: t102-home-granola-treatment
 
 
 ## 🧭 Backlog
@@ -40,6 +40,13 @@ Instructions:
 - [ ] T102 (P2) – improve the zero state illustration. On home screen's empty state, green was used in the highlight of the illustration, vs. the library tab's empty state where its just gray.
 - [ ] T103 (P1) Improve the tagging system, so it is easy to add, manage (update, remove), and search. #refinements
 - [x] T104 LOE: L (P0) Description: CarPlay Add Note — replace notification-based phone handoff with in-process voice capture using SFSpeechRecognizer + AVSpeechSynthesizer. Button tap speaks "What's your note?", captures live speech via car mic, saves note to Core Data directly (mirroring AddNoteIntent.perform() logic), speaks confirmation. Set AddNoteIntent.openAppWhenRun = false separately to prevent phone foregrounding when Siri invokes the intent by voice shortcut. (build/build17) (Commit: 8337ca4)
+- [ ] T106 LOE: S (P1) Description: NoteViewModel tag filter — add `activeTagFilter: String?`, `allTags: [String]` computed by tag frequency across all notes, tag predicate wired into fetchNotes() NSCompoundPredicate, `$activeTagFilter` Combine subscription.
+- [ ] T107 LOE: S (P1) Description: TagFilterBar component in LibraryView — "All" chip + top 4 tags by frequency + "+N more" overflow chip → bottom sheet with full alphabetical list. Single-select, mintAccent active state, hidden when allTags is empty.
+- [ ] T108 LOE: XS (P1) Description: Wire TagFilterBar into LibraryView.searchAndFilterSection between search field and note count line. Add filtered empty state ("No notes tagged #x" + Clear filter button) when activeTagFilter is set and notes list is empty.
+- [ ] T109 LOE: M (P2) Description: Tag input in NoteCaptureSheetWrapper (Add Note sheet) — inline autocomplete chip input, fuzzy-match existing tags, "Create #tag" fallback, max 5 tags, 20-char limit, lowercase-normalized on save.
+- [ ] T110 LOE: S (P3) Description: Tag management screen — rename, delete, merge tags. Deferred post-MVP. Data model already supports it via comma-separated tags string on NoteEntity.
+- [ ] T111 LOE: S (P1) Descritpion: On the "Continue Listening" tab, please allow swipe to delete without requiring a confirmation dialogue
+- [ ] T112 LOE: M? (P1) improve browsing and searching experience. Potentially adding a "for you" section based on type of podcasts that have been followed or played/listened. <- should there be a log of "listened" episodes, does overcast or other podcast do this in the background in order to provide a more personalized/customized experience?
 
 
 ## 📨 Inbox (raw ideas)

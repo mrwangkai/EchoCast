@@ -36,13 +36,13 @@
 		BA46C10C2F6132EA00CD7426 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA46C10B2F6132EA00CD7426 /* AppDelegate.swift */; };
 		BA46C10F2F61382200CD7426 /* CarPlayNowPlayingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA46C10D2F61382200CD7426 /* CarPlayNowPlayingController.swift */; };
 		BA46C1102F61382200CD7426 /* CarPlaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA46C10E2F61382200CD7426 /* CarPlaySceneDelegate.swift */; };
-		CP101D2F32F61382200CD7428 /* CarPlayDictationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CP101D2F42F61382200CD7428 /* CarPlayDictationView.swift */; };
 		BA6E078C2F52397F003EC3C4 /* BookmarkOverlayCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6E078B2F52397F003EC3C4 /* BookmarkOverlayCard.swift */; };
 		BA6E08672F5246C3003EC3C4 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6E08662F5246C3003EC3C4 /* ToastView.swift */; };
 		BA6EFC012F36A955003EC3C4 /* worklog-xcodeassistant-20260206.md in Resources */ = {isa = PBXBuildFile; fileRef = BA6EFC002F36A954003EC3C4 /* worklog-xcodeassistant-20260206.md */; };
 		BA6EFC042F36D644003EC3C4 /* COMMIT_MESSAGE.txt in Resources */ = {isa = PBXBuildFile; fileRef = BA6EFC032F36D644003EC3C4 /* COMMIT_MESSAGE.txt */; };
 		BE245BBE30074AACA289C192 /* EpisodeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29B3BD3927C3A99156079726 /* EpisodeDetailView.swift */; };
 		C8ADB94949E1542B64678C06 /* AddNoteIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAC0568ECC00DF51EF175765 /* AddNoteIntent.swift */; };
+		CP101D2F32F61382200CD7428 /* CarPlayDictationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CP101D2F42F61382200CD7428 /* CarPlayDictationView.swift */; };
 		E4P1AYER78VIEW90BUILDFILE23456 /* Player/EpisodePlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4P1AYER78VIEW0FILEREFGHIJKL /* Player/EpisodePlayerView.swift */; };
 		E8B0FC6D8C4B1BE4CD420BF7 /* SiriShortcutsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 543B86F71016EB6FBBDE162E /* SiriShortcutsManager.swift */; };
 		EBBC5664163B5EEAF0595A57 /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAB032ABF6B07EDBEB3E5FC7 /* ExportService.swift */; };
@@ -78,7 +78,6 @@
 		8F0A3B4C7D9E1F2A3B4C5D6E /* PodcastBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastBrowseViewModel.swift; sourceTree = "<group>"; };
 		92FA7184CFBE6C3A2C89D11C /* PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceController.swift; sourceTree = "<group>"; };
 		97B336D73F6E2BC5950A352B /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		CP101D2F42F61382200CD7428 /* CarPlayDictationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlayDictationView.swift; sourceTree = "<group>"; };
 		A00000000000000000000000 /* EchoNotes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EchoNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A0000000000000000000000E /* EchoNotes.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = EchoNotes.xcdatamodel; sourceTree = "<group>"; };
@@ -95,6 +94,7 @@
 		BA6EFC032F36D644003EC3C4 /* COMMIT_MESSAGE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = COMMIT_MESSAGE.txt; sourceTree = "<group>"; };
 		BA6EFCD22F4E8CA3003EC3C4 /* EchoNotes.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EchoNotes.entitlements; sourceTree = "<group>"; };
 		CA2011DE4F5DA850C5620FBC /* PodcastDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastDetailView.swift; sourceTree = "<group>"; };
+		CP101D2F42F61382200CD7428 /* CarPlayDictationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlayDictationView.swift; sourceTree = "<group>"; };
 		D6FD48759719F0A48ACDFE95 /* GlobalPlayerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalPlayerManager.swift; sourceTree = "<group>"; };
 		DAB032ABF6B07EDBEB3E5FC7 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
 		E4P1AYER78VIEW0FILEREFGHIJKL /* Player/EpisodePlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player/EpisodePlayerView.swift; sourceTree = "<group>"; };
@@ -496,7 +496,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = EchoNotes/EchoNotes.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BY2WMSQ7U3;
 				ENABLE_PREVIEWS = YES;
@@ -533,7 +533,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = EchoNotes/EchoNotes.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = BY2WMSQ7U3;
 				ENABLE_PREVIEWS = YES;

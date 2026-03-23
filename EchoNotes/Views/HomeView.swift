@@ -542,51 +542,47 @@ struct HomeView: View {
     // MARK: - Empty State View
 
     private var emptyStateView: some View {
-        VStack(spacing: 24) {
-            Spacer()
-                .frame(height: 100)
+        GeometryReader { geo in
+            VStack(spacing: 24) {
+                Image(systemName: "waveform")
+                    .font(.system(size: 64))
+                    .foregroundColor(.mintAccent)
 
-            Image(systemName: "waveform")
-                .font(.system(size: 72))
-                .foregroundColor(.mintAccent)
+                VStack(spacing: 8) {
+                    Text("No notes yet")
+                        .font(.title2Echo())
+                        .foregroundColor(.echoTextPrimary)
 
-            VStack(spacing: 8) {
-                Text("No notes yet")
-                    .font(.title2Echo())
-                    .foregroundColor(.echoTextPrimary)
-
-                Text("Start listening to a podcast and add notes as you go")
-                    .font(.bodyEcho())
-                    .foregroundColor(.echoTextSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
-
-            // Find a podcast CTA
-            Button(action: {
-                navigationPath.append("browse")
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 15, weight: .medium))
-                    Text("Find a podcast")
-                        .font(.bodyRoundedMedium())
+                    Text("Start listening to a podcast and add notes as you go")
+                        .font(.bodyEcho())
+                        .foregroundColor(.echoTextSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
                 }
-                .foregroundColor(.mintButtonText)
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, EchoSpacing.screenPadding)
-                .padding(.vertical, 16)
-                .background(Color.mintButtonBackground)
-                .cornerRadius(12)
-            }
-            .padding(.horizontal, EchoSpacing.screenPadding)
-            .buttonStyle(.plain)
 
-            Spacer()
-                .frame(height: 32)
+                Button(action: {
+                    navigationPath.append("browse")
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 15, weight: .medium))
+                        Text("Find a podcast")
+                            .font(.bodyRoundedMedium())
+                    }
+                    .foregroundColor(.mintButtonText)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, EchoSpacing.screenPadding)
+                    .padding(.vertical, 16)
+                    .background(Color.mintButtonBackground)
+                    .cornerRadius(12)
+                }
+                .padding(.horizontal, EchoSpacing.screenPadding)
+                .buttonStyle(.plain)
+            }
+            .frame(maxWidth: .infinity)
+            .position(x: geo.size.width / 2, y: geo.size.height * 0.42)
         }
-        .padding(.horizontal, EchoSpacing.homeSidePadding)
-        .frame(maxWidth: .infinity)
+        .frame(height: UIScreen.main.bounds.height * 0.7)
         .onAppear {
             print("🏠 [HomeView] Showing empty state")
         }

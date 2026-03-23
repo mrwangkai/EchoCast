@@ -92,5 +92,7 @@
 	<false/>
 	<key>UIApplicationSupportsCarPlay</key>
 	<true/>
+	<key>NSmicrophoneUsageDescription</key>
+	<string>Used to capture notes while listening via CarPlay.</string>
 </dict>
 </plist>
