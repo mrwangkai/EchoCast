@@ -43,10 +43,6 @@ Instructions:
 - [ ] T111 LOE: S (P1) Descritpion: On the "Continue Listening" tab, please allow swipe to delete without requiring a confirmation dialogue
 - [ ] T112 LOE: M? (P1) improve browsing and searching experience. Potentially adding a "for you" section based on type of podcasts that have been followed or played/listened. <- should there be a log of "listened" episodes, does overcast or other podcast do this in the background in order to provide a more personalized/customized experience?
 - [ ] T117 LOE: S (P3) Description: Tag management screen — rename, delete, merge tags. Deferred post-MVP. Data model already supports it via comma-separated tags string on NoteEntity.
-- [ ] T118 LOE: XS (P1) Description: Wire NoteViewModel.allTags to existingTags parameter on NoteCaptureSheetWrapper and EditNoteSheetWrapper call sites in ContentView.swift — replace existingTags: [] placeholder so autocomplete surfaces real tags from the user's note history. this is from Immediate gap — existingTags: [] placeholder (T116)
-Both NoteCaptureSheetWrapper and EditNoteSheetWrapper are passing an empty array for existingTags, so autocomplete suggestions won't surface real tags yet. The fix is wiring NoteViewModel.allTags through to the call sites in ContentView.swift. That's a small focused task:
-
-
 
 
 ## 📨 Inbox (raw ideas)
@@ -134,6 +130,7 @@ Both NoteCaptureSheetWrapper and EditNoteSheetWrapper are passing an empty array
 - [x] T114 LOE: S (P1) — TagFilterBar component in LibraryView — "All" chip + top 4 tags by frequency + "+N more" overflow chip → bottom sheet with full alphabetical list. Single-select, mintAccent active state, hidden when allTags is empty. (Commit: 797e1e4)
 - [x] T115 LOE: XS (P1) — Wire TagFilterBar into LibraryView.searchAndFilterSection between search field and note count line. Added filtered empty state ("No notes tagged #x" + Clear filter button) when activeTagFilter is set and notes list is empty. (Commit: 797e1e4)
 - [x] T116 LOE: M (P2) — Upgrade tags input in both NoteCaptureSheetWrapper and EditNoteSheetWrapper (EpisodePlayerView.swift) from plain comma TextField to autocomplete chip input — fuzzy-match against existing tags passed in as parameter, "Create #tag" fallback, dismissible chips, max 5 tags, 20-char limit, lowercase-normalized on save. (Commit: 797e1e4)
+- [x] T118 LOE: XS (P1) — Wire NoteViewModel.allTags to NoteCaptureSheetWrapper existingTags — Added @StateObject private var noteViewModel = NoteViewModel() to ContentView, updated NoteCaptureSheetWrapper call to pass existingTags: noteViewModel.allTags instead of empty array placeholder. Autocomplete now surfaces real tags from user's note history. (Commit: b9ec22a)
 
 ## Reported bug 🐞
 - [ ] T44 (P1): "There doesn't appear to be a way to get back to the episodes list when you start an episode". This is an assumption that user are familiar with the swipe down action, which may not be the case. (LOE: S - add back button or dismiss)
