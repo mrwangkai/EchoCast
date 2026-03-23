@@ -3,6 +3,7 @@ import Combine
 import AppIntents
 import AVFoundation
 import Speech
+import AudioToolbox
 
 class CarPlayNowPlayingController {
 
@@ -15,12 +16,13 @@ class CarPlayNowPlayingController {
     private var isShowingAlert = false
     private var isHandlingNoteTap = false
 
-    // T104: In-process voice capture
+    // T119: Voice capture properties
     private var speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private var audioEngine = AVAudioEngine()
     private var isCapturingNote = false
+    private var noteButton: CPNowPlayingImageButton?
 
     func setup(interfaceController: CPInterfaceController) {
         self.interfaceController = interfaceController
@@ -36,21 +38,21 @@ class CarPlayNowPlayingController {
     // MARK: - Now Playing Button
 
     private func setupNowPlayingButtons() {
-        let noteButton = CPNowPlayingImageButton(
-            image: UIImage(systemName: "square.and.pencil") ?? UIImage()
+        let button = CPNowPlayingImageButton(
+            image: makeIdleButtonImage()
         ) { [weak self] _ in
             self?.handleAddNoteTap()
         }
+        self.noteButton = button
         DispatchQueue.main.async {
-            CPNowPlayingTemplate.shared.updateNowPlayingButtons([noteButton])
+            CPNowPlayingTemplate.shared.updateNowPlayingButtons([button])
         }
-
-        // T58: Ensure audio session is active for CarPlay playback
         try? AVAudioSession.sharedInstance().setActive(true, options: [])
     }
 
     private func handleAddNoteTap() {
         guard !isHandlingNoteTap, !isCapturingNote else { return }
+        guard GlobalPlayerManager.shared.currentEpisode != nil else { return }
         isHandlingNoteTap = true
 
         SFSpeechRecognizer.requestAuthorization { [weak self] status in
@@ -65,18 +67,63 @@ class CarPlayNowPlayingController {
         }
     }
 
+    // MARK: - T119: Voice Capture
+
+    private func makeIdleButtonImage() -> UIImage {
+        return UIImage(systemName: "square.and.pencil") ?? UIImage()
+    }
+
+    private func makeRecordingButtonImage() -> UIImage {
+        let config = UIImage.SymbolConfiguration(pointSize: 22, weight: .medium)
+        let mic = UIImage(systemName: "square.and.pencil", withConfiguration: config) ?? UIImage()
+
+        let size = CGSize(width: 32, height: 32)
+        return UIGraphicsImageRenderer(size: size).image { ctx in
+            // Draw base icon centered
+            let iconRect = CGRect(
+                x: (size.width - mic.size.width) / 2,
+                y: (size.height - mic.size.height) / 2,
+                width: mic.size.width,
+                height: mic.size.height
+            )
+            UIColor.white.setFill()
+            mic.draw(in: iconRect)
+
+            // Draw red dot in top-right corner
+            let dotRadius: CGFloat = 5
+            let dotCenter = CGPoint(x: size.width - dotRadius - 1, y: dotRadius + 1)
+            UIColor.red.setFill()
+            UIBezierPath(
+                arcCenter: dotCenter,
+                radius: dotRadius,
+                startAngle: 0,
+                endAngle: .pi * 2,
+                clockwise: true
+            ).fill()
+        }
+    }
+
+    private func updateButtonState(isRecording: Bool) {
+        let image = isRecording ? makeRecordingButtonImage() : makeIdleButtonImage()
+        let updatedButton = CPNowPlayingImageButton(
+            image: image
+        ) { [weak self] _ in
+            self?.handleAddNoteTap()
+        }
+        self.noteButton = updatedButton
+        DispatchQueue.main.async {
+            CPNowPlayingTemplate.shared.updateNowPlayingButtons([updatedButton])
+        }
+    }
+
     private func startVoiceCapture() {
         isCapturingNote = true
+        updateButtonState(isRecording: true)
 
-        // Prompt the user via speech
-        let prompt = AVSpeechUtterance(string: "What's your note?")
-        prompt.voice = AVSpeechSynthesisVoice(language: "en-US")
-        prompt.postUtteranceDelay = 0.4
+        // Brief beep to signal recording start
+        AudioServicesPlaySystemSound(1113)
 
-        speechSynthesizer.speak(prompt)
-
-        // Wait for prompt to finish before starting mic capture
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             self?.beginRecognition()
         }
     }
@@ -97,8 +144,8 @@ class CarPlayNowPlayingController {
 
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
-            self.recognitionRequest?.append(buffer)
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
+            self?.recognitionRequest?.append(buffer)
         }
 
         audioEngine.prepare()
@@ -129,17 +176,15 @@ class CarPlayNowPlayingController {
         recognitionTask?.cancel()
         recognitionTask = nil
         isCapturingNote = false
+        updateButtonState(isRecording: false)
 
-        // Restore audio session for playback
+        // Restore audio session
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.allowBluetooth])
         try? AVAudioSession.sharedInstance().setActive(true, options: [])
     }
 
     private func saveNote(text: String) {
-        guard !text.isEmpty else {
-            let utterance = AVSpeechUtterance(string: "No note captured.")
-            utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-            speechSynthesizer.speak(utterance)
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return
         }
 
