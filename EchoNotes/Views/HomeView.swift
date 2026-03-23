@@ -546,7 +546,7 @@ struct HomeView: View {
             VStack(spacing: 24) {
                 Image(systemName: "waveform")
                     .font(.system(size: 64))
-                    .foregroundColor(.mintAccent)
+                    .foregroundColor(.echoTextTertiary)
 
                 VStack(spacing: 8) {
                     Text("No notes yet")
