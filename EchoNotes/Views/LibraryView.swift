@@ -27,6 +27,7 @@ struct LibraryView: View {
     @State private var shareItem: ShareSheetItem?
     @State private var navigationPath = NavigationPath()
     @State private var showingContinueListeningSheet = false
+    @State private var showingTagOverflow = false
 
     // Namespace for matched geometry effect with mini player
     @Namespace private var playerAnimation
@@ -240,6 +241,11 @@ struct LibraryView: View {
             .background(Color.searchFieldBackground)
             .cornerRadius(8)
 
+            // Tag filter bar
+            if !viewModel.allTags.isEmpty {
+                tagFilterBar
+            }
+
             // Notes count
             HStack {
                 Text("\(viewModel.notes.count) notes")
@@ -291,81 +297,197 @@ struct LibraryView: View {
     // MARK: - Empty State View
 
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
-            if followedPodcasts.isEmpty {
-                // Sub-state 1: no podcasts followed
+        Group {
+            if let activeTag = viewModel.activeTagFilter {
                 VStack(spacing: 12) {
-                    Image(systemName: "note.text")
+                    Image(systemName: "tag")
                         .font(.system(size: 36))
                         .foregroundColor(.echoTextTertiary)
-                    Text("Your notes live here")
+                    Text("No notes tagged \"#\(activeTag)\"")
                         .font(.title2Echo())
                         .foregroundColor(.echoTextPrimary)
-                    Text("Play any episode and tap the note button to capture ideas as you listen.")
-                        .font(.bodyEcho())
-                        .foregroundColor(.echoTextSecondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-                    Button(action: {
-                        // Navigate to Browse via parent if possible,
-                        // otherwise post a notification
-                        NotificationCenter.default.post(
-                            name: NSNotification.Name("navigateToBrowse"),
-                            object: nil
-                        )
-                    }) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 15, weight: .medium))
-                            Text("Browse podcasts")
-                                .font(.bodyRoundedMedium())
-                        }
-                        .foregroundColor(.mintButtonText)
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, EchoSpacing.screenPadding)
-                        .padding(.vertical, 16)
-                        .background(Color.mintButtonBackground)
-                        .cornerRadius(12)
+                    Button("Clear filter") {
+                        viewModel.activeTagFilter = nil
                     }
-                    .padding(.horizontal, EchoSpacing.screenPadding)
-                    .buttonStyle(.plain)
+                    .font(.bodyEcho())
+                    .foregroundColor(.mintAccent)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 60)
             } else {
-                // Sub-state 2: has podcasts, no notes yet
-                HStack(spacing: 12) {
-                    Text("Play an episode and capture what stays with you")
-                        .font(.bodyEcho())
-                        .foregroundColor(.echoTextSecondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Button(action: {
-                        showingContinueListeningSheet = true
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.mintAccent.opacity(0.15))
-                                .frame(width: 36, height: 36)
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14, weight: .medium))
+                VStack(spacing: 16) {
+                    if followedPodcasts.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "note.text")
+                                .font(.system(size: 36))
+                                .foregroundColor(.echoTextTertiary)
+                            Text("Your notes live here")
+                                .font(.title2Echo())
+                                .foregroundColor(.echoTextPrimary)
+                            Text("Play any episode and tap the note button to capture ideas as you listen.")
+                                .font(.bodyEcho())
+                                .foregroundColor(.echoTextSecondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 32)
+                            Button(action: {
+                                NotificationCenter.default.post(
+                                    name: NSNotification.Name("navigateToBrowse"),
+                                    object: nil
+                                )
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "magnifyingglass")
+                                        .font(.system(size: 15, weight: .medium))
+                                    Text("Browse podcasts")
+                                        .font(.bodyRoundedMedium())
+                                }
+                                .foregroundColor(.mintButtonText)
+                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal, EchoSpacing.screenPadding)
+                                .padding(.vertical, 16)
+                                .background(Color.mintButtonBackground)
+                                .cornerRadius(12)
+                            }
+                            .padding(.horizontal, EchoSpacing.screenPadding)
+                            .buttonStyle(.plain)
+                        }
+                    } else {
+                        HStack(spacing: 12) {
+                            Text("Play an episode and capture what stays with you")
+                                .font(.bodyEcho())
+                                .foregroundColor(.echoTextSecondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Button(action: {
+                                showingContinueListeningSheet = true
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.mintAccent.opacity(0.15))
+                                        .frame(width: 36, height: 36)
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.mintAccent)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .background(Color.mintAccent.opacity(0.07))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.mintAccent.opacity(0.15), lineWidth: 1)
+                        )
+                        .padding(.horizontal, EchoSpacing.screenPadding)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 60)
+                .sheet(isPresented: $showingContinueListeningSheet) {
+                    ContinueListeningSheetView()
+                }
+            }
+        }
+    }
+
+    // MARK: - Tag Filter Bar
+
+    private var tagFilterBar: some View {
+        let visibleTags = Array(viewModel.allTags.prefix(4))
+        let overflowCount = viewModel.allTags.count - visibleTags.count
+
+        return HStack(spacing: 8) {
+            tagChip(label: "All", isActive: viewModel.activeTagFilter == nil) {
+                viewModel.activeTagFilter = nil
+            }
+            ForEach(visibleTags, id: \.self) { tag in
+                tagChip(label: "#\(tag)", isActive: viewModel.activeTagFilter == tag) {
+                    viewModel.activeTagFilter = (viewModel.activeTagFilter == tag) ? nil : tag
+                }
+            }
+            if overflowCount > 0 {
+                tagChip(label: "+\(overflowCount) more", isActive: false) {
+                    showingTagOverflow = true
+                }
+            }
+            Spacer()
+        }
+        .sheet(isPresented: $showingTagOverflow) {
+            tagOverflowSheet
+        }
+    }
+
+    private func tagChip(label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.caption2Medium())
+                .foregroundColor(isActive ? Color.black : Color.echoTextSecondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(isActive ? Color.mintAccent : Color.clear)
+                .overlay(
+                    Capsule()
+                        .stroke(isActive ? Color.mintAccent : Color.echoTextTertiary.opacity(0.4), lineWidth: 1)
+                )
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var tagOverflowSheet: some View {
+        NavigationStack {
+            List {
+                Button(action: {
+                    viewModel.activeTagFilter = nil
+                    showingTagOverflow = false
+                }) {
+                    HStack {
+                        Text("All notes")
+                            .font(.bodyEcho())
+                            .foregroundColor(.echoTextPrimary)
+                        Spacer()
+                        if viewModel.activeTagFilter == nil {
+                            Image(systemName: "checkmark")
                                 .foregroundColor(.mintAccent)
                         }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(Color.mintAccent.opacity(0.07))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.mintAccent.opacity(0.15), lineWidth: 1)
-                )
-                .padding(.horizontal, EchoSpacing.screenPadding)
+                .listRowBackground(Color.noteCardBackground)
+
+                ForEach(viewModel.allTags, id: \.self) { tag in
+                    Button(action: {
+                        viewModel.activeTagFilter = tag
+                        showingTagOverflow = false
+                    }) {
+                        HStack {
+                            Text("#\(tag)")
+                                .font(.bodyEcho())
+                                .foregroundColor(.echoTextPrimary)
+                            Spacer()
+                            if viewModel.activeTagFilter == tag {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.mintAccent)
+                            }
+                        }
+                    }
+                    .listRowBackground(Color.noteCardBackground)
+                }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color.echoBackground)
+            .navigationTitle("Filter by tag")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { showingTagOverflow = false }
+                        .foregroundColor(.mintAccent)
+                }
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 60)
-        .sheet(isPresented: $showingContinueListeningSheet) {
-            ContinueListeningSheetView()
-        }
+        .preferredColorScheme(.dark)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }
 

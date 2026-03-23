@@ -343,7 +343,8 @@ struct EpisodePlayerView: View {
                 NoteCaptureSheetWrapper(
                     episode: episode,
                     podcast: podcast,
-                    currentTime: player.currentTime
+                    currentTime: player.currentTime,
+                    existingTags: []
                 )
             }
         }
@@ -1151,12 +1152,14 @@ struct NoteCaptureSheetWrapper: View {
     let episode: RSSEpisode
     let podcast: PodcastEntity
     let currentTime: TimeInterval
+    let existingTags: [String]
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
 
     @State private var noteText: String = ""
-    @State private var tags: String = ""
+    @State private var selectedTags: [String] = []
+    @State private var tagInput: String = ""
     @State private var saveErrorMessage: String? = nil
     @State private var showSaveError: Bool = false
 
@@ -1214,15 +1217,74 @@ struct NoteCaptureSheetWrapper: View {
                             Text("Tags")
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(.primary)
-                            TextField("interesting, quote...", text: $tags)
-                                .font(.system(size: 15))
-                                .padding(12)
-                                .background(Color(red: 0.2, green: 0.2, blue: 0.2))
-                                .cornerRadius(12)
-                            Text("Separate tags with commas")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.secondary)
-                                .padding(.leading, 2)
+
+                            // Selected tag chips
+                            if !selectedTags.isEmpty {
+                                FlowLayout(spacing: 6) {
+                                    ForEach(selectedTags, id: \.self) { tag in
+                                        HStack(spacing: 4) {
+                                            Text("#\(tag)")
+                                                .font(.system(size: 13, weight: .medium))
+                                                .foregroundColor(.mintAccent)
+                                            Button(action: { selectedTags.removeAll { $0 == tag } }) {
+                                                Image(systemName: "xmark")
+                                                    .font(.system(size: 10, weight: .bold))
+                                                    .foregroundColor(.mintAccent.opacity(0.7))
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 5)
+                                        .background(Color.mintAccent.opacity(0.12))
+                                        .overlay(
+                                            Capsule().stroke(Color.mintAccent.opacity(0.3), lineWidth: 1)
+                                        )
+                                        .clipShape(Capsule())
+                                    }
+                                }
+                            }
+
+                            // Tag input field
+                            if selectedTags.count < 5 {
+                                TextField("Add a tag...", text: $tagInput)
+                                    .font(.system(size: 15))
+                                    .padding(12)
+                                    .background(Color(red: 0.2, green: 0.2, blue: 0.2))
+                                    .cornerRadius(12)
+                                    .autocorrectionDisabled()
+                                    .textInputAutocapitalization(.never)
+                                    .onSubmit { commitTagInput() }
+
+                                // Suggestions
+                                let suggestions = tagSuggestions
+                                if !suggestions.isEmpty {
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        ForEach(suggestions, id: \.self) { suggestion in
+                                            Button(action: { addTag(suggestion) }) {
+                                                HStack {
+                                                    Text(suggestion.hasPrefix("Create") ? suggestion : "#\(suggestion)")
+                                                        .font(.system(size: 14))
+                                                        .foregroundColor(suggestion.hasPrefix("Create") ? .echoTextSecondary : .echoTextPrimary)
+                                                    Spacer()
+                                                }
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 10)
+                                            }
+                                            .buttonStyle(.plain)
+                                            if suggestion != suggestions.last {
+                                                Divider().padding(.leading, 12)
+                                            }
+                                        }
+                                    }
+                                    .background(Color(red: 0.2, green: 0.2, blue: 0.2))
+                                    .cornerRadius(12)
+                                }
+
+                                Text("Up to 5 tags")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(.secondary)
+                                    .padding(.leading, 2)
+                            }
                         }
 
                         // Save button
@@ -1291,8 +1353,7 @@ struct NoteCaptureSheetWrapper: View {
         newNote.noteText = noteText
         newNote.createdAt = Date()
         newNote.podcast = podcast
-        let tagList = tags.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-        newNote.tags = tagList.joined(separator: ",")
+        newNote.tags = selectedTags.joined(separator: ",")
 
         do {
             try viewContext.save()
@@ -1303,18 +1364,59 @@ struct NoteCaptureSheetWrapper: View {
             showSaveError = true
         }
     }
+
+    private var tagSuggestions: [String] {
+        guard !tagInput.isEmpty else { return [] }
+        let input = tagInput.lowercased().trimmingCharacters(in: .whitespaces)
+        let matches = existingTags
+            .filter { $0.lowercased().contains(input) && !selectedTags.contains($0) }
+            .prefix(4)
+        var results = Array(matches)
+        if !selectedTags.contains(input) && !existingTags.contains(input) && results.isEmpty {
+            results.append("Create \"\(input)\"")
+        }
+        return results
+    }
+
+    private func commitTagInput() {
+        let input = tagInput.lowercased()
+            .trimmingCharacters(in: .whitespaces)
+            .prefix(20)
+            .description
+        guard !input.isEmpty,
+              !selectedTags.contains(input),
+              selectedTags.count < 5 else { return }
+        selectedTags.append(input)
+        tagInput = ""
+    }
+
+    private func addTag(_ suggestion: String) {
+        let tag: String
+        if suggestion.hasPrefix("Create \"") {
+            tag = tagInput.lowercased().trimmingCharacters(in: .whitespaces)
+        } else {
+            tag = suggestion
+        }
+        guard !tag.isEmpty,
+              !selectedTags.contains(tag),
+              selectedTags.count < 5 else { return }
+        selectedTags.append(tag)
+        tagInput = ""
+    }
 }
 
 // MARK: - Edit Note Sheet Wrapper
 
 struct EditNoteSheetWrapper: View {
     let existingNote: NoteEntity
+    let existingTags: [String]
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
 
     @State private var noteText: String = ""
-    @State private var tags: String = ""
+    @State private var selectedTags: [String] = []
+    @State private var tagInput: String = ""
     @State private var saveErrorMessage: String? = nil
     @State private var showSaveError: Bool = false
 
@@ -1372,15 +1474,74 @@ struct EditNoteSheetWrapper: View {
                             Text("Tags")
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(.primary)
-                            TextField("interesting, quote...", text: $tags)
-                                .font(.system(size: 15))
-                                .padding(12)
-                                .background(Color(red: 0.2, green: 0.2, blue: 0.2))
-                                .cornerRadius(12)
-                            Text("Separate tags with commas")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.secondary)
-                                .padding(.leading, 2)
+
+                            // Selected tag chips
+                            if !selectedTags.isEmpty {
+                                FlowLayout(spacing: 6) {
+                                    ForEach(selectedTags, id: \.self) { tag in
+                                        HStack(spacing: 4) {
+                                            Text("#\(tag)")
+                                                .font(.system(size: 13, weight: .medium))
+                                                .foregroundColor(.mintAccent)
+                                            Button(action: { selectedTags.removeAll { $0 == tag } }) {
+                                                Image(systemName: "xmark")
+                                                    .font(.system(size: 10, weight: .bold))
+                                                    .foregroundColor(.mintAccent.opacity(0.7))
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 5)
+                                        .background(Color.mintAccent.opacity(0.12))
+                                        .overlay(
+                                            Capsule().stroke(Color.mintAccent.opacity(0.3), lineWidth: 1)
+                                        )
+                                        .clipShape(Capsule())
+                                    }
+                                }
+                            }
+
+                            // Tag input field
+                            if selectedTags.count < 5 {
+                                TextField("Add a tag...", text: $tagInput)
+                                    .font(.system(size: 15))
+                                    .padding(12)
+                                    .background(Color(red: 0.2, green: 0.2, blue: 0.2))
+                                    .cornerRadius(12)
+                                    .autocorrectionDisabled()
+                                    .textInputAutocapitalization(.never)
+                                    .onSubmit { commitTagInput() }
+
+                                // Suggestions
+                                let suggestions = tagSuggestions
+                                if !suggestions.isEmpty {
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        ForEach(suggestions, id: \.self) { suggestion in
+                                            Button(action: { addTag(suggestion) }) {
+                                                HStack {
+                                                    Text(suggestion.hasPrefix("Create") ? suggestion : "#\(suggestion)")
+                                                        .font(.system(size: 14))
+                                                        .foregroundColor(suggestion.hasPrefix("Create") ? .echoTextSecondary : .echoTextPrimary)
+                                                    Spacer()
+                                                }
+                                                .padding(.horizontal, 12)
+                                                .padding(.vertical, 10)
+                                            }
+                                            .buttonStyle(.plain)
+                                            if suggestion != suggestions.last {
+                                                Divider().padding(.leading, 12)
+                                            }
+                                        }
+                                    }
+                                    .background(Color(red: 0.2, green: 0.2, blue: 0.2))
+                                    .cornerRadius(12)
+                                }
+
+                                Text("Up to 5 tags")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(.secondary)
+                                    .padding(.leading, 2)
+                            }
                         }
 
                         // Update button
@@ -1431,17 +1592,13 @@ struct EditNoteSheetWrapper: View {
         .preferredColorScheme(.dark)
         .onAppear {
             noteText = existingNote.noteText ?? ""
-            tags = existingNote.tagsArray.joined(separator: ", ")
+            selectedTags = existingNote.tagsArray
         }
     }
 
     private func updateNote() {
         existingNote.noteText = noteText
-        existingNote.tags = tags
-            .split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
-            .joined(separator: ",")
+        existingNote.tags = selectedTags.joined(separator: ",")
 
         do {
             try viewContext.save()
@@ -1450,6 +1607,45 @@ struct EditNoteSheetWrapper: View {
             saveErrorMessage = "Failed to save: \(error.localizedDescription)"
             showSaveError = true
         }
+    }
+
+    private var tagSuggestions: [String] {
+        guard !tagInput.isEmpty else { return [] }
+        let input = tagInput.lowercased().trimmingCharacters(in: .whitespaces)
+        let matches = existingTags
+            .filter { $0.lowercased().contains(input) && !selectedTags.contains($0) }
+            .prefix(4)
+        var results = Array(matches)
+        if !selectedTags.contains(input) && !existingTags.contains(input) && results.isEmpty {
+            results.append("Create \"\(input)\"")
+        }
+        return results
+    }
+
+    private func commitTagInput() {
+        let input = tagInput.lowercased()
+            .trimmingCharacters(in: .whitespaces)
+            .prefix(20)
+            .description
+        guard !input.isEmpty,
+              !selectedTags.contains(input),
+              selectedTags.count < 5 else { return }
+        selectedTags.append(input)
+        tagInput = ""
+    }
+
+    private func addTag(_ suggestion: String) {
+        let tag: String
+        if suggestion.hasPrefix("Create \"") {
+            tag = tagInput.lowercased().trimmingCharacters(in: .whitespaces)
+        } else {
+            tag = suggestion
+        }
+        guard !tag.isEmpty,
+              !selectedTags.contains(tag),
+              selectedTags.count < 5 else { return }
+        selectedTags.append(tag)
+        tagInput = ""
     }
 }
 

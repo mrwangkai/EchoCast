@@ -14,6 +14,7 @@ class NoteViewModel: ObservableObject {
     @Published var searchText: String = ""
     @Published var filterPriority: Bool = false
     @Published var sortOrder: SortOrder = .dateDescending
+    @Published var activeTagFilter: String? = nil
 
     private let persistenceController: PersistenceController
     private var cancellables = Set<AnyCancellable>()
@@ -51,6 +52,11 @@ class NoteViewModel: ObservableObject {
         if filterPriority {
             let priorityPredicate = NSPredicate(format: "isPriority == YES")
             predicates.append(priorityPredicate)
+        }
+
+        if let tagFilter = activeTagFilter {
+            let tagPredicate = NSPredicate(format: "tags CONTAINS[cd] %@", tagFilter)
+            predicates.append(tagPredicate)
         }
 
         if !predicates.isEmpty {
@@ -94,6 +100,12 @@ class NoteViewModel: ObservableObject {
             .store(in: &cancellables)
 
         $sortOrder
+            .sink { [weak self] _ in
+                self?.fetchNotes()
+            }
+            .store(in: &cancellables)
+
+        $activeTagFilter
             .sink { [weak self] _ in
                 self?.fetchNotes()
             }
@@ -145,5 +157,19 @@ class NoteViewModel: ObservableObject {
             note.showTitle ?? "Unknown Show"
         }
         return grouped.sorted { $0.key < $1.key }.map { (key: $0.key, notes: $0.value) }
+    }
+
+    var allTags: [String] {
+        var tagFrequency: [String: Int] = [:]
+        for note in notes {
+            let tags = (note.tags ?? "")
+                .split(separator: ",")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
+            for tag in tags {
+                tagFrequency[tag, default: 0] += 1
+            }
+        }
+        return tagFrequency.sorted { $0.value > $1.value }.map { $0.key }
     }
 }

@@ -10,7 +10,7 @@ Instructions:
 
 ## 🔥 In Progress
 
-- [ ] T105 LOE: S (P2) Description: Experiment branch — (1) surface-differentiate Continue Listening section with subtle elevated background vs. flat Podcasts section, mirroring Granola's two-floor home hierarchy; (2) anchor empty state to geometric center rather than fixed top offset. Branch: t102-home-granola-treatment
+(No active tasks — see Backlog for available work)
 
 
 ## 🧭 Backlog
@@ -40,21 +40,20 @@ Instructions:
 - [ ] T102 (P2) – improve the zero state illustration. On home screen's empty state, green was used in the highlight of the illustration, vs. the library tab's empty state where its just gray.
 - [ ] T103 (P1) Improve the tagging system, so it is easy to add, manage (update, remove), and search. #refinements
 - [x] T104 LOE: L (P0) Description: CarPlay Add Note — replace notification-based phone handoff with in-process voice capture using SFSpeechRecognizer + AVSpeechSynthesizer. Button tap speaks "What's your note?", captures live speech via car mic, saves note to Core Data directly (mirroring AddNoteIntent.perform() logic), speaks confirmation. Set AddNoteIntent.openAppWhenRun = false separately to prevent phone foregrounding when Siri invokes the intent by voice shortcut. (build/build17) (Commit: 8337ca4)
-- [ ] T106 LOE: S (P1) Description: NoteViewModel tag filter — add `activeTagFilter: String?`, `allTags: [String]` computed by tag frequency across all notes, tag predicate wired into fetchNotes() NSCompoundPredicate, `$activeTagFilter` Combine subscription.
-- [ ] T107 LOE: S (P1) Description: TagFilterBar component in LibraryView — "All" chip + top 4 tags by frequency + "+N more" overflow chip → bottom sheet with full alphabetical list. Single-select, mintAccent active state, hidden when allTags is empty.
-- [ ] T108 LOE: XS (P1) Description: Wire TagFilterBar into LibraryView.searchAndFilterSection between search field and note count line. Add filtered empty state ("No notes tagged #x" + Clear filter button) when activeTagFilter is set and notes list is empty.
-- [ ] T109 LOE: M (P2) Description: Tag input in NoteCaptureSheetWrapper (Add Note sheet) — inline autocomplete chip input, fuzzy-match existing tags, "Create #tag" fallback, max 5 tags, 20-char limit, lowercase-normalized on save.
-- [ ] T110 LOE: S (P3) Description: Tag management screen — rename, delete, merge tags. Deferred post-MVP. Data model already supports it via comma-separated tags string on NoteEntity.
 - [ ] T111 LOE: S (P1) Descritpion: On the "Continue Listening" tab, please allow swipe to delete without requiring a confirmation dialogue
 - [ ] T112 LOE: M? (P1) improve browsing and searching experience. Potentially adding a "for you" section based on type of podcasts that have been followed or played/listened. <- should there be a log of "listened" episodes, does overcast or other podcast do this in the background in order to provide a more personalized/customized experience?
+- [ ] T113 LOE: S (P1) Description: NoteViewModel tag filter — add `activeTagFilter: String?`, `allTags: [String]` computed by tag frequency across all notes, tag predicate wired into fetchNotes() NSCompoundPredicate, `$activeTagFilter` Combine subscription.
+- [ ] T114 LOE: S (P1) Description: TagFilterBar component in LibraryView — "All" chip + top 4 tags by frequency + "+N more" overflow chip → bottom sheet with full alphabetical list. Single-select, mintAccent active state, hidden when allTags is empty.
+- [ ] T115 LOE: XS (P1) Description: Wire TagFilterBar into LibraryView.searchAndFilterSection between search field and note count line. Add filtered empty state ("No notes tagged #x" + Clear filter button) when activeTagFilter is set and notes list is empty.
+- [ ] T116 LOE: M (P2) Description: Upgrade tags input in both NoteCaptureSheetWrapper and EditNoteSheetWrapper (EpisodePlayerView.swift) from plain comma TextField to autocomplete chip input — fuzzy-match against existing tags passed in as parameter, "Create #tag" fallback, dismissible chips, max 5 tags, 20-char limit, lowercase-normalized on save.
+- [ ] T117 LOE: S (P3) Description: Tag management screen — rename, delete, merge tags. Deferred post-MVP. Data model already supports it via comma-separated tags string on NoteEntity.
 
 
 ## 📨 Inbox (raw ideas)
 - [ ] T38 (P1): Notes listing on notes tab feel … improvement needed (LOE: L - redesign work)
 - [ ] T39 (P1): Update button style for play — maybe more rounded (LOE: XS)
 - [ ] T48 (P3): Update animation for how the markers show up. Right now its flying in from the left, which feels a bit buggy. And this is happening after the skeleton loading screen. (LOE: M)
-- [ ] T50 (P2): "Search is weird". when typing fast, "Con" does not have "Conan" as a top choice; when typing "Co", "Conan" shows up as a top choice. (LOE: M - diagnostic)
-- [x] T53 (P3): CarPlay notes incorrectly write sourceApp = 'Siri' via AddNoteIntent — should write 'CarPlay'. Fix CarPlayNowPlayingController to pass sourceApp directly to createNote rather than routing through AddNoteIntent. (LOE: XS). This is resolved by T101. 
+- [ ] T50 (P2): "Search is weird". when typing fast, "Con" does not have "Conan" as a top choice; when typing "Co", "Conan" shows up as a top choice. (LOE: M - diagnostic) 
 
 ## ✅ Done
 
@@ -128,6 +127,9 @@ Instructions:
 - [x] T99 (P1) — Fix lock screen artwork flashing — Added MPMediaItemPropertyArtwork to updateNowPlayingInfo() in GlobalPlayerManager; if cachedArtworkImage is available, includes it in first nowPlayingInfo assignment to prevent flash. (build/build16) (Commit: 472f95f)
 - [x] T100 (P2) — Fix Home Screen empty state not rendering after deleting last item — Decoupled section guards so each section shows only based on its own content; Continue Listening: player.currentEpisode || continueListeningEpisodes, Notes: recentNotes, empty state: all four data sources empty. (build/build16) (Commit: de181f7)
 - [x] T101 (P1) — CarPlay Add Note → Siri-style dictation — Replaced false voice confirmation + AddNoteSheet trigger with CarPlayDictationView using SFSpeechRecognizer + AVAudioEngine for live transcription; CarPlay button posts notification → phone presents dictation sheet → on save, posts EchoCast.carPlayNoteSaved → CarPlay plays real audio confirmation. sourceApp set to "CarPlay". (build/build16) (Commit: d7b97fa)
+- [x] T105 LOE: S (P2) — Granola-inspired home treatment — anchored empty state (GeometryReader, 42% vertical position) + explored elevated Continue Listening band treatment (removed after visual review). (build/build17) (Commit: 7aa9697)
+- [x] T53 (P3) — CarPlay notes sourceApp fix — Resolved by T104. T104's saveNote() in CarPlayNowPlayingController writes sourceApp = "CarPlay" directly to Core Data, bypassing AddNoteIntent entirely. No separate fix needed. (Commit: 8337ca4)
+- [x] T104 LOE: L (P0) — CarPlay Add Note: In-Process Voice Capture — Replaced notification-based phone handoff (which required phone interaction) with SFSpeechRecognizer + AVAudioEngine running in-process on CarPlay. Button tap in CPNowPlayingTemplate speaks "What's your note?" via AVSpeechSynthesizer, opens mic, captures live speech via car mic for up to 10 seconds, transcribes via SFSpeechRecognizer, saves note to Core Data with sourceApp = "CarPlay" and current playback timestamp from GlobalPlayerManager, then speaks "Note saved at [M:SS]" confirmation and shows CPAlertTemplate banner. Set AddNoteIntent.openAppWhenRun = false to prevent phone foregrounding when Siri invokes the intent by voice shortcut. Added import Speech, five new properties (speechRecognizer, recognitionRequest, recognitionTask, audioEngine, isCapturingNote), and four new methods (startVoiceCapture, beginRecognition, stopRecognition, saveNote) to CarPlayNowPlayingController. Removed showCarPlayAlert() as no longer needed. (build/build17) (Commit: 8337ca4)
 
 ## Reported bug 🐞
 - [ ] T44 (P1): "There doesn't appear to be a way to get back to the episodes list when you start an episode". This is an assumption that user are familiar with the swipe down action, which may not be the case. (LOE: S - add back button or dismiss)

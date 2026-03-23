@@ -108,7 +108,8 @@ struct ContentView: View {
                 NoteCaptureSheetWrapper(
                     episode: episode,
                     podcast: podcast,
-                    currentTime: player.currentTime
+                    currentTime: player.currentTime,
+                    existingTags: []
                 )
                 .environment(\.managedObjectContext, viewContext)
             }
@@ -3442,7 +3443,7 @@ struct NoteDetailSheet: View {
             }
         }
         .sheet(isPresented: $showingEditSheet) {
-            EditNoteSheetWrapper(existingNote: note)
+            EditNoteSheetWrapper(existingNote: note, existingTags: [])
                 .environment(\.managedObjectContext, viewContext)
         }
     }
