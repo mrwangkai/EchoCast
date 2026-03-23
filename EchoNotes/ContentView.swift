@@ -21,6 +21,7 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @StateObject private var player = GlobalPlayerManager.shared
     @StateObject private var devStatus = DevStatusManager.shared
+    @StateObject private var noteViewModel = NoteViewModel()
     @State private var showSiriNoteCaptureSheet = false
     @State private var siriNoteTimestamp = ""
     @State private var showFullPlayer = false  // Manage full player sheet at root level
@@ -109,7 +110,7 @@ struct ContentView: View {
                     episode: episode,
                     podcast: podcast,
                     currentTime: player.currentTime,
-                    existingTags: []
+                    existingTags: noteViewModel.allTags
                 )
                 .environment(\.managedObjectContext, viewContext)
             }
