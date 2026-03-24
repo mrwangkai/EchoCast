@@ -42,6 +42,7 @@ Instructions:
 - [ ] T111 LOE: S (P1) Descritpion: On the "Continue Listening" tab, please allow swipe to delete without requiring a confirmation dialogue
 - [ ] T112 LOE: M? (P1) improve browsing and searching experience. Potentially adding a "for you" section based on type of podcasts that have been followed or played/listened. <- should there be a log of "listened" episodes, does overcast or other podcast do this in the background in order to provide a more personalized/customized experience?
 - [ ] T117 LOE: S (P3) Description: Tag management screen — rename, delete, merge tags. Deferred post-MVP. Data model already supports it via comma-separated tags string on NoteEntity.
+- [ ] T122 LOE: S (P1) Description: CarPlay recording UX fixes — (A) pause GlobalPlayerManager playback at recording start and resume on stopRecognition(); (B) speak "Listening" via AVSpeechSynthesizer immediately after beep so driver knows mic is open; (C) replace silent early return in saveNote() with spoken "Nothing captured, try again" feedback. All changes scoped to CarPlayNowPlayingController.swift only.
 
 ## 📨 Inbox (raw ideas)
 - [ ] T38 (P1): Notes listing on notes tab feel … improvement needed (LOE: L - redesign work)
@@ -131,6 +132,8 @@ Instructions:
 - [x] T118 LOE: XS (P1) — Wire NoteViewModel.allTags to NoteCaptureSheetWrapper existingTags — Added @StateObject private var noteViewModel = NoteViewModel() to ContentView, updated NoteCaptureSheetWrapper call to pass existingTags: noteViewModel.allTags instead of empty array placeholder. Autocomplete now surfaces real tags from user's note history. (build/build17) (Commit: b9ec22a)
 - [x] T119 LOE: S (P1) — CarPlay Add Note: Red Dot Recording State — Replaced notification-based phone handoff with single-tap in-process voice capture. Button icon switches to red dot recording state (programmatically rendered via UIGraphicsImageRenderer) on tap. Short beep via AudioServicesPlaySystemSound signals recording start. SFSpeechRecognizer + AVAudioEngine capture live speech via car mic, auto-stop after 10s. Note saved to Core Data with sourceApp = "CarPlay" and current playback timestamp. Spoken confirmation via AVSpeechSynthesizer + CPAlertTemplate visual confirmation after save. AddNoteIntent.openAppWhenRun set to false. Removed showCarPlayAlert(). (build/build17) (Commit: 0f983ad)
 - [x] T102 (P2) — Home zero state illustration consistency — Changed waveform icon color from .mintAccent (green) to .echoTextTertiary (gray) to match Library tab empty state styling. (Commit: d41b420)
+- [x] T120 (P1) — Home screen always show all 3 sections with empty states — Always render Continue Listening, Your Podcasts, and Notes sections regardless of data. Each section has its own empty state. Removed global emptyStateView. Follow-up: added horizontal padding to "No episodes in progress", replaced card-style empty state in Your Podcasts with plain text. (build/build18) (Commit: 2875398)
+- [x] T121 (P2) — Settings: Add "Reset App Data" button — Added destructive action separate from "Clear Cache". "Reset App Data" deletes all NoteEntity records and calls clearCache(). Includes confirmation alert warning about permanent note deletion. (build/build18) (Commit: 757ed75)
 
 
 ## Reported bug 🐞
