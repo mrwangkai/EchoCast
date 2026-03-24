@@ -73,19 +73,15 @@ struct HomeView: View {
                         .frame(height: 0)
 
                     // Continue Listening Section
-                    if player.currentEpisode != nil || !continueListeningEpisodes.isEmpty {
-                        continueListeningSection
-                    }
+                    continueListeningSection
 
                     // Following Section
-                    if !followedPodcasts.isEmpty {
-                        followingSection
-                    }
+                    followingSection
 
                     // Recent Notes Section
                     if !recentNotes.isEmpty {
                         recentNotesSection
-                    } else if !continueListeningEpisodes.isEmpty || !followedPodcasts.isEmpty || player.currentEpisode != nil {
+                    } else {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Notes")
                                 .font(.title2Echo())
@@ -93,14 +89,6 @@ struct HomeView: View {
                                 .padding(.horizontal, EchoSpacing.screenPadding)
                             notesEmptyStateCard
                         }
-                    }
-
-                    // Empty state - only show when there's no content at all
-                    if player.currentEpisode == nil &&
-                       continueListeningEpisodes.isEmpty &&
-                       recentNotes.isEmpty &&
-                       followedPodcasts.isEmpty {
-                        emptyStateView
                     }
                 }
                 .padding(.bottom, 100)
@@ -282,14 +270,16 @@ struct HomeView: View {
                     .font(.title2Echo())
                     .foregroundColor(.echoTextPrimary)
                 Spacer()
-                Button {
-                    showingContinueListeningSheet = true
-                } label: {
-                    Text("View all")
-                        .font(.body)
-                        .foregroundColor(Color.mintAccent.opacity(0.85))
+                if !continueListeningEpisodes.isEmpty || player.currentEpisode != nil {
+                    Button {
+                        showingContinueListeningSheet = true
+                    } label: {
+                        Text("View all")
+                            .font(.body)
+                            .foregroundColor(Color.mintAccent.opacity(0.85))
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 20)
 
@@ -323,6 +313,7 @@ struct HomeView: View {
                 Text("No episodes in progress")
                     .font(.bodyEcho())
                     .foregroundColor(.echoTextTertiary)
+                    .padding(.horizontal, EchoSpacing.screenPadding)
             }
         }
     }
@@ -336,18 +327,25 @@ struct HomeView: View {
                     .font(.title2Echo())
                     .foregroundColor(.echoTextPrimary)
                 Spacer()
-                Button {
-                    showingYourShowsSheet = true
-                } label: {
-                    Text("View all")
-                        .font(.body)
-                        .foregroundColor(Color.mintAccent.opacity(0.85))
+                if !followedPodcasts.isEmpty {
+                    Button {
+                        showingYourShowsSheet = true
+                    } label: {
+                        Text("View all")
+                            .font(.body)
+                            .foregroundColor(Color.mintAccent.opacity(0.85))
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 20)
 
-            if followedPodcasts.count == 1 {
+            if followedPodcasts.isEmpty {
+                Text("Follow a podcast to see it here")
+                    .font(.bodyEcho())
+                    .foregroundColor(.echoTextTertiary)
+                    .padding(.horizontal, EchoSpacing.screenPadding)
+            } else if followedPodcasts.count == 1 {
                 // Single podcast: show card
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
