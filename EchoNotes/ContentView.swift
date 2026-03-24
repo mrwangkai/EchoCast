@@ -3458,6 +3458,7 @@ struct SettingsView: View {
     @ObservedObject var historyManager = PlaybackHistoryManager.shared
     @State private var showOnboarding = false
     @State private var showClearCacheAlert = false
+    @State private var showResetAppDataAlert = false
     @State private var showOPMLOptions = false
     @State private var showDebugConsole = false
 
@@ -3542,6 +3543,13 @@ struct SettingsView: View {
                         }
                     }
 
+                    Button(role: .destructive) {
+                        showResetAppDataAlert = true
+                    } label: {
+                        Text("Reset App Data")
+                            .foregroundColor(.red)
+                    }
+
                     Button(action: {
                         showOnboarding = true
                     }) {
@@ -3569,6 +3577,14 @@ struct SettingsView: View {
                 }
             } message: {
                 Text("This will delete all notes, podcasts, and playback history. This action cannot be undone.")
+            }
+            .alert("Reset App Data?", isPresented: $showResetAppDataAlert) {
+                Button("Delete All Notes", role: .destructive) {
+                    resetAppData()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will permanently delete all your notes. This cannot be undone.")
             }
             .fullScreenCover(isPresented: $showOnboarding) {
                 OnboardingView(isOnboardingComplete: $showOnboarding)
@@ -3622,6 +3638,20 @@ struct SettingsView: View {
         } catch {
             print("❌ Error clearing cache: \(error)")
         }
+    }
+
+    private func resetAppData() {
+        // Delete all NoteEntity records
+        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NoteEntity.fetchRequest()
+        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        do {
+            try viewContext.execute(deleteRequest)
+            try viewContext.save()
+        } catch {
+            print("❌ [Settings] Failed to delete notes: \(error)")
+        }
+        // Then clear cache as well
+        clearCache()
     }
 }
 
