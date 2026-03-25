@@ -120,10 +120,21 @@ class CarPlayNowPlayingController {
         isCapturingNote = true
         updateButtonState(isRecording: true)
 
+        // T122: Pause playback during recording so mic captures voice cleanly
+        GlobalPlayerManager.shared.pause()
+
         // Brief beep to signal recording start
         AudioServicesPlaySystemSound(1113)
 
+        // T122: Spoken affordance so driver knows mic is open
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self = self else { return }
+            let listeningPrompt = AVSpeechUtterance(string: "Listening")
+            listeningPrompt.voice = AVSpeechSynthesisVoice(language: "en-US")
+            listeningPrompt.rate = 0.5
+            self.speechSynthesizer.speak(listeningPrompt)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
             self?.beginRecognition()
         }
     }
@@ -178,6 +189,9 @@ class CarPlayNowPlayingController {
         isCapturingNote = false
         updateButtonState(isRecording: false)
 
+        // T122: Resume playback after recording stops
+        GlobalPlayerManager.shared.play()
+
         // Restore audio session
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.allowBluetooth])
         try? AVAudioSession.sharedInstance().setActive(true, options: [])
@@ -185,6 +199,11 @@ class CarPlayNowPlayingController {
 
     private func saveNote(text: String) {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            // T122: Audible feedback so driver knows nothing was captured
+            let utterance = AVSpeechUtterance(string: "Nothing captured, try again.")
+            utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+            speechSynthesizer.speak(utterance)
+            // T122: Also resume playback since stopRecognition already fired
             return
         }
 
