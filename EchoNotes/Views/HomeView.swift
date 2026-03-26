@@ -46,6 +46,10 @@ struct HomeView: View {
     @State private var showingContinueListeningSheet = false
     @State private var showingYourShowsSheet = false
 
+    // MARK: - Quote Rotation (T127)
+    @AppStorage("lastQuoteIndex") private var lastQuoteIndex: Int = 0
+    @AppStorage("lastQuoteLaunchDate") private var lastQuoteLaunchDate: String = ""
+
     // Namespace for matched geometry effect with mini player
     @Namespace private var playerAnimation
 
@@ -65,12 +69,188 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Quote Rotation (T127)
+    private var currentQuote: String {
+        let allQuotes = [
+            "The palest ink is better than the best memory.",
+            "Your mind is for having ideas, not holding them.",
+            "A short pencil is mightier than a long memory.",
+            "Reading without noting is like water through sand.",
+            "The best listeners leave a paper trail.",
+            "What you capture, you keep. The rest is just heard.",
+            "One note taken is worth ten things remembered.",
+            "Listening is the beginning. Writing is the understanding.",
+            "The most valuable podcast you'll ever consume is the one you wrote down.",
+            "Ideas are guests. Notes are how you ask them to stay.",
+            "You don't remember what you learned. You remember what you wrote.",
+            "Every great thinker had a notebook. This is yours.",
+            "Future you will thank present you. Start the note.",
+            "The podcast ends. The insight doesn't have to.",
+            "Your brain has limited storage. EchoCast doesn't.",
+            "Capture the thing that made you sit up straighter.",
+            "Notes are how good ideas survive the commute.",
+            "The moment you think 'I'll remember this' — write it down."
+        ]
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        let today = formatter.string(from: Date())
+
+        if lastQuoteLaunchDate != today {
+            // Date has changed — rotate to next quote
+            let nextIndex = (lastQuoteIndex + 1) % allQuotes.count
+            lastQuoteIndex = nextIndex
+            lastQuoteLaunchDate = today
+            return allQuotes[nextIndex]
+        } else {
+            // Same day — return current quote
+            return allQuotes[lastQuoteIndex]
+        }
+    }
+
+    // MARK: - Stat Summary (T127)
+    private var recentNotesCount: Int {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
+        return recentNotes.filter { ($0.createdAt ?? .distantPast) >= cutoff }.count
+    }
+
+    private var recentPodcastCount: Int {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
+        let titles = recentNotes
+            .filter { ($0.createdAt ?? .distantPast) >= cutoff }
+            .compactMap { $0.showTitle }
+        return Set(titles).count
+    }
+
+    private var topTags: [String] {
+        let allTags = recentNotes.flatMap { $0.tagsArray }
+        let freq = allTags.reduce(into: [:]) { $0[$1, default: 0] += 1 }
+        return freq.sorted { $0.value > $1.value }.prefix(3).map { $0.key }
+    }
+
+    // MARK: - Notes Ceiling Block (T127)
+    private var notesCeilingBlock: some View {
+        VStack(alignment: .leading, spacing: 12) {
+
+            // Quote OR stat summary
+            if recentNotesCount == 0 {
+                // Empty state: quote only — no stat row
+                EmptyView()
+            } else {
+                // Stat summary
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("\(recentNotesCount) notes across \(recentPodcastCount) \(recentPodcastCount == 1 ? "podcast" : "podcasts") in the last 30 days")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Color.white.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if !topTags.isEmpty {
+                        HStack(spacing: 6) {
+                            ForEach(topTags, id: \.self) { tag in
+                                Text("#\(tag)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.mintAccent)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(Color.mintAccent.opacity(0.1))
+                                    .clipShape(Capsule())
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(Color.mintAccent.opacity(0.22), lineWidth: 0.5)
+                                    )
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, EchoSpacing.screenPadding)
+            }
+
+            // Horizontal note carousel — always shown
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    if recentNotes.isEmpty {
+                        // Empty carousel: quote card + ghost cards
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(currentQuote)
+                                .font(.system(size: 12))
+                                .foregroundColor(Color.white.opacity(0.55))
+                                .italic()
+                                .lineLimit(4)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            Spacer(minLength: 0)
+
+                            HStack {
+                                Spacer()
+                                Button(action: {
+                                    navigationPath.append("browse")
+                                }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.mintAccent.opacity(0.12))
+                                            .frame(width: 26, height: 26)
+                                        Image(systemName: "arrow.right")
+                                            .font(.system(size: 11, weight: .medium))
+                                            .foregroundColor(.mintAccent)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(12)
+                        .frame(width: 160, height: 110)
+                        .background(Color.mintAccent.opacity(0.05))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.mintAccent.opacity(0.15), lineWidth: 0.5)
+                        )
+
+                        // Ghost cards
+                        ForEach(0..<2, id: \.self) { i in
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(i == 0 ? 0.03 : 0.015))
+                                .frame(width: 160, height: 110)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.04), lineWidth: 0.5)
+                                )
+                        }
+                    } else {
+                        ForEach(recentNotes.prefix(10)) { note in
+                            NoteCarouselCard(note: note)
+                                .onTapGesture {
+                                    selectedNote = note
+                                }
+                        }
+                    }
+                }
+                .padding(.leading, EchoSpacing.screenPadding)
+                .padding(.trailing, EchoSpacing.screenPadding)
+            }
+            .scrollClipDisabled()
+        }
+        .padding(.top, 4)
+        .padding(.bottom, 16)
+        .background(Color(red: 0.145, green: 0.145, blue: 0.145))  // #252525
+        .clipShape(
+            .rect(
+                topLeadingRadius: 0,
+                bottomLeadingRadius: 20,
+                bottomTrailingRadius: 20,
+                topTrailingRadius: 0
+            )
+        )
+    }
+
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(alignment: .leading, spacing: EchoSpacing.homeSectionSpacing) {
-                    Spacer()
-                        .frame(height: 0)
+                    // Notes Ceiling Block (T127)
+                    notesCeilingBlock
 
                     // Continue Listening Section
                     continueListeningSection
@@ -81,14 +261,6 @@ struct HomeView: View {
                     // Recent Notes Section
                     if !recentNotes.isEmpty {
                         recentNotesSection
-                    } else {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Notes")
-                                .font(.title2Echo())
-                                .foregroundColor(.echoTextPrimary)
-                                .padding(.horizontal, EchoSpacing.screenPadding)
-                            notesEmptyStateCard
-                        }
                     }
                 }
                 .padding(.bottom, 100)
@@ -101,7 +273,7 @@ struct HomeView: View {
             .background(Color.echoBackground)
             .navigationTitle("EchoCast")
             .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(Color.echoBackground, for: .navigationBar)
+            .toolbarBackground(Color(red: 0.145, green: 0.145, blue: 0.145), for: .navigationBar)
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     // Search button → pushes to Browse via NavigationPath
@@ -1075,6 +1247,56 @@ private struct YourShowsSheetRow: View {
 
 extension Notification.Name {
     static let openSearch = Notification.Name("EchoCast.openSearch")
+}
+
+// MARK: - Note Carousel Card (T127)
+
+struct NoteCarouselCard: View {
+    let note: NoteEntity
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(note.noteText ?? "")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(Color.white.opacity(0.82))
+                .lineLimit(3)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 8)
+
+            Spacer(minLength: 0)
+
+            if let podcast = note.showTitle {
+                Text(podcast)
+                    .font(.system(size: 10))
+                    .foregroundColor(Color.white.opacity(0.3))
+                    .lineLimit(1)
+                    .padding(.bottom, 4)
+            }
+
+            if let timestamp = note.timestamp {
+                HStack(spacing: 3) {
+                    Image(systemName: "clock")
+                        .font(.system(size: 8))
+                        .foregroundColor(.mintAccent)
+                    Text(timestamp)
+                        .font(.system(size: 10))
+                        .foregroundColor(.mintAccent)
+                }
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(Color.mintAccent.opacity(0.1))
+                .clipShape(Capsule())
+            }
+        }
+        .padding(12)
+        .frame(width: 160, height: 110)
+        .background(Color.white.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.07), lineWidth: 0.5)
+        )
+    }
 }
 
 // MARK: - Podcast Following Card

@@ -10,10 +10,7 @@ Instructions:
 
 ## 🔥 In Progress
 
-- [ ] T123 LOE: XS (P1) Description: Fix "Create tag" row hit area — wrap the entire suggestion row HStack in a Button with .contentShape(Rectangle()) so the full row width is tappable
-- [ ] T124 LOE: S (P1) Description: Differentiate "Create tag" dropdown from the tag input field — distinct background (#242424), leading plus.circle.fill icon in mintAccent, and label copy split into "Create " (secondary color) + tag text (white 85%)
-- [ ] T125 LOE: S (P1) Description: Align tag chip style in Add/Edit Note sheets to match NoteCardView — background #242424 at 65% opacity, text #FFFFFF at 70% opacity, caption2Medium font, 8/4pt padding, cornerRadius 6
-- [ ] T126 LOE: S (P2) Description: Right-align tag chips on NoteCardView with 221pt max-width constraint; overflow chips collapse to +{n} pill; expanded note detail/sheet shows all tags without truncation
+- [ ] T127 LOE: M (P2) Description: Notes ceiling block — full-screen-width elevated surface (#252525) from status bar through large title, containing: (a) quote card [0 notes] or stat summary + tag chips [1+ notes], both followed by horizontal note carousel; quote rotates once per app launch via UserDefaults; 30-day rolling window for stats; top-most tags derived from NoteEntity.tagsArray; ceiling breaks to base background at 20pt bottom radius; removes existing notesEmptyStateCard and standalone emptyStateView. Branch: t127-notes-ceiling
 
 
 ## 🧭 Backlog
