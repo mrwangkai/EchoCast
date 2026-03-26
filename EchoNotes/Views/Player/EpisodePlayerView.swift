@@ -1223,23 +1223,20 @@ struct NoteCaptureSheetWrapper: View {
                                 FlowLayout(spacing: 6) {
                                     ForEach(selectedTags, id: \.self) { tag in
                                         HStack(spacing: 4) {
-                                            Text("#\(tag)")
-                                                .font(.system(size: 13, weight: .medium))
-                                                .foregroundColor(.mintAccent)
+                                            Text(tag)
+                                                .font(.system(size: 12, weight: .medium))
+                                                .foregroundColor(.white.opacity(0.70))
                                             Button(action: { selectedTags.removeAll { $0 == tag } }) {
-                                                Image(systemName: "xmark")
-                                                    .font(.system(size: 10, weight: .bold))
-                                                    .foregroundColor(.mintAccent.opacity(0.7))
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.system(size: 11))
+                                                    .foregroundColor(.white.opacity(0.40))
                                             }
                                             .buttonStyle(.plain)
                                         }
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 5)
-                                        .background(Color.mintAccent.opacity(0.12))
-                                        .overlay(
-                                            Capsule().stroke(Color.mintAccent.opacity(0.3), lineWidth: 1)
-                                        )
-                                        .clipShape(Capsule())
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color(red: 0.141, green: 0.141, blue: 0.141, opacity: 0.65))
+                                        .cornerRadius(6)
                                     }
                                 }
                             }
@@ -1480,23 +1477,20 @@ struct EditNoteSheetWrapper: View {
                                 FlowLayout(spacing: 6) {
                                     ForEach(selectedTags, id: \.self) { tag in
                                         HStack(spacing: 4) {
-                                            Text("#\(tag)")
-                                                .font(.system(size: 13, weight: .medium))
-                                                .foregroundColor(.mintAccent)
+                                            Text(tag)
+                                                .font(.system(size: 12, weight: .medium))
+                                                .foregroundColor(.white.opacity(0.70))
                                             Button(action: { selectedTags.removeAll { $0 == tag } }) {
-                                                Image(systemName: "xmark")
-                                                    .font(.system(size: 10, weight: .bold))
-                                                    .foregroundColor(.mintAccent.opacity(0.7))
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.system(size: 11))
+                                                    .foregroundColor(.white.opacity(0.40))
                                             }
                                             .buttonStyle(.plain)
                                         }
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 5)
-                                        .background(Color.mintAccent.opacity(0.12))
-                                        .overlay(
-                                            Capsule().stroke(Color.mintAccent.opacity(0.3), lineWidth: 1)
-                                        )
-                                        .clipShape(Capsule())
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color(red: 0.141, green: 0.141, blue: 0.141, opacity: 0.65))
+                                        .cornerRadius(6)
                                     }
                                 }
                             }
