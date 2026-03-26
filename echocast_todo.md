@@ -10,7 +10,10 @@ Instructions:
 
 ## 🔥 In Progress
 
-(No active tasks — see Backlog for available work)
+- [ ] T123 LOE: XS (P1) Description: Fix "Create tag" row hit area — wrap the entire suggestion row HStack in a Button with .contentShape(Rectangle()) so the full row width is tappable
+- [ ] T124 LOE: S (P1) Description: Differentiate "Create tag" dropdown from the tag input field — distinct background (#242424), leading plus.circle.fill icon in mintAccent, and label copy split into "Create " (secondary color) + tag text (white 85%)
+- [ ] T125 LOE: S (P1) Description: Align tag chip style in Add/Edit Note sheets to match NoteCardView — background #242424 at 65% opacity, text #FFFFFF at 70% opacity, caption2Medium font, 8/4pt padding, cornerRadius 6
+- [ ] T126 LOE: S (P2) Description: Right-align tag chips on NoteCardView with 221pt max-width constraint; overflow chips collapse to +{n} pill; expanded note detail/sheet shows all tags without truncation
 
 
 ## 🧭 Backlog
@@ -42,6 +45,8 @@ Instructions:
 - [ ] T111 LOE: S (P1) Descritpion: On the "Continue Listening" tab, please allow swipe to delete without requiring a confirmation dialogue
 - [ ] T112 LOE: M? (P1) improve browsing and searching experience. Potentially adding a "for you" section based on type of podcasts that have been followed or played/listened. <- should there be a log of "listened" episodes, does overcast or other podcast do this in the background in order to provide a more personalized/customized experience?
 - [ ] T117 LOE: S (P3) Description: Tag management screen — rename, delete, merge tags. Deferred post-MVP. Data model already supports it via comma-separated tags string on NoteEntity.
+- [ ] T127 LOE: M (P2) Description: Notes ceiling block — full-screen-width elevated surface (#252525) from status bar through large title, containing: (a) quote card [0 notes] or stat summary + tag chips [1+ notes], both followed by horizontal note carousel; quote rotates once per app launch via UserDefaults; 30-day rolling window for stats; top-most tags derived from NoteEntity.tagsArray; ceiling breaks to base background at 20pt bottom radius; removes existing notesEmptyStateCard and standalone emptyStateView. Branch: t127-notes-ceiling
+- [ ] T128 LOE: XS (P1) Description: Update EditNoteSheetWrapper tag chips in EpisodePlayerView.swift (lines 1482–1500) to match T125 spec — #242424@65% background, white@70% text, no # prefix, rounded rect r6, 8/4 padding, xmark.circle.fill remove icon
 
 ## 📨 Inbox (raw ideas)
 - [ ] T38 (P1): Notes listing on notes tab feel … improvement needed (LOE: L - redesign work)
@@ -134,6 +139,10 @@ Instructions:
 - [x] T120 (P1) — Home screen always show all 3 sections with empty states — Always render Continue Listening, Your Podcasts, and Notes sections regardless of data. Each section has its own empty state. Removed global emptyStateView. Follow-up: added horizontal padding to "No episodes in progress", replaced card-style empty state in Your Podcasts with plain text. (build/build18) (Commit: 2875398)
 - [x] T121 (P2) — Settings: Add "Reset App Data" button — Added destructive action separate from "Clear Cache". "Reset App Data" deletes all NoteEntity records and calls clearCache(). Includes confirmation alert warning about permanent note deletion. (build/build18) (Commit: 757ed75)
 - [x] T122 (P1) — CarPlay Recording UX Fixes — (A) pause GlobalPlayerManager on recording start, resume on stopRecognition() so mic captures voice cleanly without podcast audio interference; (B) speak "Listening" via AVSpeechSynthesizer after beep so driver has audible confirmation mic is open, delays beginRecognition() to 1.2s to avoid capturing the prompt itself; (C) replaced silent early return in saveNote() with spoken "Nothing captured, try again." feedback. All changes scoped to CarPlayNowPlayingController.swift. (build/build18) (Commit: e0b6d60)
+- [x] T123 (P1) — Fix "Create tag" row hit area — Full-width tap target with .contentShape(Rectangle()), mintAccent plus.circle.fill icon, split text styling ("Create " in secondary + tag text in white@85%). (build/build18) (Commit: ddb9a1d)
+- [x] T124 (P1) — Differentiate "Create tag" dropdown — Added .padding(.top, 4) to suggestions VStack for visual separation from input field; distinct #242424 background. (build/build18) (Commit: ddb9a1d)
+- [x] T125 (P1) — TagChip redesign — Background #242424@65%, text white@70%, font 12pt medium, padding 8/4, cornerRadius 6. Applied to TagInputView.swift TagChip struct. (build/build18) (Commit: ddb9a1d)
+- [x] T126 (P2) — NoteCardView + NoteDetailSheet tag chips — Updated to match T125 spec; tags right-aligned at 221pt max-width constraint; overflow chips collapse to +{n} pill. (build/build18) (Commit: ddb9a1d)
 
 
 ## Reported bug 🐞
