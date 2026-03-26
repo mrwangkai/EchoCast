@@ -10,7 +10,7 @@ Instructions:
 
 ## 🔥 In Progress
 
-- [ ] T127 LOE: M (P2) Description: Notes ceiling block — full-screen-width elevated surface (#252525) from status bar through large title, containing: (a) quote card [0 notes] or stat summary + tag chips [1+ notes], both followed by horizontal note carousel; quote rotates once per app launch via UserDefaults; 30-day rolling window for stats; top-most tags derived from NoteEntity.tagsArray; ceiling breaks to base background at 20pt bottom radius; removes existing notesEmptyStateCard and standalone emptyStateView. Branch: t127-notes-ceiling
+(No active tasks — see Backlog for available work)
 
 
 ## 🧭 Backlog
@@ -42,7 +42,6 @@ Instructions:
 - [ ] T111 LOE: S (P1) Descritpion: On the "Continue Listening" tab, please allow swipe to delete without requiring a confirmation dialogue
 - [ ] T112 LOE: M? (P1) improve browsing and searching experience. Potentially adding a "for you" section based on type of podcasts that have been followed or played/listened. <- should there be a log of "listened" episodes, does overcast or other podcast do this in the background in order to provide a more personalized/customized experience?
 - [ ] T117 LOE: S (P3) Description: Tag management screen — rename, delete, merge tags. Deferred post-MVP. Data model already supports it via comma-separated tags string on NoteEntity.
-- [ ] T127 LOE: M (P2) Description: Notes ceiling block — full-screen-width elevated surface (#252525) from status bar through large title, containing: (a) quote card [0 notes] or stat summary + tag chips [1+ notes], both followed by horizontal note carousel; quote rotates once per app launch via UserDefaults; 30-day rolling window for stats; top-most tags derived from NoteEntity.tagsArray; ceiling breaks to base background at 20pt bottom radius; removes existing notesEmptyStateCard and standalone emptyStateView. Branch: t127-notes-ceiling
 
 ## 📨 Inbox (raw ideas)
 - [ ] T38 (P1): Notes listing on notes tab feel … improvement needed (LOE: L - redesign work)
@@ -139,6 +138,7 @@ Instructions:
 - [x] T124 (P1) — Differentiate "Create tag" dropdown — Added .padding(.top, 4) to suggestions VStack for visual separation from input field; distinct #242424 background. (build/build18) (Commit: ddb9a1d)
 - [x] T125 (P1) — TagChip redesign — Background #242424@65%, text white@70%, font 12pt medium, padding 8/4, cornerRadius 6. Applied to TagInputView.swift TagChip struct. (build/build18) (Commit: ddb9a1d)
 - [x] T126 (P2) — NoteCardView + NoteDetailSheet tag chips — Updated to match T125 spec; tags right-aligned at 221pt max-width constraint; overflow chips collapse to +{n} pill. (build/build18) (Commit: ddb9a1d)
+- [x] T127 (P2) — Notes ceiling block — Full-width elevated surface (#252525) at top of HomeView with stat summary (30-day rolling window, note count, podcast count, top 3 tags) and horizontal note carousel (10 notes max). Quote rotates daily via @AppStorage (18 quotes). Empty state shows quote card + ghost cards with browse CTA. Ceiling breaks to base background with 20pt bottom radius. Removed old Notes empty state and standalone emptyStateView. (build/build18) (Commit: db34f97)
 - [x] T128 (P1) — EditNoteSheetWrapper tag chips — Updated in EpisodePlayerView.swift (both Add Note and Edit Note sheets) to match T125 spec: removed # prefix, changed to dark gray background (#242424@65%), white@70% text, 12pt medium font, 8/4 padding, rounded rect r6, xmark.circle.fill icon. (build/build18) (Commit: 618bb50)
 
 
