@@ -3225,31 +3225,31 @@ struct NoteCardView: View {
 
                     Spacer()
 
-                    // Tags (fixed right, max 225px)
+                    // Tags (fixed right, max 221px)
                     if !note.tagsArray.isEmpty {
                         HStack(spacing: 6) {
                             ForEach(visibleTags, id: \.self) { tag in
                                 Text(tag)
-                                    .font(.caption2Medium())
-                                    .foregroundColor(.echoTextSecondary)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.70))
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
-                                    .background(Color.noteCardBackground)
+                                    .background(Color(red: 0.141, green: 0.141, blue: 0.141, opacity: 0.65))
                                     .cornerRadius(6)
                                     .lineLimit(1)
                             }
 
                             if additionalTagsCount > 0 {
                                 Text("+\(additionalTagsCount)")
-                                    .font(.caption2Medium())
-                                    .foregroundColor(.echoTextSecondary)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.70))
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
-                                    .background(Color.noteCardBackground)
+                                    .background(Color(red: 0.141, green: 0.141, blue: 0.141, opacity: 0.65))
                                     .cornerRadius(6)
                             }
                         }
-                        .frame(maxWidth: 225)  // Max width constraint
+                        .frame(maxWidth: 221, alignment: .trailing)
                     }
                 }
             }
@@ -3389,11 +3389,11 @@ struct NoteDetailSheet: View {
                             FlowLayout(spacing: 8) {
                                 ForEach(note.tagsArray, id: \.self) { tag in
                                     Text(tag)
-                                        .font(.caption2Medium())
-                                        .padding(.horizontal, 10)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.70))
+                                        .padding(.horizontal, 8)
                                         .padding(.vertical, 4)
-                                        .background(Color.noteCardBackground)
-                                        .foregroundColor(.echoTextPrimary)
+                                        .background(Color(red: 0.141, green: 0.141, blue: 0.141, opacity: 0.65))
                                         .cornerRadius(6)
                                 }
                             }

@@ -89,15 +89,25 @@ struct TagInputView: View {
                             addTag(inputText)
                         }) {
                             HStack {
-                                Image(systemName: "plus.circle")
-                                    .foregroundColor(.blue)
-                                Text("Create tag \"\(inputText.trimmingCharacters(in: .whitespaces))\"")
-                                    .foregroundColor(.echoTextPrimary)
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundColor(.mintAccent)
+                                    .font(.system(size: 15))
+                                Text("Create ")
+                                    .foregroundColor(.echoTextSecondary)
+                                    .font(.bodyEcho())
+                                Text(inputText.trimmingCharacters(in: .whitespaces))
+                                    .foregroundColor(.white.opacity(0.85))
+                                    .font(.bodyEcho())
                                 Spacer()
                             }
+                            .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
                             .padding(.horizontal, 12)
                             .padding(.vertical, 10)
+                            .background(Color(red: 0.141, green: 0.141, blue: 0.141))
+                            .cornerRadius(8)
                         }
+                        .buttonStyle(.plain)
 
                         if !filteredSuggestions.isEmpty {
                             Divider()
@@ -126,6 +136,7 @@ struct TagInputView: View {
                     }
                 }
                 .background(Color.noteCardBackground)
+                .padding(.top, 4)
                 .cornerRadius(10)
                 .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
                 .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .top)))
@@ -169,20 +180,21 @@ struct TagChip: View {
     var body: some View {
         HStack(spacing: 4) {
             Text(tag)
-                .font(.subheadline)
-                .foregroundColor(.blue)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white.opacity(0.70))
+                .lineLimit(1)
 
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.caption)
-                    .foregroundColor(.blue.opacity(0.6))
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.40))
             }
             .accessibilityLabel("Remove tag \(tag)")
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(Color.blue.opacity(0.1))
-        .cornerRadius(16)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color(red: 0.141, green: 0.141, blue: 0.141, opacity: 0.65))
+        .cornerRadius(6)
     }
 }
 
